@@ -1,0 +1,71 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>dev test</title>
+<style>body{margin:0;font:12px monospace;background:#9cf}#log{position:fixed;left:0;top:0;max-width:50%;white-space:pre-wrap;background:#fffc;padding:6px;max-height:100%;overflow:auto}canvas{display:block}</style>
+</head><body><div id="log"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="js/data.js"></script><script src="js/tickle-core.js"></script><script src="js/sdf.js"></script>
+<script>
+const log = (s) => { document.getElementById('log').textContent += s + '\n'; };
+// 1) validate seed->traits port against tokenURI() traits
+const map = {}; let conflicts = 0, themeBad = 0, noneBad = 0;
+for (const [id, seed, tr] of TB.TOKENS) {
+  const p = TB.pickTraits(seed);
+  for (const slot of TB.SLOTS) {
+    const label = TB.SLOT_LABEL[slot]; const name = tr[label];
+    const idx = p.sel[slot];
+    if (idx === undefined) { if (name !== 'None') { noneBad++; log('none mismatch #' + id + ' ' + slot + ' ' + name); } continue; }
+    const k = slot + ':' + idx;
+    if (map[k] && map[k] !== name) { conflicts++; log('conflict ' + k + ' ' + map[k] + ' vs ' + name + ' #' + id); }
+    map[k] = name;
+    if (slot !== 'body') {
+      const tn = tr[label + ' Theme'];
+      const mine = p.themeFor[slot] === undefined ? 'None' : TB.THEME_NAMES[p.themeFor[slot]];
+      if (tn !== undefined && tn !== mine) { themeBad++; if (themeBad < 6) log('theme mismatch #' + id + ' ' + slot + ' ' + tn + ' vs ' + mine); }
+    }
+  }
+}
+log('tokens ' + TB.TOKENS.length + ' conflicts ' + conflicts + ' none-mismatch ' + noneBad + ' theme-mismatch ' + themeBad);
+log('names known: ' + Object.keys(map).length + ' / 58');
+window.NAMES = map;
+log(JSON.stringify(map));
+// 2) voxelize token from ?id=
+const qid = +(new URLSearchParams(location.search).get('id') || 1);
+const row = TB.TOKENS.find(r => r[0] === qid) || TB.TOKENS[0];
+const t0 = performance.now();
+const T = TB.tickleLayers(row[1]);
+const vc = TB.voxelize(TB.compile(T.character), { voxel: +(new URLSearchParams(location.search).get('v') || 9), colors: TB.colorOf, shell: +(new URLSearchParams(location.search).get('s') || 0.55) });
+const t1 = performance.now();
+const vh = TB.voxelize(TB.compile(T.home), { voxel: 18, colors: TB.colorOf });
+const t2 = performance.now();
+log('#' + row[0] + ' char voxels ' + vc.count + ' evals ' + vc.evals + ' ' + (t1 - t0).toFixed(0) + 'ms; home voxels ' + vh.count + ' evals ' + vh.evals + ' ' + (t2 - t1).toFixed(0) + 'ms');
+log(JSON.stringify(row[2]).slice(0, 300));
+// render
+const renderer = new THREE.WebGLRenderer({ antialias: true }); renderer.setSize(innerWidth, innerHeight); renderer.setPixelRatio(devicePixelRatio);
+renderer.outputEncoding = THREE.sRGBEncoding;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color().setRGB(...TB.SKIES[T.traits.sky]).convertSRGBToLinear();
+const cam = new THREE.PerspectiveCamera(35, innerWidth / innerHeight, 0.1, 100);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x777766, 0.9));
+const dl = new THREE.DirectionalLight(0xffffff, 0.7); dl.position.set(3, 5, 4); scene.add(dl);
+function mesh(v, s) {
+  const g = new THREE.BoxGeometry(1, 1, 1);
+  const m = new THREE.MeshLambertMaterial();
+  const im = new THREE.InstancedMesh(g, m, v.count);
+  const M = new THREE.Matrix4(), c = new THREE.Color();
+  for (let i = 0; i < v.count; i++) {
+    const x = v.positions[3 * i], y = v.positions[3 * i + 1], z = v.positions[3 * i + 2];
+    // SDF (x,y,z z-up) -> three (-x, z, y)
+    M.makeTranslation(v.origin[0] + (x + .5) * v.voxel, v.origin[2] + (z + .5) * v.voxel, v.origin[1] + (y + .5) * v.voxel);
+    M.scale(new THREE.Vector3(v.voxel, v.voxel, v.voxel));
+    im.setMatrixAt(i, M);
+    c.setRGB(v.colors[3 * i], v.colors[3 * i + 1], v.colors[3 * i + 2]); im.setColorAt(i, c);
+  }
+  const grp = new THREE.Group(); grp.add(im); grp.scale.setScalar(s); return grp;
+}
+const S = 1 / 150;
+scene.add(mesh(vc, S)); scene.add(mesh(vh, S));
+let ang = 0;
+cam.position.set(0, 2.6, 9); cam.lookAt(0, 1.6, 0);
+function loop() { requestAnimationFrame(loop); ang += 0.004; const r = 10; cam.position.set(Math.sin(ang) * r, 3.2, Math.cos(ang) * r); cam.lookAt(0, 1.4, 0); renderer.render(scene, cam); }
+if (new URLSearchParams(location.search).get('spin')) loop(); else { cam.position.set(0, 2.2, 10); cam.lookAt(0, 1.4, 0); renderer.render(scene, cam); }
+</script></body></html>

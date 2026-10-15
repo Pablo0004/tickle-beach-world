@@ -1,0 +1,599 @@
+<title>Tickle Beach World</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@400;600;700;800&family=Silkscreen&display=swap">
+<style>
+/* Layout: full-bleed voxel island; a lagoon-navy glass HUD hugs the edges (top bar, right inspector, build dock). */
+:root {
+  --ink: #0b2230;
+  --panel: rgba(9, 29, 41, 0.9);
+  --panel-solid: #0d2a39;
+  --raise: rgba(255, 255, 255, 0.06);
+  --raise-2: rgba(255, 255, 255, 0.11);
+  --line: rgba(190, 230, 240, 0.14);
+  --text: #eaf6f7;
+  --muted: #94b4be;
+  --sun: #ffd23f;
+  --sea: #3cc6d8;
+  --coral: #ff7b6b;
+  --good: #7be08f;
+  --warn: #ffd23f;
+  --bad: #ff7b6b;
+  --font-display: "Lilita One", "Arial Rounded MT Bold", system-ui, sans-serif;
+  --font-body: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-pixel: "Silkscreen", ui-monospace, "Cascadia Mono", monospace;
+  --r: 12px;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+[hidden] { display: none !important; }
+body { background: var(--ink); color: var(--text); font-family: var(--font-body); font-size: 14px; overflow: hidden; }
+* { box-sizing: border-box; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--sun); outline-offset: 2px; }
+#app { position: fixed; inset: 0; }
+#world { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+#overlay { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+
+.glass { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 8px 30px rgba(0, 20, 30, 0.35); }
+
+/* top bar */
+#topbar { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 10px); left: 12px; right: 396px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 8px 10px; }
+.brand { display: flex; align-items: baseline; gap: 6px; margin-right: 4px; }
+.brand b { font-family: var(--font-display); font-weight: 400; font-size: 20px; letter-spacing: 0.3px; color: var(--sun); text-shadow: 0 2px 0 rgba(0,0,0,0.25); }
+.brand span { font-family: var(--font-display); font-size: 20px; color: var(--text); }
+.unofficial { font-style: normal; font-size: 10.5px; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 1px 7px; align-self: center; white-space: nowrap; }
+.clock { font-family: var(--font-pixel); font-size: 12px; color: var(--text); background: var(--raise); border-radius: 8px; padding: 6px 8px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.seg { display: inline-flex; background: var(--raise); border-radius: 10px; padding: 3px; gap: 2px; }
+.seg button { border: 0; background: transparent; padding: 6px 10px; border-radius: 8px; font-weight: 700; font-size: 13px; color: var(--muted); white-space: nowrap; }
+.seg button[aria-pressed="true"] { background: var(--sun); color: #2a2100; }
+.seg.speed button { font-family: var(--font-pixel); font-size: 11px; padding: 6px 8px; }
+.seg.speed button[aria-pressed="true"] { background: var(--sea); color: #04232a; }
+.toggle { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 13px; color: var(--muted); }
+.toggle input { accent-color: var(--sun); width: 16px; height: 16px; }
+.spacer { flex: 1; }
+.iconbtn { border: 1px solid var(--line); background: var(--raise); border-radius: 8px; padding: 6px 10px; font-weight: 700; font-size: 13px; }
+
+/* panel */
+#panel { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 10px); right: 12px; bottom: 12px; width: 372px; display: flex; flex-direction: column; overflow: hidden; }
+.tabs { display: flex; gap: 2px; padding: 6px; border-bottom: 1px solid var(--line); }
+.tabs button { flex: 1; border: 0; background: transparent; color: var(--muted); padding: 8px 4px; border-radius: 8px; font-weight: 800; font-size: 13px; position: relative; }
+.tabs button[aria-selected="true"] { background: var(--raise-2); color: var(--text); }
+.badge { display: inline-block; min-width: 18px; padding: 0 5px; margin-left: 4px; border-radius: 9px; background: var(--coral); color: #2a0600; font-size: 11px; line-height: 18px; font-weight: 800; }
+.badge[data-n="0"] { display: none; }
+.tabbody { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+.tabbody[hidden] { display: none !important; }
+h2 { font-family: var(--font-display); font-weight: 400; font-size: 18px; margin: 0; letter-spacing: 0.2px; text-wrap: balance; }
+h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.9px; color: var(--muted); margin: 0; font-weight: 800; }
+p { margin: 0; line-height: 1.45; }
+.note { color: var(--muted); font-size: 12.5px; line-height: 1.45; }
+.card { background: var(--raise); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.btn { border: 0; border-radius: 9px; padding: 8px 12px; font-weight: 800; font-size: 13px; background: var(--raise-2); }
+.btn.primary { background: var(--sun); color: #2a2100; }
+.btn.sea { background: var(--sea); color: #04232a; }
+.btn.danger { background: rgba(255, 123, 107, 0.18); color: var(--coral); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.pix { font-family: var(--font-pixel); font-size: 11px; letter-spacing: 0.2px; }
+.chip { display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; padding: 2px 8px; font-size: 11.5px; font-weight: 800; background: var(--raise-2); color: var(--muted); white-space: nowrap; }
+.chip.pending { background: rgba(255, 210, 63, 0.16); color: var(--sun); }
+.chip.auto { background: rgba(60, 198, 216, 0.16); color: var(--sea); }
+.chip.approved, .chip.starter { background: rgba(123, 224, 143, 0.15); color: var(--good); }
+.chip.rejected, .chip.discarded { background: rgba(255, 123, 107, 0.15); color: var(--coral); }
+.chip.claude { background: rgba(255, 170, 120, 0.16); color: #ffb48a; }
+
+/* tickle list */
+.tlist { display: flex; flex-direction: column; gap: 4px; }
+.trow { display: grid; grid-template-columns: 22px 1fr auto; gap: 8px; align-items: center; width: 100%; text-align: left; border: 0; background: transparent; padding: 6px 6px; border-radius: 9px; }
+.trow:hover { background: var(--raise); }
+.trow[aria-current="true"] { background: var(--raise-2); }
+.sw { width: 22px; height: 22px; border-radius: 6px; box-shadow: inset 0 -3px 0 rgba(0,0,0,0.2); }
+.tname { font-weight: 800; font-size: 13.5px; }
+.tact { color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mini { display: grid; grid-template-columns: repeat(4, 8px); gap: 3px; align-items: end; height: 22px; }
+.mini i { display: block; width: 8px; border-radius: 2px; background: var(--good); }
+.needs { display: grid; grid-template-columns: 64px 1fr 36px; gap: 6px 8px; align-items: center; font-size: 12.5px; }
+.bar { height: 8px; border-radius: 4px; background: rgba(255,255,255,0.08); overflow: hidden; }
+.bar i { display: block; height: 100%; border-radius: 4px; }
+.num { font-family: var(--font-pixel); font-size: 11px; text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+.traits { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 10px; font-size: 12.5px; align-items: baseline; }
+.traits .k { color: var(--muted); }
+.ok { color: var(--good); font-weight: 800; }
+.no { color: var(--coral); font-weight: 800; }
+
+/* director log */
+.log { display: flex; flex-direction: column; gap: 6px; }
+.entry { display: grid; grid-template-columns: 58px 1fr; gap: 8px; font-size: 12.5px; padding: 6px 0; border-top: 1px solid var(--line); }
+.entry .when { font-family: var(--font-pixel); font-size: 10px; color: var(--muted); line-height: 1.5; }
+.entry .why { color: var(--muted); margin-top: 2px; }
+.entry .kind { font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.7px; }
+.k-raid { color: #ff6b5e; } .k-dragon { color: #ff9a3c; } .k-clan { color: var(--good); }
+.hpbar { position: absolute; transform: translate(-50%, -100%); background: rgba(9, 29, 41, 0.82); color: #fff; font-size: 11px; font-weight: 800; padding: 3px 7px; border-radius: 8px; min-width: 96px; white-space: nowrap; }
+.hpbar .hb { height: 5px; background: rgba(255, 255, 255, 0.2); border-radius: 3px; margin-top: 3px; overflow: hidden; }
+.hpbar .hb i { display: block; height: 100%; transition: width 0.25s; }
+.hpbar.dragonbar { min-width: 190px; font-size: 12px; } .hpbar.dragonbar .hb { height: 8px; }
+#roomHud { position: absolute; left: 16px; top: 96px; max-width: 360px; background: rgba(9, 29, 41, 0.9); color: #fff; border-radius: 12px; padding: 10px 12px; z-index: 30; font-size: 12.5px; }
+#roomHud .rh-title { font-weight: 900; font-size: 15px; }
+#roomMap { display: block; margin: 6px 0; border-radius: 6px; cursor: crosshair; max-width: 100%; image-rendering: pixelated; }
+#roomHud .rh-room { color: #ffd23f; font-weight: 800; margin: 2px 0 4px; }
+#roomHud .rh-note { color: #c9d4e0; margin-bottom: 6px; }
+#roomHud .rh-warps { display: flex; flex-wrap: wrap; gap: 6px; }
+#exitSel { max-width: 100%; flex: 1 1 100%; padding: 5px; border-radius: 8px; background: #0e2a38; color: #fff; border: 1px solid rgba(255,255,255,0.2); }
+#roomFade { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 29; }
+#doorChip { position: absolute; transform: translate(-50%, -120%); background: rgba(9, 29, 41, 0.92); color: #fff; border-radius: 10px; padding: 6px 8px; z-index: 31; display: flex; gap: 8px; align-items: center; font-size: 12.5px; white-space: nowrap; }
+#doorChip[hidden], #roomHud[hidden], #placeCard[hidden] { display: none; }
+#placeCard { position: absolute; left: 16px; top: 96px; width: min(380px, calc(100% - 32px)); max-height: calc(100% - 200px); overflow: auto; background: rgba(9, 29, 41, 0.94); color: #fff; border-radius: 12px; padding: 12px 14px; z-index: 31; font-size: 12.5px; line-height: 1.45; }
+#placeCard .pc-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; margin-bottom: 6px; }
+#placeCard .pc-name { font-weight: 900; font-size: 15px; }
+#placeCard .pc-sub { color: #ffd23f; font-weight: 700; font-size: 12px; }
+#placeCard .pc-text p { margin: 6px 0; color: #dfe8f0; }
+#placeCard .kv { margin: 6px 0; }
+.hpbar.tbar { min-width: 30px; padding: 2px 3px; border-radius: 5px; } .hpbar.tbar .nm { display: none; } .hpbar.tbar .hb { margin-top: 0; height: 4px; }
+.k-creature { color: #c9a6ff; } .k-death { color: #c9d4ff; } .k-ritual { color: #ffd23f; } .k-ruin { color: #ff9a3c; } .k-box { color: #ff8fc0; } .k-hunt { color: #ffb48a; } .k-outlaw { color: #ff6b5e; } .k-trade { color: #7be08f; } .k-train { color: #c9a6ff; } .k-dungeon, .k-level { color: #ffb48a; }
+.clandot { display: inline-block; width: 10px; height: 10px; border-radius: 3px; vertical-align: -1px; margin-right: 4px; }
+.k-design { color: var(--sun); } .k-mechanic { color: #c9a6ff; } .k-build { color: #ffb48a; } .k-event { color: var(--coral); } .k-social { color: var(--good); } .k-world, .k-director { color: var(--sea); } .k-claude { color: #ffb48a; } .k-review { color: var(--good); }
+textarea { width: 100%; resize: vertical; min-height: 54px; background: rgba(0,0,0,0.25); border: 1px solid var(--line); border-radius: 9px; padding: 8px; }
+select { background: rgba(0,0,0,0.3); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; max-width: 100%; }
+.diag { display: grid; grid-template-columns: 64px 1fr auto; gap: 6px 8px; align-items: center; font-size: 12.5px; }
+
+/* review */
+.rlist { display: flex; flex-direction: column; gap: 4px; }
+.ritem { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; text-align: left; width: 100%; border: 0; background: transparent; padding: 7px 8px; border-radius: 9px; }
+.ritem:hover { background: var(--raise); }
+.ritem[aria-current="true"] { background: var(--raise-2); }
+.ritem .t { font-weight: 800; font-size: 13px; }
+.ritem .s { color: var(--muted); font-size: 11.5px; grid-column: 1 / -1; }
+#preview { width: 100%; height: 210px; border-radius: 10px; display: block; background: radial-gradient(circle at 50% 35%, #2b5f73, #0e2c3b); }
+.checks { display: flex; flex-direction: column; gap: 5px; font-size: 12.5px; }
+.check { display: grid; grid-template-columns: 16px 1fr; gap: 8px; align-items: start; }
+.dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 4px; }
+.dot.pass { background: var(--good); } .dot.warn { background: var(--warn); } .dot.fail { background: var(--bad); }
+.check b { font-weight: 800; }
+.check span { color: var(--muted); display: block; }
+.score { font-family: var(--font-display); font-size: 30px; line-height: 1; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; font-size: 12.5px; }
+.kv .k { color: var(--muted); }
+pre.json { margin: 0; max-height: 160px; overflow: auto; background: rgba(0,0,0,0.3); border-radius: 8px; padding: 8px; font-size: 11px; line-height: 1.4; white-space: pre; }
+
+/* dock */
+#dock { position: absolute; left: 12px; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); padding: 8px; display: flex; flex-direction: column; gap: 8px; max-width: calc(100% - 410px); }
+#dock[hidden] { display: none !important; }
+.tools { display: flex; gap: 4px; flex-wrap: wrap; }
+.tools button { border: 0; background: var(--raise); border-radius: 8px; padding: 7px 10px; font-weight: 800; font-size: 12.5px; }
+.tools button[aria-pressed="true"] { background: var(--sun); color: #2a2100; }
+.swatches { display: flex; gap: 4px; flex-wrap: wrap; }
+.swatches button { width: 26px; height: 26px; border-radius: 6px; border: 2px solid transparent; box-shadow: inset 0 -4px 0 rgba(0,0,0,0.22); }
+.swatches button[aria-pressed="true"] { border-color: var(--text); }
+.hint { font-size: 12px; color: var(--muted); }
+.iconbtn.primaryish { background: var(--sun); color: #2a2100; border-color: transparent; }
+.modal.dir { padding: 12px; }
+.dirbox { width: min(1180px, 100%); height: 100%; max-height: 100%; display: flex; flex-direction: column; gap: 10px; }
+#dirSearch { width: 100%; font-size: 15px; padding: 10px 12px; }
+.dirfilters { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; }
+.fsel { display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: var(--muted); font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; }
+.fsel select { text-transform: none; letter-spacing: 0; font-weight: 600; font-size: 13px; color: var(--text); max-width: 170px; }
+.dircols { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 12px; }
+.dirlist, .dirdetail { overflow-y: auto; min-height: 0; display: flex; flex-direction: column; gap: 4px; }
+.drow { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 10px; align-items: center; text-align: left; border: 0; background: transparent; padding: 7px 8px; border-radius: 9px; width: 100%; }
+.drow:hover { background: var(--raise); }
+.drow[aria-current="true"] { background: var(--raise-2); }
+.drow .tname, .drow .tact { display: block; }
+.dtag { font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+.sw.big { width: 34px; height: 34px; border-radius: 8px; }
+.bio { font-size: 14.5px; line-height: 1.55; max-width: 68ch; }
+.skills { display: grid; grid-template-columns: 82px 1fr 24px; gap: 5px 10px; align-items: center; font-size: 12.5px; }
+.skills .bar i { background: var(--sun); }
+.routine { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; font-size: 13px; }
+.routine li { display: grid; grid-template-columns: 52px 1fr; gap: 8px; align-items: baseline; padding: 4px 6px; border-radius: 7px; }
+.routine li.past { opacity: 0.55; }
+.routine li.now { background: rgba(255, 210, 63, 0.14); }
+@media (max-width: 760px) { .dircols { grid-template-columns: 1fr; } .dirlist { max-height: 40vh; } .fsel select { max-width: 140px; } }
+#mapbox { position: absolute; right: 396px; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); padding: 6px; display: flex; flex-direction: column; gap: 4px; }
+#minimap { display: block; width: 200px; height: 186px; border-radius: 8px; cursor: crosshair; image-rendering: pixelated; }
+#mapLabel { max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.maplegend { display: flex; flex-wrap: wrap; gap: 4px 9px; font-size: 10.5px; color: var(--muted); max-width: 200px; }
+.maplegend.big { max-width: none; font-size: 12.5px; gap: 6px 16px; }
+.maplegend span { display: inline-flex; align-items: center; gap: 4px; }
+.maplegend i { display: inline-block; width: 9px; height: 9px; }
+.lg-v { background: linear-gradient(90deg, #ff7a2f 50%, #2f8fe0 50%); border-radius: 2px; }
+.lg-a { border: 2px solid #ffd23f; border-radius: 50%; width: 7px !important; height: 7px !important; }
+.lg-c { background: #4a4a4a; border-radius: 9px 9px 0 0; box-shadow: inset 0 -3px 0 #c9a6ff; }
+.lg-f { background: #fff; border: 1.5px solid #2f8fe0; border-radius: 50%; width: 10px !important; height: 6px !important; } .lg-e { background: #c9a6ff; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); width: 9px !important; height: 11px !important; } .lg-s { background: #ffd23f; clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); width: 11px !important; height: 11px !important; } .lg-m { background: #6b4a2b; border-radius: 5px 5px 0 0; width: 10px !important; height: 6px !important; } .lg-k { background: #7a4a24; width: 4px !important; height: 10px !important; }
+.lg-l { width: 0 !important; height: 0 !important; border-left: 5px solid transparent; border-right: 5px solid transparent; border-bottom: 9px solid #3a1a14; }
+.lg-d { background: #ff3b2f; border-radius: 50%; }
+.lg-b { background: #c79a62; }
+.lg-y { border: 2px solid #fff; border-radius: 50%; width: 7px !important; height: 7px !important; }
+#mapOpen { font-size: 12px; padding: 5px 8px; }
+.mapbox2 { width: min(1140px, 100%) !important; }
+.bigwrap { width: 100%; }
+#bigmap { display: block; width: 100%; height: auto; border-radius: 10px; cursor: pointer; image-rendering: pixelated; }
+.maptip { position: fixed; z-index: 20; pointer-events: none; background: rgba(9, 29, 41, 0.92); color: #fff; font-size: 12px; line-height: 1.35; padding: 6px 9px; border-radius: 8px; max-width: 280px; box-shadow: 0 4px 14px rgba(0,0,0,0.3); }
+input[type="text"] { background: rgba(0,0,0,0.3); border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; }
+.tag.mine { box-shadow: 0 0 0 2px var(--sun); }
+.isl { display: flex; flex-direction: column; gap: 4px; padding: 6px 0; border-top: 1px solid var(--line); }
+.isl a { color: var(--sea); }
+
+/* overlay */
+.tag { position: absolute; transform: translate(-50%, -100%); font-weight: 800; font-size: 11.5px; padding: 2px 7px; border-radius: 999px; background: rgba(9, 29, 41, 0.72); color: var(--text); white-space: nowrap; display: flex; align-items: center; gap: 5px; }
+.tag .m { width: 7px; height: 7px; border-radius: 50%; }
+.tag.sel { background: var(--sun); color: #2a2100; }
+.bubble { position: absolute; transform: translate(-50%, -100%); background: #fffdf3; color: #1f2a2e; font-weight: 700; font-size: 12.5px; padding: 5px 9px; border-radius: 12px; max-width: 190px; white-space: normal; text-align: center; box-shadow: 0 3px 0 rgba(0,0,0,0.18); }
+.bubble::after { content: ""; position: absolute; left: 50%; bottom: -6px; margin-left: -6px; border: 6px solid transparent; border-top-color: #fffdf3; border-bottom: 0; }
+
+#toasts { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); display: flex; flex-direction: column; gap: 6px; align-items: center; pointer-events: none; max-width: 90%; }
+.toast { background: var(--panel-solid); border: 1px solid var(--line); color: var(--text); font-weight: 800; padding: 8px 14px; border-radius: 999px; font-size: 13px; animation: pop 0.25s ease-out; }
+#casinoWin { position: absolute; right: 16px; top: 96px; width: min(580px, calc(100% - 32px)); max-height: calc(100% - 120px); overflow: auto; background: rgba(9, 29, 41, 0.96); color: #fff; border-radius: 12px; padding: 12px; z-index: 40; font-size: 13px; }
+#casinoWin[hidden] { display: none; }
+#contestHud { position: absolute; left: 16px; top: 96px; width: 250px; background: rgba(9, 29, 41, 0.9); color: #fff; border-radius: 12px; padding: 9px 12px 10px; z-index: 29; font-size: 12.5px; pointer-events: none; border: 1px solid rgba(255, 210, 63, 0.35); }
+#contestHud[hidden] { display: none; }
+#fpHud { position: absolute; left: 50%; transform: translateX(-50%); top: 84px; background: rgba(9, 29, 41, 0.88); color: #fff; border-radius: 999px; padding: 6px 8px 6px 16px; z-index: 31; font-size: 12.5px; white-space: nowrap; display: flex; align-items: center; gap: 8px; }
+#fpHud[hidden] { display: none; }
+#beastBar { position: absolute; transform: translate(-50%, -100%); width: 150px; z-index: 12; pointer-events: none; background: rgba(9, 29, 41, 0.85); border-radius: 8px; padding: 3px 6px 5px; color: #fff; font-size: 11.5px; font-weight: 800; text-align: center; }
+#beastBar i { display: block; height: 6px; margin-top: 3px; border-radius: 3px; background: #e8443a; }
+#beastBar[hidden] { display: none; }
+#uwTint { position: absolute; inset: 0; pointer-events: none; z-index: 0; background: radial-gradient(ellipse at 50% 40%, rgba(40, 150, 190, 0.28), rgba(10, 60, 95, 0.55)); }
+#uwTint[hidden] { display: none; }
+@media (max-width: 760px) { #fpHud { white-space: normal; width: calc(100% - 32px); border-radius: 12px; top: 112px; } }
+#contestHud .ch-t { font-weight: 900; font-size: 15px; color: #ffd23f; }
+#contestHud .ch-r { color: #c9d4e0; font-weight: 700; font-size: 12px; }
+#contestHud .ch-s { color: #c9d4e0; margin: 1px 0 6px; }
+#contestHud .ch-row { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; border-top: 1px solid rgba(255, 255, 255, 0.07); }
+#contestHud .ch-row span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#contestHud .ch-row span:last-child { color: #ffd23f; font-weight: 800; white-space: nowrap; }
+#contestHud .ch-row.mine span:first-child { color: #7be08f; font-weight: 800; }
+@media (max-width: 760px) { #contestHud { left: 8px; top: auto; bottom: 150px; width: 210px; font-size: 11.5px; } }
+.ctab-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; } .ctab-head .btn { margin-left: auto; }
+.ctab-board { background: #145a2e; border-radius: 10px; padding: 8px; margin-bottom: 8px; min-height: 40px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.ctab-seats { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; margin-bottom: 8px; }
+.cseat { background: rgba(255,255,255,0.06); border-radius: 8px; padding: 6px; } .cseat.me { outline: 2px solid #ffd23f; } .cseat.turn { background: rgba(255,210,63,0.18); }
+.cres { color: #ffd23f; font-weight: 800; }
+.pcard { display: inline-block; min-width: 26px; padding: 3px 4px; margin: 1px; border-radius: 4px; background: #fff; color: #111; font-weight: 900; text-align: center; } .pcard.red { color: #d0202a; } .pcard.back { background: repeating-linear-gradient(45deg, #2f5fb0, #2f5fb0 4px, #ffd23f 4px, #ffd23f 6px); min-height: 18px; }
+.ctab-moves { margin: 8px 0; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.ctab-log { color: #c9d4e0; font-size: 12px; border-top: 1px solid rgba(255,255,255,0.12); padding-top: 6px; }
+.rball { display: inline-block; min-width: 26px; padding: 2px 6px; border-radius: 999px; font-weight: 900; text-align: center; color: #fff; } .rball.red { background: #c0262d; } .rball.black { background: #111; } .rball.green { background: #1f9e4a; } .rball.bingo { background: #fff; color: #c0262d; } .rball.small { min-width: 18px; padding: 0 4px; font-size: 11px; margin: 0 1px; }
+.rlayout { display: flex; gap: 2px; width: 100%; } .rgrid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 2px; flex: 1; }
+.rnum { border: 0; border-radius: 3px; color: #fff; font-weight: 800; padding: 4px 0; cursor: pointer; font-size: 11px; } .rnum.red { background: #c0262d; } .rnum.black { background: #222; } .rnum.green { background: #1f9e4a; padding: 4px 6px; }
+.rout { display: flex; flex-wrap: wrap; gap: 4px; width: 100%; }
+.bboard { display: grid; grid-template-columns: repeat(10, 1fr); gap: 2px; margin-bottom: 8px; } .bboard span { text-align: center; font-size: 11px; background: rgba(255,255,255,0.06); border-radius: 3px; color: #9a9aa0; } .bboard span.on { background: #ffd23f; color: #111; font-weight: 900; }
+.bticket { border-collapse: collapse; margin: 4px 6px 4px 0; background: #fff8e0; color: #111; } .bticket td { width: 22px; height: 20px; text-align: center; font-size: 11px; border: 1px solid #c8b890; font-weight: 700; } .bticket td.hit { background: #ffd23f; text-decoration: line-through; } .bticket td.blank { background: #e8dcc0; }
+.slotbox { display: flex; gap: 10px; justify-content: center; background: #1a0a0a; border: 4px solid #ffd23f; border-radius: 14px; padding: 14px; margin: 6px auto 4px; max-width: 300px; }
+.slotbox .reel { width: 72px; height: 72px; display: flex; align-items: center; justify-content: center; font-size: 46px; background: #fff8e0; border-radius: 10px; box-shadow: inset 0 -6px 0 rgba(0,0,0,0.15); }
+.slotbox .reel.seven { color: #d0202a; font-weight: 900; font-family: Georgia, serif; }
+@media (max-width: 760px) { #casinoWin { left: 8px; right: 8px; width: auto; top: auto; bottom: 8px; max-height: 60%; } }
+.toast.act { pointer-events: auto; display: flex; align-items: center; gap: 10px; padding: 6px 8px 6px 14px; }
+.toast.act .btn { padding: 4px 12px; font-size: 12.5px; }
+@keyframes pop { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+#loading { position: absolute; inset: 0; display: grid; place-items: center; background: radial-gradient(circle at 50% 40%, #1f5d73, var(--ink)); z-index: 5; padding: 16px; }
+#loading .box { width: min(420px, 100%); display: flex; flex-direction: column; gap: 12px; padding: 18px; }
+#loading .title { font-family: var(--font-display); font-size: 30px; color: var(--sun); }
+.progress { height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden; }
+.progress i { display: block; height: 100%; width: 0; background: var(--sun); transition: width 0.3s; }
+#loadList { font-size: 12.5px; color: var(--muted); min-height: 3.2em; }
+
+.modal { position: absolute; inset: 0; background: rgba(4, 16, 22, 0.6); display: grid; place-items: center; z-index: 6; padding: 16px; }
+.modal[hidden] { display: none !important; }
+.modal .box { width: min(760px, 100%); max-height: 100%; display: flex; flex-direction: column; gap: 10px; padding: 14px; overflow: auto; }
+.modal iframe { width: 100%; aspect-ratio: 16 / 10; border: 0; border-radius: 10px; background: #9cd0ff; max-width: 100%; }
+.menutabs { align-self: flex-start; flex-wrap: wrap; }
+.soundrow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: 8px 0; }
+.soundrow > b { min-width: 80px; }
+.menusec[hidden] { display: none !important; }
+.camrow { gap: 4px; flex-wrap: nowrap; }
+.camrow #mapOpen { flex: 1; }
+.camrow #camLeft, .camrow #camRight { padding: 4px 9px; font-size: 16px; line-height: 1; }
+.credits { display: flex; flex-direction: column; gap: 6px; font-size: 13px; line-height: 1.45; }
+.credits a { color: var(--sun); }
+.musicrows { display: grid; grid-template-columns: 150px 1fr; gap: 4px 12px; font-size: 13px; }
+.musicrows b { color: var(--muted); font-weight: 600; }
+.help ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; line-height: 1.45; }
+
+@media (prefers-reduced-motion: reduce) { .toast { animation: none; } .progress i { transition: none; } }
+
+@media (max-width: 760px) {
+  #topbar { right: 12px; padding: 6px 8px; gap: 6px; }
+  .brand span, .unofficial { display: none; }
+  .brand b { font-size: 17px; }
+  .seg button { padding: 6px 8px; font-size: 12px; }
+  #panel { top: auto; left: 0; right: 0; bottom: 0; width: auto; height: 44%; border-radius: 14px 14px 0 0; padding-bottom: env(safe-area-inset-bottom, 0px); }
+  #panel.collapsed { height: 52px; }
+  #dock { bottom: calc(44% + 10px); max-width: calc(100% - 24px); }
+  #panel.collapsed ~ #dock { bottom: 64px; }
+  #toasts { bottom: calc(44% + 12px); }
+  .tabs button { font-size: 12px; padding: 8px 2px; }
+  #panel { height: 40%; }
+  #dock { bottom: calc(40% + 8px); padding: 6px; gap: 6px; }
+  #toasts { bottom: calc(40% + 12px); }
+  .iconbtn.primaryish { background: var(--sun); color: #2a2100; border-color: transparent; }
+.modal.dir { padding: 12px; }
+.dirbox { width: min(1180px, 100%); height: 100%; max-height: 100%; display: flex; flex-direction: column; gap: 10px; }
+#dirSearch { width: 100%; font-size: 15px; padding: 10px 12px; }
+.dirfilters { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; }
+.fsel { display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: var(--muted); font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; }
+.fsel select { text-transform: none; letter-spacing: 0; font-weight: 600; font-size: 13px; color: var(--text); max-width: 170px; }
+.dircols { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 12px; }
+.dirlist, .dirdetail { overflow-y: auto; min-height: 0; display: flex; flex-direction: column; gap: 4px; }
+.drow { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 10px; align-items: center; text-align: left; border: 0; background: transparent; padding: 7px 8px; border-radius: 9px; width: 100%; }
+.drow:hover { background: var(--raise); }
+.drow[aria-current="true"] { background: var(--raise-2); }
+.drow .tname, .drow .tact { display: block; }
+.dtag { font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+.sw.big { width: 34px; height: 34px; border-radius: 8px; }
+.bio { font-size: 14.5px; line-height: 1.55; max-width: 68ch; }
+.skills { display: grid; grid-template-columns: 82px 1fr 24px; gap: 5px 10px; align-items: center; font-size: 12.5px; }
+.skills .bar i { background: var(--sun); }
+.routine { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; font-size: 13px; }
+.routine li { display: grid; grid-template-columns: 52px 1fr; gap: 8px; align-items: baseline; padding: 4px 6px; border-radius: 7px; }
+.routine li.past { opacity: 0.55; }
+.routine li.now { background: rgba(255, 210, 63, 0.14); }
+@media (max-width: 760px) { .dircols { grid-template-columns: 1fr; } .dirlist { max-height: 40vh; } .fsel select { max-width: 140px; } }
+#mapbox { right: 12px; bottom: auto; top: calc(env(safe-area-inset-top, 0px) + 110px); }
+  #minimap { width: 110px; height: 102px; }
+  #mapLabel, #mapbox .maplegend { display: none; }
+  .tools button { padding: 6px 8px; font-size: 12px; }
+  .hint { display: none; }
+  .clock { font-size: 10px; padding: 5px 6px; }
+}
+</style>
+
+<div id="app">
+  <canvas id="world" aria-label="Tickle Beach island, 3D view"></canvas>
+  <div id="uwTint" hidden></div>
+  <div id="roomFade"></div><div id="roomHud" hidden></div><div id="contestHud" hidden></div><div id="fpHud" hidden></div><div id="beastBar" hidden></div><div id="doorChip" hidden></div><div id="placeCard" hidden></div>
+    <div id="overlay"></div>
+
+  <header id="topbar" class="glass">
+    <div class="brand"><b>Tickle Beach</b><span>World</span><em class="unofficial" title="Built from the public on-chain data; not affiliated with the Tickle Beach team">Unofficial prototype</em></div>
+    <div class="clock" id="clock">Day 1 &#xb7; 08:00</div>
+    <div class="seg" role="group" aria-label="Who runs the world">
+      <button id="modeAuto" aria-pressed="true" title="The Director AI manages the island on its own">AI runs it</button>
+      <button id="modeManual" aria-pressed="false" title="You are in control; the AI only suggests">I'm in control</button>
+    </div>
+    <div class="seg speed" role="group" aria-label="Speed">
+      <button data-speed="0" aria-pressed="false" title="Pause (space)">II</button>
+      <button data-speed="1" aria-pressed="true" title="Normal speed">1x</button>
+      <button data-speed="4" aria-pressed="false" title="Fast">4x</button>
+      <button data-speed="12" aria-pressed="false" title="Very fast">12x</button>
+      <button id="musicBtn" aria-pressed="false" title="Music that follows where you are">&#9834; off</button>
+    </div>
+    <label class="toggle" id="freeWillWrap" hidden><input type="checkbox" id="freeWill" checked> Free will</label>
+    <span class="spacer"></span>
+    <button class="iconbtn primaryish" id="dirOpen">Directory</button>
+    <button class="iconbtn" id="helpBtn">Menu</button>
+  </header>
+
+  <aside id="panel" class="glass" aria-label="Inspector">
+    <nav class="tabs" role="tablist">
+      <button role="tab" id="t-tickles" aria-selected="true" data-tab="tickles">Tickles</button>
+      <button role="tab" id="t-holders" aria-selected="false" data-tab="holders">Holders</button>
+      <button role="tab" id="t-director" aria-selected="false" data-tab="director">Director</button>
+      <button role="tab" id="t-review" aria-selected="false" data-tab="review">Review<span class="badge" id="reviewBadge" data-n="0">0</span></button>
+      <button role="tab" id="t-arena" aria-selected="false" data-tab="arena">Adventure</button>
+      <button role="tab" id="t-library" aria-selected="false" data-tab="library">Library</button>
+    </nav>
+
+    <section class="tabbody" id="tab-tickles" role="tabpanel">
+      <div class="card">
+        <label class="note" for="findInput">Find any of the 9,629 Tickles by token number</label>
+        <div class="row"><input id="findInput" type="text" inputmode="numeric" placeholder="e.g. 4048" style="flex:1;min-width:0"><button class="btn primary" id="findBtn">Go</button></div>
+        <p class="note" id="findNote">Move with WASD or the arrow keys, or click the map.</p>
+      </div>
+      <div id="tickleDetail"></div>
+      <h3 id="nearbyTitle">Nearby</h3>
+      <div class="tlist" id="tickleList"></div>
+    </section>
+
+    <section class="tabbody" id="tab-holders" role="tabpanel" hidden>
+      <div id="holdersBody"></div>
+    </section>
+
+    <section class="tabbody" id="tab-director" role="tabpanel" hidden>
+      <div class="card" id="dirStatus"></div>
+      <div class="card">
+        <h3>What the Director sees</h3>
+        <div class="diag" id="diag"></div>
+        <div class="row"><button class="btn primary" id="runDirector">Run the Director now</button><button class="btn" id="remixBtn">New look for an on-chain item</button></div>
+      </div>
+      <div class="card" id="claudeCard">
+        <h3>Ask Claude to design</h3>
+        <p class="note">Claude writes a new object in the collection's own stroke format, plus the activity it unlocks. It goes through the same checks as everything else.</p>
+        <label class="note" for="brief">What should it make? Leave empty to fix the island's biggest need.</label>
+        <textarea id="brief" rows="2" placeholder="A lemonade stand two Tickles can share"></textarea>
+        <div class="row"><button class="btn sea" id="askClaude">Design with Claude</button><button class="btn" id="stopClaude" hidden>Stop</button></div>
+        <p class="note" id="claudeStatus" aria-live="polite"></p>
+      </div>
+      <h3>Director log</h3>
+      <div class="log" id="log"></div>
+    </section>
+
+    <section class="tabbody" id="tab-review" role="tabpanel" hidden>
+      <div id="reviewDetail"></div>
+      <h3>Everything the AI has made</h3>
+      <div class="row" style="margin-bottom:8px"><button class="btn primary" id="approveAll">Approve everything waiting</button></div>
+      <p class="note" id="approveNote"></p>
+      <div class="rlist" id="reviewList"></div>
+    </section>
+
+    <section class="tabbody" id="tab-arena" role="tabpanel" hidden>
+      <div id="arenaBody"></div>
+    </section>
+
+    <section class="tabbody" id="tab-library" role="tabpanel" hidden>
+      <div id="libraryBody"></div>
+    </section>
+  </aside>
+
+  <div id="dock" class="glass" hidden>
+    <div class="tools" role="group" aria-label="Tools">
+      <button data-tool="select" aria-pressed="true">Select</button>
+      <button data-tool="order" aria-pressed="false">Give orders</button>
+      <button data-tool="build" aria-pressed="false">Build</button>
+      <button data-tool="dig" aria-pressed="false">Dig</button>
+      <button data-tool="place" aria-pressed="false">Place object</button>
+    </div>
+    <div class="swatches" id="swatches" hidden></div>
+    <div class="row" id="placeRow" hidden><select id="placeSel" aria-label="Object to place"></select></div>
+    <div class="hint" id="toolHint">Click a Tickle to inspect it.</div>
+  </div>
+
+  <div id="mapbox" class="glass">
+    <canvas id="minimap" width="200" height="186" aria-label="Map of the archipelago; click to travel"></canvas>
+    <div class="note" id="mapLabel"></div>
+    <div class="maplegend" aria-hidden="true"><span><i class="lg-v"></i>Village</span><span><i class="lg-a"></i>Arena</span><span><i class="lg-c"></i>Cave</span><span><i class="lg-l"></i>Dragon</span></div>
+    <div class="row camrow"><button class="btn" id="camLeft" title="Turn the view left (Z)" aria-label="Turn the view left">&#x27f2;</button><button class="btn" id="mapOpen">Big map (M)</button><button class="btn" id="camRight" title="Turn the view right (X)" aria-label="Turn the view right">&#x27f3;</button></div>
+  </div>
+
+  <div id="toasts" aria-live="polite"></div>
+
+  <div id="loading">
+    <div class="box glass">
+      <div class="title">Tickle Beach World</div>
+      <p class="note">An unofficial prototype built on the public Tickle Beach contract. It derives all 9,629 Tickles from the contract and builds the ones near you voxel by voxel.</p>
+      <div class="progress"><i id="loadBar"></i></div>
+      <div id="loadList">Starting&#x2026;</div>
+    </div>
+  </div>
+
+  <div class="modal" id="onchainModal" hidden>
+    <div class="box glass">
+      <div class="row" style="justify-content: space-between"><h2 id="onchainTitle">On-chain render</h2><button class="btn" id="onchainClose">Close</button></div>
+      <iframe id="onchainFrame" title="On-chain render" loading="lazy"></iframe>
+      <p class="note" id="onchainNote"></p>
+    </div>
+  </div>
+
+  <div class="modal" id="mapModal" hidden>
+    <div class="box glass mapbox2">
+      <div class="row" style="justify-content:space-between">
+        <div><h2>Map</h2><p class="note">Hover a mark to see what it is; click to go there.</p></div>
+        <button class="btn" id="mapClose">Close</button>
+      </div>
+      <div class="bigwrap"><canvas id="bigmap" width="900" height="610" aria-label="Map of the whole world"></canvas></div>
+      <div class="maplegend big"><span><i class="lg-v"></i>A holder's place (its colour)</span><span><i class="lg-a"></i>Creature arena</span><span><i class="lg-c"></i>Dungeon cave</span><span><i class="lg-l"></i>Dragon lair</span><span><i class="lg-d"></i>Dragon flying</span><span><i class="lg-b"></i>Bridge</span><span><i class="lg-f"></i>Ferry</span><span><i class="lg-k"></i>Dock</span><span><i class="lg-m"></i>Mine</span><span><i class="lg-s"></i>Maker's Isle</span><span><i class="lg-e"></i>Ether field</span><span><i class="lg-y"></i>You are here</span></div>
+    </div>
+  </div>
+  <div id="mapTip" class="maptip" hidden></div>
+  <div class="modal dir" id="dirModal" hidden>
+    <div class="box glass dirbox">
+      <div class="row" style="justify-content:space-between">
+        <div><h2>Tickle Directory</h2><p class="note" id="dirCount"></p></div>
+        <button class="btn" id="dirClose">Close</button>
+      </div>
+      <input id="dirSearch" type="text" spellcheck="false" placeholder="Search by number, name, village, job or owner wallet (0x&#x2026;)" aria-label="Search Tickles">
+      <div class="dirfilters" id="dirFilters"></div>
+      <div class="dircols">
+        <div class="dirlist" id="dirList"></div>
+        <div class="dirdetail" id="dirDetail"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="helpModal" hidden>
+    <div class="box glass help">
+      <div class="row" style="justify-content: space-between"><h2>Menu</h2><button class="btn primary" id="helpClose">Close</button></div>
+      <div class="seg menutabs" role="group" aria-label="Menu sections"><button data-menu="help" aria-pressed="true">How it works</button><button data-menu="controls" aria-pressed="false">Controls</button><button data-menu="music" aria-pressed="false">Sound</button><button data-menu="credits" aria-pressed="false">Credits</button></div>
+      <div class="menusec" id="menu-controls" hidden>
+        <ul>
+          <li><b>Move:</b> drag the ground, or WASD / the arrow keys (hold Shift to go faster). Click the small map to travel; M opens the big map.</li>
+          <li><b>First person (V):</b> pick a Tickle and press V (or "First person" on its card) to see the world through its eyes. A Tickle of yours, while you are in control, you walk yourself: WASD to walk, Shift to run, drag or Z/X to turn, E to go into a building, and it swims if you take it into the water; if it owns a horse or a griffin, M puts it in the saddle (on a griffin, Space climbs and C comes down). Any other Tickle you ride along with through its day (races, regattas, dives...), dragging to look round. Esc leaves.</li>
+          <li><b>Turn the view:</b> Z and X, or the &#x27f2; &#x27f3; buttons under the small map, or right-drag (Ctrl-drag); twist two fingers on a touch screen.</li>
+          <li><b>Zoom:</b> the mouse wheel, or pinch.</li>
+          <li><b>Pick up and throw:</b> press on a Tickle, an animal, a creature, a dragon, a horse or a griffin, a sea beast, a boat, an object, a tree or a building and drag to lift it; let go to set it down, or let go while moving to throw it. Buildings and trees break when thrown; a sea beast thrown hard is hurt, then slides back into the water; a boat set down on land is carried back to its mooring (holders can only pick up their own Tickles).</li>
+          <li><b>Look and go in:</b> click a building or landmark for its card; E goes inside the nearest door, cave or mine; Esc comes back out (and closes cards).</li>
+          <li><b>Follow:</b> select a Tickle and press F, and the camera follows it.</li>
+          <li><b>Time:</b> Space pauses; 1, 2 and 3 set the speed.</li>
+        </ul>
+      </div>
+      <div class="menusec" id="menu-music" hidden></div>
+      <div class="menusec" id="menu-credits" hidden></div>
+      <ul class="menusec" id="menu-help">
+        <li>All 9,629 Tickles live here. Each one's seed is derived in your browser with the contract's own formula and its body is rebuilt from the models stored on Ethereum. Nothing is redrawn by hand or by AI.</li>
+        <li>They live in about 290 villages across six large regions, one per on-chain Location, joined by bridges. The land is dressed with pieces cut out of those Location floors (palms, umbrellas, ducks, waterfalls, piers, campfires) and with a kit of trees, houses, town halls, granaries, crops, animals and dragons that Claude designed in the same stroke format (you can review each one, and open it in the original on-chain viewer). Each Tickle's on-chain Ground item (fishing rod, surfboard, beachball, 808, skateboard&#x2026;) lives in its inventory and only comes out when it is used; others can join in with some of them, and skaters ride theirs on long trips.</li>
+        <li>Ponds are alive: the on-chain ducks paddle about and sometimes waddle onto the bank (and swim over to anyone feeding them), and the on-chain fish, in its own colours and the collection's themes, swims below the surface and jumps now and then.</li>
+        <li>Every Tickle has a job that comes from its on-chain items (the Fishing Rod makes a fisher, the 808 a DJ, the Skateboard a courier) and a daily plan: breakfast at home, work, lunch, chores for the village, free time, dinner by the fire on the square, then home to sleep in its own house. They keep to it even when you are not looking.</li>
+        <li><b>Items:</b> a Tickle's own Ground item (rod, surfboard, weights, beachball, skates...) comes out of its inventory only while it uses it, but anyone can go fishing, surfing, work out, play ball or skate: the village lends rods, boards, weights, balls and skates to whoever has none (owners still do it more often). Surfers paddle out lying on the board, wait for a wave and ride it in to the beach: only on the open sea round the land, where the waves are (the great lake, the channels and the ponds are calm). Breakers roll in on every beach of the open sea. What a Tickle holds in its paws (chips, a game, a float, a wake board, a towel) is put away while it needs both paws (dancing, playing ball, surfing, fighting, rowing; lifting a weight takes only one), and a big one is kept at its side rather than waved about.</li>
+        <li><b>Casinos:</b> every region has a casino near its arena, open every night from 19:00 to 23:30, with real games played for shells: Texas Hold'em poker (fixed limit, blinds 1/2), blackjack (the dealer stands on 17, blackjack pays 3 to 2), European roulette (one zero) and 90-ball bingo (a prize for the first line and a bigger one for bingo). The Lucky Shells go on many nights and others now and then; each table has its dealer. Go inside and click a table to watch it; to play, choose your wallet in the Holders tab and sit one of your own Tickles down: it plays with its own shells.</li>
+        <li><b>Contests:</b> every region holds a contest every day, a different one each day: a <b>Fishing Derby</b> on the bank by its dock (the heaviest catch wins, and the fish go to the granaries), a <b>Surf Contest</b> on a beach of the open sea (judges score every wave), a <b>Regatta</b> of sailing dinghies round the buoys, a <b>Foot Race</b> and a <b>Kart Grand Prix</b> on a circuit marked with cones, the <b>Strongest Tickle</b> (a one-paw dumbbell press), a <b>Fashion Show</b> on a catwalk (the models change their clothes and keep them; the winner's look becomes the region's fashion) and a <b>Song Contest</b> on a stage (the winning song becomes the tune of every village in the region). The best of the region compete, three judges score the shows, the neighbours watch, and the top three climb the podium for 40, 20 and 10 shells. A scoreboard shows the standings while you watch. Play as a holder to enter your own Tickles from the Adventure tab.</li>
+        <li><b>Diving:</b> dive sites all over the water, each marked by a float with a red diver's flag: out at sea off every region's coast (a sunken ship or a coral reef) and in the great lake (a bed of oysters, or the drowned ruins of an old temple of the Maker). In their free time those who love the water (a float in their paws, a surfboard, lifeguards, beachcombers, treasure hunters, the Marauders) swim out and dive again and again, and come up with shells and coral to sell, pearls (now and then a black one), old coins, a sea chest now and then, Ethernum from the drowned temples and, very rarely, a relic of the sea. You can see them under the water, bubbles rising. In "I'm in control" send your own Tickles with Go diving.</li>
+        <li><b>Wealth and the Blacksmiths' Guild:</b> shells buy things you can see. Every region has a Blacksmiths' Guild near its Guild Quarter: two smiths at the anvils, a paddock of horses for sale and a griffin roost. Tickles with shells to spare go shopping there in their free time: fine steel and masterwork weapons (they hit harder), steel shields, a pony, a saddle horse, a white charger or a riding griffin. On long trips a Tickle with a mount rides it at a trot, or flies its griffin straight there, and arrives much sooner; the mount waits beside it and sleeps by its house. Those who live near a dock buy a boat for the marina (a rowing boat, a sailing boat, a yacht) and take it out on the lake some afternoons; and the village builders rebuild a house bigger for those who pay: a two-storey townhouse, then a manor. A trade-in pays half of the old one. Some families were rich from the start. Your own Tickles buy too (not while you are in control), and their card has buttons to buy for them. The Wealth card in the Adventure tab lists the richest.</li>
+        <li><b>Sea beasts:</b> the Lake Serpent lives in the great lake and the Kraken in the open sea. Now and then one rises off a dock or a beach in the afternoon, smashes the rowing boats in its reach and spits at whoever is by the water. The armed Tickles, the mages and the tamers of the villages round about run down to fight it with spears and stones, spells and creatures. Beaten, it dies and sinks and its hoard is shared out (shells, Ethernum, experience), and whoever struck the last blow keeps a relic from it; if they cannot beat it, it goes back down and the dock's boats lie on the bottom until morning.</li>
+        <li><b>Every holder has its place:</b> all of a holder's Tickles live together. From 20 Tickles a holder has an estate: its manor in the middle (a big house with a tower) and a house for each of its Tickles round it. From 5 to 19 Tickles, a mansion where they all live under one roof (the more of them, the bigger it is), with its granary, altar and fields. Small holders (1 to 4 Tickles) have a house each for their household in towns shared with other small holders. The places are spread evenly over the six regions, and the map follows the ownership snapshot: when it changes, the places change. Every place is its own clan, with its colour on the roofs: places become allies or rivals by what happens between them (raids, dragons fought side by side). In the afternoon Tickles farm the fields, hunt deer and boar, look after the pigs, sheep and chickens, gather fruit or fish, and it all goes into the granary; allies send food to each other, and a place whose granary runs low may raid a richer rival at night. Fights end in a knock-out, never worse: the Tickle goes home to recover. The Holders tab shows where each holder's place is.</li>
+        <li><b>Creatures:</b> seven fantasy creatures live wild across the map (Griffin, Cinderling, Bubblefin, Mossling, Pebblit, Zapbug and the night-flying Lumoth), each with a type that beats some and loses to others. Tamers go out to tame them, battle wild ones with their favourite, keep up to three and level them up. Every evening the eight strongest tamers of each region fight a tournament at its arena; the Arena tab shows tonight's results, the strongest creatures and a guide.</li>
+        <li><b>The Great Underworld:</b> every dungeon cave on the map leads down into one great dungeon that runs under the whole map, 36 floors deep. Each floor is a labyrinth as wide as all the land above (tunnels under the channels join the regions), in six bands of six floors: the Goblin Warrens, the Catacombs, the Serpent Halls, the Labyrinth, the Burning Deep and the Abyss. Mythological monsters roam them (goblins, kobolds, skeletons, mummies, harpies, basilisks, werewolves, centaurs, golems, salamanders, manticores, trolls, wraiths, hellhounds and more), and every floor has its own guardian with the stairs down sealed behind it until it is beaten: the Goblin King, Medusa, the Minotaur, the Cyclops, the Chimera, the Hydra, Cerberus, the Lich King and the Primordial Hydra. At the very bottom, right beneath the Maker's Isle where every way through meets, waits the Golden Tickle, the strongest of all. The panel lets you go up and down floor by floor or jump to any floor, and its map shows the whole floor. Some afternoons a village sends a party down: it takes the shortcut to the floor of the last guardian its village has beaten and goes on, up to two floors, as far as its strength allows. The treasure makes them stronger: Ethernum (an adventurer burns a crystal to light the way), silver, gold, gems and orichalcum for the smith, shells, food, and relics that each make their bearer stronger. The Adventure tab shows the deepest villages, the guardians and who beat them first. Every Tickle has a level; monsters, raids and dragons give experience, and a higher level hits harder, tames better and gets knocked out less.</li>
+        <li><b>Watching the fights:</b> the parties are not only swordsmen. About a quarter of the adventurers are mages who fight from a distance with Fireball, Frost Shard, Lightning or Arcane Missiles (the orb of the staff shows the school), and healers mend the wounded with Healing Light. Every blow shows the damage it did, every fighter has a health bar, and guardians shake the ground with shockwaves. A party's afternoon goes floor by floor and guardian by guardian: when one faces a guardian a message with a <b>Watch</b> button appears, the Adventure tab lists everyone down there now, and inside the Underworld the panel has a button for every fight going on. What you watch is what happens: a party that wins does not fall, one that loses is struck down. Guardians have special attacks of their own (Ground Slam, Fire Breath, Venom Spray, Charge, Petrifying Gaze, Eye Beam, Lightning Storm, Screech, calling up more of their kind): the attack's name appears over the guardian and the ground where it will land glows first, and below a third of its health a guardian is enraged and strikes faster.</li>
+        <li><b>Guilds:</b> every region has a Guild Quarter, six halls round a yard near its biggest village. The Adventurers' Guild (the parties), the Warriors' Guild (two of them guard every mine each afternoon, one at the door and one on its rounds inside; with nobody on guard the goblins raid the stores), the Marauders' Guild (scouts who help a party find more and get further, and treasure hunters who dig up caches of Ethernum, gems and old relics), the Miners' Guild (every shift digs the mine deeper, up to five levels, each with more galleries and richer veins), the Merchants' Guild and the Mages' Guild. Deeds earn standing, from Novice to Grandmaster, and standing makes a fighter stronger and a miner luckier. Go inside a hall to read its board.</li>
+        <li><b>Fallen and revived:</b> a dragon's fire or claws, a monster, and now and then a raid can cost a Tickle its life. Its spirit waits by the altar of its village until the villagers gather at night for a revival ritual (it takes food from the granary), and then it is back. A dragon's fire can also bring a house down: the residents sleep in the town hall and the villagers rebuild it in the afternoons, from ruins to scaffolding to house.</li>
+        <li><b>Boxing:</b> drop two Tickles into a creature arena and the ring becomes a boxing ring.</li>
+        <li><b>Dragons:</b> each region has one, asleep on its highest peak. Tickles respect a dragon's ground: nobody spends free time there and anyone passing tiptoes. Twice a day most dragons fly a patrol over their land and Tickles underneath duck. Some evenings a dragon flies down to burn fields and steal food; and if its sleep is broken (Tickles lingering on its peak, something dropped on it, a hunt that failed) it wakes in a rage and attacks the village it blames. Only Tickles ready to fight go out: those with arms (sword, axe or spear, some with a shield) and tamers, who send their creature in. Everyone else hides at home. Health bars show over the dragon and over every fighter.</li>
+        <li><b>A dragon in your hand:</b> set a dragon down among the Tickles and it fights where it lands, to the end. It has a great deal of life, but it can die; its lair stays empty for five days until a young dragon moves in, and the Tickle who struck the final blow is remembered as a dragon slayer.</li>
+        <li><b>The great lake</b> lies in the middle of the six regions. Every region has a dock; three ferries cross between the north and south shores on a timetable (06:00 to 22:00), and Tickles who spend their free time across the lake ride over and back. The lake is full of life: cattails along the shore, lily pads in flower with frogs hopping between them, herons in the shallows, swans, turtles and otters, koi that jump, and weed swaying under the water. On some days the fishers of the shore villages row out in the dock's rowing boats and bring their catch to the granary.</li>
+        <li><b>The Maker:</b> the Tickles venerate the one who made them as the Maker. His name has been lost: only his initials, P.M., survive in the stories the Tickles tell. A giant golden statue of a Tickle raising its arms stands on the Maker's Isle in the middle of the great lake; the devout go there on pilgrimage on the launches that leave every dock, and the revival ritual is a prayer to the Maker. Prayers are answered in Ethernum, the crystals that power creature magic (a tamer with Ethernum can have its creature cast a spell); Ethernum is also found in dungeons and in a dragon's hoard.</li>
+        <li><b>The blessed:</b> the rarest Tickles of the collection are heroes blessed by the Maker, with a halo of their blessing's colour. Every Tickle of Matching Rank 8 carries the blessing of its colour (Might, the Bulwark, Healing or Fortune), and the 1/1s (the only one of their colour at rank 8, and the only Tickle at rank 0) carry the Total Blessing. They fight with the Maker's golden blade. See the Adventure tab.</li>
+        <li><b>Weather:</b> fronts of cloud, rain and storm drift across the map with the wind, so it can pour in one region while the sun shines in the next; each region has its own climate (the Waterfall is the wettest, Beach Sand the driest, the Palm gets tropical storms). The clock shows the weather where you are; the Weather card in the Adventure tab shows every region and the next hours. Near you the sky darkens, rain falls, clouds drift over, mornings can be foggy, and in a storm lightning strikes (thunder follows, later the further away) and now and then splits a tree or a roof. Tickles shelter at home from storms (many from heavy rain too) and the birds fall quiet. Rarer still: a tornado tears across a region, wrecking what is in its way and throwing Tickles through the air; and very rarely the sea draws back from a coast before a tsunami, and the people of the shore run inland before the wave breaks over the beach.</li>
+        <li><b>Sound (Menu &gt; Sound):</b> music, ambience and effects each have their own volume and their own switch. The ambience is the world around you: songbirds in the trees (sunfinches, meadow warblers, palm robins, coral thrushes and turtle doves; gulls over the sea; the moon owl at night) all singing in one key and to one pulse, so they sound together in harmony, fullest at dawn; frogs croaking in bouts on the lily pads; the smiths' anvils and the hooves of the horses. The effects are the screams, crashes, bells, punches and the cries of whatever you throw.</li>
+        <li><b>Music:</b> the &#9834; button in the top bar turns on music that follows the camera: each village plays its region's town tune (a calmer one at night, muffled indoors), mines and dungeons have their own uneasy tunes, arenas a battle tune, and the lake, the roads and the Maker's Isle theirs. A sleeping dragon nearby makes it hushed and tense, an awake dragon or monsters close by bring the danger tune, and a fight with a dragon the boss tune. All of it is free music from OpenGameArt (see Credits).</li>
+        <li><b>Places:</b> click any building or landmark (a house, a town hall, a granary, an arena, a dungeon, a mine, a dock, an altar, an Ether field, the Maker's statue) to see its card: what it is, what is going on there now, a little of its story, and "Go inside" when it has an inside.</li>
+        <li><b>Going inside:</b> click a house, a town hall, a granary, a dungeon, a mine or a guild hall and press "Go inside" (or press E near one). Like in the old Pokemon games every place has its own rooms joined by numbered exits (the doormat, stairs, ladders). Homes show their owner's things: its on-chain Ground item, its creature, its trophies. The town hall has the village's notice board and, upstairs, the treasury of ores; the granary is as full as the stores. The caves lead into the Great Underworld, 36 floors of labyrinth under the whole map with a guardian on every floor, and mines are three levels of tunnels with monsters on patrol; you see the party fighting its way through and the miners at the rock. Drag to look around a floor; Esc takes you back out.</li>
+        <li><b>Mines and orichalcum:</b> every region has a mine. Each is rich in two of the lesser ores. Miners bring up stone (faster rebuilding), coal (it feeds the forge), copper (tools: the village works faster), iron (weapons and shields, so more villagers can fight a dragon), silver (silver-tipped weapons that monsters fear), gems (collars that make creatures stronger), gold (sold for shells and offered to the Maker) and, from the deep veins, orichalcum: the legendary metal of the Orichalcum Blade. The way in is a timber portal sunk into a cutting, with rails and a loaded cart coming out.</li>
+        <li><b>Ether fields:</b> crystals of Ether grow out of the rock in two wild spots in every region (purple on the map). Tamers and the devout go there now and then to gather Ethernum, the energy their creatures' spells run on.</li>
+        <li><b>Factions and shells:</b> money is counted in shells (a wage for work, a little spent every day). Across the clans run six factions: the Adventurers' Guild (dungeons and dragon hunts: a beaten dragon hides for three days), the Trainers' League (coach other tamers' creatures at the arena for a fee), The Lucky Shells (gamblers who bet at tournaments and boxing), the Night Watch (patrols at night), the Black Sails (outlaws who steal and set fires at night) and the Merchants (carry food to hungry villages). See the Adventure tab.</li>
+        <li>Tickles near you are full 3D characters; further away they show as small figures, and beyond that they keep living in a simplified simulation. See Controls for how to move around.</li>
+        <li><b>AI runs it:</b> the Director watches the Tickles' needs and designs new objects, activities, buildings and events on its own. Its work passes automatic fidelity checks and enters the world marked as unreviewed.</li>
+        <li><b>I'm in control:</b> the Director stops acting. You give orders, build with blocks, place objects, and nothing the AI makes enters the world until you approve it.</li>
+        <li><b>Review</b> shows every AI-made object and activity with its checks against the collection. <b>Library</b> holds what you approved, ready to export as a reusable stroke library.</li>
+        <li><b>Holders</b> lets you play as a wallet (ownership from an ownerOf() snapshot). In &#x201c;I'm in control&#x201d; you can only direct that wallet's Tickles.</li>
+        <li class="note">Unofficial prototype made from the collection's public on-chain data. Not affiliated with the Tickle Beach team.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="js/data.js?v=225"></script>
+<script src="js/owners.js?v=225"></script>
+<script src="js/keccak.js?v=225"></script>
+<script src="js/tickle-core.js?v=225"></script>
+<script src="js/procgen.js?v=225"></script>
+<script src="js/kit.js?v=225"></script>
+<script src="js/kit-interior.js?v=225"></script>
+<script src="js/kit-monsters.js?v=225"></script>
+<script src="js/kit-myth.js?v=225"></script>
+<script src="js/kit-wealth.js?v=225"></script>
+<script src="js/approved.js?v=225"></script>
+<script src="js/world.js?v=225"></script>
+<script src="js/sim.js?v=225"></script>
+<script src="js/geo.js?v=226"></script>
+<script src="js/population.js?v=225"></script>
+<script src="js/critters.js?v=225"></script>
+<script src="js/village.js?v=225"></script>
+<script src="js/wildlife.js?v=225"></script>
+<script src="js/creatures.js?v=225"></script>
+<script src="js/dungeons.js?v=225"></script>
+<script src="js/fate.js?v=225"></script>
+<script src="js/boxing.js?v=225"></script>
+<script src="js/factions.js?v=225"></script>
+<script src="js/faith.js?v=225"></script>
+<script src="js/rampage.js?v=225"></script>
+<script src="js/lairs.js?v=225"></script>
+<script src="js/boats.js?v=225"></script>
+<script src="js/lakelife.js?v=225"></script>
+<script src="js/mines.js?v=225"></script>
+<script src="js/fx.js?v=225"></script>
+<script src="js/surf.js?v=225"></script>
+<script src="js/guilds.js?v=225"></script>
+<script src="js/casino.js?v=225"></script>
+<script src="js/contests.js?v=225"></script>
+<script src="js/diving.js?v=225"></script>
+<script src="js/firstperson.js?v=225"></script>
+<script src="js/seabeasts.js?v=225"></script>
+<script src="js/wealth.js?v=225"></script>
+<script src="js/birds.js?v=225"></script>
+<script src="js/weather.js?v=225"></script>
+<script src="js/interiors.js?v=225"></script>
+<script src="js/places.js?v=225"></script>
+<script src="js/sfx.js?v=225"></script>
+<script src="js/music.js?v=225"></script>
+<script src="js/hand.js?v=225"></script>
+<script src="js/ui.js?v=225"></script>
+<script src="js/directory.js?v=225"></script>

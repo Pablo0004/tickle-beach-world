@@ -1,0 +1,312 @@
+<title>Tickle Beach World</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@400;600;700;800&family=Silkscreen&display=swap">
+<style>
+/* Layout: full-bleed voxel island; a lagoon-navy glass HUD hugs the edges (top bar, right inspector, build dock). */
+:root {
+  --ink: #0b2230;
+  --panel: rgba(9, 29, 41, 0.9);
+  --panel-solid: #0d2a39;
+  --raise: rgba(255, 255, 255, 0.06);
+  --raise-2: rgba(255, 255, 255, 0.11);
+  --line: rgba(190, 230, 240, 0.14);
+  --text: #eaf6f7;
+  --muted: #94b4be;
+  --sun: #ffd23f;
+  --sea: #3cc6d8;
+  --coral: #ff7b6b;
+  --good: #7be08f;
+  --warn: #ffd23f;
+  --bad: #ff7b6b;
+  --font-display: "Lilita One", "Arial Rounded MT Bold", system-ui, sans-serif;
+  --font-body: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-pixel: "Silkscreen", ui-monospace, "Cascadia Mono", monospace;
+  --r: 12px;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+[hidden] { display: none !important; }
+body { background: var(--ink); color: var(--text); font-family: var(--font-body); font-size: 14px; overflow: hidden; }
+* { box-sizing: border-box; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--sun); outline-offset: 2px; }
+#app { position: fixed; inset: 0; }
+#world { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+#overlay { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+
+.glass { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 8px 30px rgba(0, 20, 30, 0.35); }
+
+/* top bar */
+#topbar { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 10px); left: 12px; right: 396px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 8px 10px; }
+.brand { display: flex; align-items: baseline; gap: 6px; margin-right: 4px; }
+.brand b { font-family: var(--font-display); font-weight: 400; font-size: 20px; letter-spacing: 0.3px; color: var(--sun); text-shadow: 0 2px 0 rgba(0,0,0,0.25); }
+.brand span { font-family: var(--font-display); font-size: 20px; color: var(--text); }
+.unofficial { font-style: normal; font-size: 10.5px; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 1px 7px; align-self: center; white-space: nowrap; }
+.clock { font-family: var(--font-pixel); font-size: 12px; color: var(--text); background: var(--raise); border-radius: 8px; padding: 6px 8px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.seg { display: inline-flex; background: var(--raise); border-radius: 10px; padding: 3px; gap: 2px; }
+.seg button { border: 0; background: transparent; padding: 6px 10px; border-radius: 8px; font-weight: 700; font-size: 13px; color: var(--muted); white-space: nowrap; }
+.seg button[aria-pressed="true"] { background: var(--sun); color: #2a2100; }
+.seg.speed button { font-family: var(--font-pixel); font-size: 11px; padding: 6px 8px; }
+.seg.speed button[aria-pressed="true"] { background: var(--sea); color: #04232a; }
+.toggle { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 13px; color: var(--muted); }
+.toggle input { accent-color: var(--sun); width: 16px; height: 16px; }
+.spacer { flex: 1; }
+.iconbtn { border: 1px solid var(--line); background: var(--raise); border-radius: 8px; padding: 6px 10px; font-weight: 700; font-size: 13px; }
+
+/* panel */
+#panel { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 10px); right: 12px; bottom: 12px; width: 372px; display: flex; flex-direction: column; overflow: hidden; }
+.tabs { display: flex; gap: 2px; padding: 6px; border-bottom: 1px solid var(--line); }
+.tabs button { flex: 1; border: 0; background: transparent; color: var(--muted); padding: 8px 4px; border-radius: 8px; font-weight: 800; font-size: 13px; position: relative; }
+.tabs button[aria-selected="true"] { background: var(--raise-2); color: var(--text); }
+.badge { display: inline-block; min-width: 18px; padding: 0 5px; margin-left: 4px; border-radius: 9px; background: var(--coral); color: #2a0600; font-size: 11px; line-height: 18px; font-weight: 800; }
+.badge[data-n="0"] { display: none; }
+.tabbody { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+.tabbody[hidden] { display: none !important; }
+h2 { font-family: var(--font-display); font-weight: 400; font-size: 18px; margin: 0; letter-spacing: 0.2px; text-wrap: balance; }
+h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.9px; color: var(--muted); margin: 0; font-weight: 800; }
+p { margin: 0; line-height: 1.45; }
+.note { color: var(--muted); font-size: 12.5px; line-height: 1.45; }
+.card { background: var(--raise); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.btn { border: 0; border-radius: 9px; padding: 8px 12px; font-weight: 800; font-size: 13px; background: var(--raise-2); }
+.btn.primary { background: var(--sun); color: #2a2100; }
+.btn.sea { background: var(--sea); color: #04232a; }
+.btn.danger { background: rgba(255, 123, 107, 0.18); color: var(--coral); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.pix { font-family: var(--font-pixel); font-size: 11px; letter-spacing: 0.2px; }
+.chip { display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; padding: 2px 8px; font-size: 11.5px; font-weight: 800; background: var(--raise-2); color: var(--muted); white-space: nowrap; }
+.chip.pending { background: rgba(255, 210, 63, 0.16); color: var(--sun); }
+.chip.auto { background: rgba(60, 198, 216, 0.16); color: var(--sea); }
+.chip.approved, .chip.starter { background: rgba(123, 224, 143, 0.15); color: var(--good); }
+.chip.rejected, .chip.discarded { background: rgba(255, 123, 107, 0.15); color: var(--coral); }
+.chip.claude { background: rgba(255, 170, 120, 0.16); color: #ffb48a; }
+
+/* tickle list */
+.tlist { display: flex; flex-direction: column; gap: 4px; }
+.trow { display: grid; grid-template-columns: 22px 1fr auto; gap: 8px; align-items: center; width: 100%; text-align: left; border: 0; background: transparent; padding: 6px 6px; border-radius: 9px; }
+.trow:hover { background: var(--raise); }
+.trow[aria-current="true"] { background: var(--raise-2); }
+.sw { width: 22px; height: 22px; border-radius: 6px; box-shadow: inset 0 -3px 0 rgba(0,0,0,0.2); }
+.tname { font-weight: 800; font-size: 13.5px; }
+.tact { color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mini { display: grid; grid-template-columns: repeat(4, 8px); gap: 3px; align-items: end; height: 22px; }
+.mini i { display: block; width: 8px; border-radius: 2px; background: var(--good); }
+.needs { display: grid; grid-template-columns: 64px 1fr 36px; gap: 6px 8px; align-items: center; font-size: 12.5px; }
+.bar { height: 8px; border-radius: 4px; background: rgba(255,255,255,0.08); overflow: hidden; }
+.bar i { display: block; height: 100%; border-radius: 4px; }
+.num { font-family: var(--font-pixel); font-size: 11px; text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+.traits { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 10px; font-size: 12.5px; align-items: baseline; }
+.traits .k { color: var(--muted); }
+.ok { color: var(--good); font-weight: 800; }
+.no { color: var(--coral); font-weight: 800; }
+
+/* director log */
+.log { display: flex; flex-direction: column; gap: 6px; }
+.entry { display: grid; grid-template-columns: 58px 1fr; gap: 8px; font-size: 12.5px; padding: 6px 0; border-top: 1px solid var(--line); }
+.entry .when { font-family: var(--font-pixel); font-size: 10px; color: var(--muted); line-height: 1.5; }
+.entry .why { color: var(--muted); margin-top: 2px; }
+.entry .kind { font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.7px; }
+.k-design { color: var(--sun); } .k-mechanic { color: #c9a6ff; } .k-build { color: #ffb48a; } .k-event { color: var(--coral); } .k-social { color: var(--good); } .k-world, .k-director { color: var(--sea); } .k-claude { color: #ffb48a; } .k-review { color: var(--good); }
+textarea { width: 100%; resize: vertical; min-height: 54px; background: rgba(0,0,0,0.25); border: 1px solid var(--line); border-radius: 9px; padding: 8px; }
+select { background: rgba(0,0,0,0.3); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; max-width: 100%; }
+.diag { display: grid; grid-template-columns: 64px 1fr auto; gap: 6px 8px; align-items: center; font-size: 12.5px; }
+
+/* review */
+.rlist { display: flex; flex-direction: column; gap: 4px; }
+.ritem { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; text-align: left; width: 100%; border: 0; background: transparent; padding: 7px 8px; border-radius: 9px; }
+.ritem:hover { background: var(--raise); }
+.ritem[aria-current="true"] { background: var(--raise-2); }
+.ritem .t { font-weight: 800; font-size: 13px; }
+.ritem .s { color: var(--muted); font-size: 11.5px; grid-column: 1 / -1; }
+#preview { width: 100%; height: 210px; border-radius: 10px; display: block; background: radial-gradient(circle at 50% 35%, #2b5f73, #0e2c3b); }
+.checks { display: flex; flex-direction: column; gap: 5px; font-size: 12.5px; }
+.check { display: grid; grid-template-columns: 16px 1fr; gap: 8px; align-items: start; }
+.dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 4px; }
+.dot.pass { background: var(--good); } .dot.warn { background: var(--warn); } .dot.fail { background: var(--bad); }
+.check b { font-weight: 800; }
+.check span { color: var(--muted); display: block; }
+.score { font-family: var(--font-display); font-size: 30px; line-height: 1; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; font-size: 12.5px; }
+.kv .k { color: var(--muted); }
+pre.json { margin: 0; max-height: 160px; overflow: auto; background: rgba(0,0,0,0.3); border-radius: 8px; padding: 8px; font-size: 11px; line-height: 1.4; white-space: pre; }
+
+/* dock */
+#dock { position: absolute; left: 12px; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); padding: 8px; display: flex; flex-direction: column; gap: 8px; max-width: calc(100% - 410px); }
+#dock[hidden] { display: none !important; }
+.tools { display: flex; gap: 4px; flex-wrap: wrap; }
+.tools button { border: 0; background: var(--raise); border-radius: 8px; padding: 7px 10px; font-weight: 800; font-size: 12.5px; }
+.tools button[aria-pressed="true"] { background: var(--sun); color: #2a2100; }
+.swatches { display: flex; gap: 4px; flex-wrap: wrap; }
+.swatches button { width: 26px; height: 26px; border-radius: 6px; border: 2px solid transparent; box-shadow: inset 0 -4px 0 rgba(0,0,0,0.22); }
+.swatches button[aria-pressed="true"] { border-color: var(--text); }
+.hint { font-size: 12px; color: var(--muted); }
+
+/* overlay */
+.tag { position: absolute; transform: translate(-50%, -100%); font-weight: 800; font-size: 11.5px; padding: 2px 7px; border-radius: 999px; background: rgba(9, 29, 41, 0.72); color: var(--text); white-space: nowrap; display: flex; align-items: center; gap: 5px; }
+.tag .m { width: 7px; height: 7px; border-radius: 50%; }
+.tag.sel { background: var(--sun); color: #2a2100; }
+.bubble { position: absolute; transform: translate(-50%, -100%); background: #fffdf3; color: #1f2a2e; font-weight: 700; font-size: 12.5px; padding: 5px 9px; border-radius: 12px; max-width: 190px; white-space: normal; text-align: center; box-shadow: 0 3px 0 rgba(0,0,0,0.18); }
+.bubble::after { content: ""; position: absolute; left: 50%; bottom: -6px; margin-left: -6px; border: 6px solid transparent; border-top-color: #fffdf3; border-bottom: 0; }
+
+#toasts { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); display: flex; flex-direction: column; gap: 6px; align-items: center; pointer-events: none; max-width: 90%; }
+.toast { background: var(--panel-solid); border: 1px solid var(--line); color: var(--text); font-weight: 800; padding: 8px 14px; border-radius: 999px; font-size: 13px; animation: pop 0.25s ease-out; }
+@keyframes pop { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+#loading { position: absolute; inset: 0; display: grid; place-items: center; background: radial-gradient(circle at 50% 40%, #1f5d73, var(--ink)); z-index: 5; padding: 16px; }
+#loading .box { width: min(420px, 100%); display: flex; flex-direction: column; gap: 12px; padding: 18px; }
+#loading .title { font-family: var(--font-display); font-size: 30px; color: var(--sun); }
+.progress { height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden; }
+.progress i { display: block; height: 100%; width: 0; background: var(--sun); transition: width 0.3s; }
+#loadList { font-size: 12.5px; color: var(--muted); min-height: 3.2em; }
+
+.modal { position: absolute; inset: 0; background: rgba(4, 16, 22, 0.6); display: grid; place-items: center; z-index: 6; padding: 16px; }
+.modal[hidden] { display: none !important; }
+.modal .box { width: min(760px, 100%); max-height: 100%; display: flex; flex-direction: column; gap: 10px; padding: 14px; overflow: auto; }
+.modal iframe { width: 100%; aspect-ratio: 16 / 10; border: 0; border-radius: 10px; background: #9cd0ff; max-width: 100%; }
+.help ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; line-height: 1.45; }
+
+@media (prefers-reduced-motion: reduce) { .toast { animation: none; } .progress i { transition: none; } }
+
+@media (max-width: 760px) {
+  #topbar { right: 12px; padding: 6px 8px; gap: 6px; }
+  .brand span, .unofficial { display: none; }
+  .brand b { font-size: 17px; }
+  .seg button { padding: 6px 8px; font-size: 12px; }
+  #panel { top: auto; left: 0; right: 0; bottom: 0; width: auto; height: 44%; border-radius: 14px 14px 0 0; padding-bottom: env(safe-area-inset-bottom, 0px); }
+  #panel.collapsed { height: 52px; }
+  #dock { bottom: calc(44% + 10px); max-width: calc(100% - 24px); }
+  #panel.collapsed ~ #dock { bottom: 64px; }
+  #toasts { bottom: calc(44% + 12px); }
+  .tabs button { font-size: 12px; padding: 8px 2px; }
+  #panel { height: 40%; }
+  #dock { bottom: calc(40% + 8px); padding: 6px; gap: 6px; }
+  #toasts { bottom: calc(40% + 12px); }
+  .tools button { padding: 6px 8px; font-size: 12px; }
+  .hint { display: none; }
+  .clock { font-size: 10px; padding: 5px 6px; }
+}
+</style>
+
+<div id="app">
+  <canvas id="world" aria-label="Tickle Beach island, 3D view"></canvas>
+  <div id="overlay"></div>
+
+  <header id="topbar" class="glass">
+    <div class="brand"><b>Tickle Beach</b><span>World</span><em class="unofficial" title="Built from the public on-chain data; not affiliated with the Tickle Beach team">Unofficial prototype</em></div>
+    <div class="clock" id="clock">Day 1 &#xb7; 08:00</div>
+    <div class="seg" role="group" aria-label="Who runs the world">
+      <button id="modeAuto" aria-pressed="true" title="The Director AI manages the island on its own">AI runs it</button>
+      <button id="modeManual" aria-pressed="false" title="You are in control; the AI only suggests">I'm in control</button>
+    </div>
+    <div class="seg speed" role="group" aria-label="Speed">
+      <button data-speed="0" aria-pressed="false" title="Pause (space)">II</button>
+      <button data-speed="1" aria-pressed="true" title="Normal speed">1x</button>
+      <button data-speed="4" aria-pressed="false" title="Fast">4x</button>
+      <button data-speed="12" aria-pressed="false" title="Very fast">12x</button>
+    </div>
+    <label class="toggle" id="freeWillWrap" hidden><input type="checkbox" id="freeWill" checked> Free will</label>
+    <span class="spacer"></span>
+    <button class="iconbtn" id="helpBtn">Help</button>
+  </header>
+
+  <aside id="panel" class="glass" aria-label="Inspector">
+    <nav class="tabs" role="tablist">
+      <button role="tab" id="t-tickles" aria-selected="true" data-tab="tickles">Tickles</button>
+      <button role="tab" id="t-director" aria-selected="false" data-tab="director">Director</button>
+      <button role="tab" id="t-review" aria-selected="false" data-tab="review">Review<span class="badge" id="reviewBadge" data-n="0">0</span></button>
+      <button role="tab" id="t-library" aria-selected="false" data-tab="library">Library</button>
+    </nav>
+
+    <section class="tabbody" id="tab-tickles" role="tabpanel">
+      <div id="tickleDetail"></div>
+      <div class="row" style="justify-content: space-between"><h3 id="islandersTitle">Islanders</h3>
+        <div class="row"><select id="inviteSel" aria-label="Invite a Tickle"></select><button class="btn" id="inviteBtn">Invite</button></div></div>
+      <div class="tlist" id="tickleList"></div>
+    </section>
+
+    <section class="tabbody" id="tab-director" role="tabpanel" hidden>
+      <div class="card" id="dirStatus"></div>
+      <div class="card">
+        <h3>What the Director sees</h3>
+        <div class="diag" id="diag"></div>
+        <div class="row"><button class="btn primary" id="runDirector">Run the Director now</button><button class="btn" id="growIsland">Grow the island</button></div>
+      </div>
+      <div class="card" id="claudeCard">
+        <h3>Ask Claude to design</h3>
+        <p class="note">Claude writes a new object in the collection's own stroke format, plus the activity it unlocks. It goes through the same checks as everything else.</p>
+        <label class="note" for="brief">What should it make? Leave empty to fix the island's biggest need.</label>
+        <textarea id="brief" rows="2" placeholder="A lemonade stand two Tickles can share"></textarea>
+        <div class="row"><button class="btn sea" id="askClaude">Design with Claude</button><button class="btn" id="stopClaude" hidden>Stop</button></div>
+        <p class="note" id="claudeStatus" aria-live="polite"></p>
+      </div>
+      <h3>Director log</h3>
+      <div class="log" id="log"></div>
+    </section>
+
+    <section class="tabbody" id="tab-review" role="tabpanel" hidden>
+      <div id="reviewDetail"></div>
+      <h3>Everything the AI has made</h3>
+      <div class="rlist" id="reviewList"></div>
+    </section>
+
+    <section class="tabbody" id="tab-library" role="tabpanel" hidden>
+      <div id="libraryBody"></div>
+    </section>
+  </aside>
+
+  <div id="dock" class="glass" hidden>
+    <div class="tools" role="group" aria-label="Tools">
+      <button data-tool="select" aria-pressed="true">Select</button>
+      <button data-tool="order" aria-pressed="false">Give orders</button>
+      <button data-tool="build" aria-pressed="false">Build</button>
+      <button data-tool="dig" aria-pressed="false">Dig</button>
+      <button data-tool="place" aria-pressed="false">Place object</button>
+    </div>
+    <div class="swatches" id="swatches" hidden></div>
+    <div class="row" id="placeRow" hidden><select id="placeSel" aria-label="Object to place"></select></div>
+    <div class="hint" id="toolHint">Click a Tickle to inspect it.</div>
+  </div>
+
+  <div id="toasts" aria-live="polite"></div>
+
+  <div id="loading">
+    <div class="box glass">
+      <div class="title">Tickle Beach World</div>
+      <p class="note">An unofficial prototype built on the public Tickle Beach contract. Reading its 58 on-chain models and building each Tickle voxel by voxel.</p>
+      <div class="progress"><i id="loadBar"></i></div>
+      <div id="loadList">Starting&#x2026;</div>
+    </div>
+  </div>
+
+  <div class="modal" id="onchainModal" hidden>
+    <div class="box glass">
+      <div class="row" style="justify-content: space-between"><h2 id="onchainTitle">On-chain render</h2><button class="btn" id="onchainClose">Close</button></div>
+      <iframe id="onchainFrame" title="On-chain render" loading="lazy"></iframe>
+      <p class="note" id="onchainNote"></p>
+    </div>
+  </div>
+
+  <div class="modal" id="helpModal" hidden>
+    <div class="box glass help">
+      <div class="row" style="justify-content: space-between"><h2>How this world works</h2><button class="btn primary" id="helpClose">Got it</button></div>
+      <ul>
+        <li>Every Tickle and home here is rebuilt from the models stored in the Tickle Beach contract on Ethereum. Nothing is redrawn by hand or by AI.</li>
+        <li><b>AI runs it:</b> the Director watches the Tickles' needs and designs new objects, activities, buildings and events on its own. Its work passes automatic fidelity checks and enters the world marked as unreviewed.</li>
+        <li><b>I'm in control:</b> the Director stops acting. You give orders, build with blocks, place objects, and nothing the AI makes enters the world until you approve it.</li>
+        <li><b>Review</b> shows every AI-made object and activity with its checks against the collection. <b>Library</b> holds what you approved, ready to export as a reusable stroke library.</li>
+        <li>Drag to orbit, right-drag or shift-drag to pan, scroll or pinch to zoom. Space pauses.</li>
+        <li class="note">Unofficial prototype made from the collection's public on-chain data. Not affiliated with the Tickle Beach team.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="js/data.js"></script>
+<script src="js/tickle-core.js"></script>
+<script src="js/procgen.js"></script>
+<script src="js/world.js"></script>
+<script src="js/sim.js"></script>
+<script src="js/ui.js"></script>

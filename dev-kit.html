@@ -1,0 +1,51 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>kit</title>
+<style>body{margin:0;background:#9cf;font:12px monospace}#lab{position:fixed;inset:0;pointer-events:none}.l{position:absolute;transform:translate(-50%,0);background:#fffd;padding:1px 4px;border-radius:4px;white-space:nowrap}canvas{display:block}</style>
+</head><body><div id="lab"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="js/data.js"></script><script src="js/tickle-core.js?d=1"></script><script src="js/sdf.js"></script><script src="js/procgen.js?d=1"></script><script src="js/kit.js?d=1"></script>
+<script>
+const S = 1 / 160;
+const q = new URLSearchParams(location.search);
+const only = q.get('kinds') ? q.get('kinds').split(',') : Object.keys(TB.KIT);
+const allv = q.get('all') === '1';
+const list = [];
+for (const k of only) for (const v of (allv ? TB.KIT[k].variants : [TB.KIT[k].variants[0]])) list.push({ k, v });
+const renderer = new THREE.WebGLRenderer({ antialias: true }); renderer.setSize(innerWidth, innerHeight); renderer.outputEncoding = THREE.sRGBEncoding;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x9cd0ff);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x777766, 0.95)); const dl = new THREE.DirectionalLight(0xffffff, 0.6); dl.position.set(3, 6, 5); scene.add(dl);
+const cols = +(q.get('cols') || 5), gap = +(q.get('gap') || 9);
+const cam = new THREE.PerspectiveCamera(30, innerWidth / innerHeight, 0.1, 500);
+const labels = [];
+const report = [];
+list.forEach((f, i) => {
+  const strokes = TB.KIT[f.k].build(f.v);
+  const layers = TB.fromCompact(strokes, 'prop');
+  const vox = TB.voxelize(TB.compile(layers), { voxel: +(q.get('voxel') || 10), colors: TB.colorOf, lip: +(q.get('lip') || 1) });
+  const ck = TB.check({ strokes }, vox);
+  report.push(f.k + ':' + f.v + ' ' + ck.score + '% ' + ck.checks.filter(c => c.status !== 'pass').map(c => c.id + '(' + c.detail + ')').join('; '));
+  if (!vox.count) return;
+  const md = TB.meshVoxels(vox);
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(md.position, 3));
+  g.setAttribute('normal', new THREE.BufferAttribute(md.normal, 3, false));
+  g.setAttribute('color', new THREE.BufferAttribute(md.color, 3, true));
+  g.setIndex(new THREE.BufferAttribute(md.index, 1));
+  const mesh = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ vertexColors: true }));
+  mesh.scale.setScalar(md.voxel * S); mesh.position.set(md.origin[0] * S, md.origin[1] * S, md.origin[2] * S);
+  const grp = new THREE.Group(); grp.add(mesh);
+  grp.rotation.y = +(q.get('rot') || 0);
+  const cx = (i % cols) * gap, cz = Math.floor(i / cols) * gap;
+  grp.position.set(cx, 0, cz); scene.add(grp);
+  labels.push({ p: new THREE.Vector3(cx, -1.2, cz), t: f.k + ' ' + f.v + ' ' + ck.score + '%' });
+});
+window.report = report;
+const rows = Math.ceil(list.length / cols);
+const tilt = +(q.get('tilt') || 0.75);
+const dist = +(q.get('dist') || 1.6);
+cam.position.set((cols - 1) * gap / 2, (rows * gap * tilt + 6) * dist, (rows * gap + 10) * dist); cam.lookAt((cols - 1) * gap / 2, 0, (rows - 1) * gap / 2);
+renderer.render(scene, cam);
+const lab = document.getElementById('lab');
+for (const l of labels) { const v = l.p.clone().project(cam); const d = document.createElement('div'); d.className = 'l'; d.textContent = l.t; d.style.left = (v.x * .5 + .5) * innerWidth + 'px'; d.style.top = (-v.y * .5 + .5) * innerHeight + 'px'; lab.appendChild(d); }
+</script></body></html>
