@@ -23,6 +23,13 @@ a preview is at https://claude.ai/artifact/TK966ZfpzsFS9aPPxwJNo6 (the published
   beside every guardian.
 - Casino leftovers checked: own Tickle through a whole tournament, 6-seat poker cards, waiters, bingo hall.
 
+- **Inspect window** (asked 22 October, evening; js/inspect.js): click anything to see what it is in a small window that
+  keeps itself up to date. Tickles (health, needs, action and day, job, holder, guild, faction, role and spell, arms and
+  their wear, creatures, relics, mount, on-chain items, shells, belongings; Full card / Follow / First person), creatures,
+  cave monsters, dragons, sea beasts, animals, lake and pond life, birds, boats, mounts, ferries, scenery, placed objects,
+  the ground and the water; inside, Tickles, monsters and guardians, chests, gems, furniture and the room itself.
+  Buildings keep their card. Clicking a Tickle no longer switches to the Tickles tab (Full card button instead).
+
 Still to do: publish version 49 once the owner approves the preview; push this work to GitHub (the cloud session
 had no GitHub access); mansions editable inside and out (later, as asked); the open questions below.
 

@@ -192,7 +192,7 @@
       const c = App.leadCreature(t.id);
       if (!c || !App.kitOn(c.sp)) { pets.delete(t.id); continue; }
       const p = pets.get(t.id);
-      if (!p || p.data !== c) pets.set(t.id, body(c.sp, t.pos.x + 1, t.pos.z + 1, c, false));
+      if (!p || p.data !== c) pets.set(t.id, Object.assign(body(c.sp, t.pos.x + 1, t.pos.z + 1, c, false), { owner: t.id }));
     }
     for (const id of [...pets.keys()]) if (!App.pop.agent[id]) pets.delete(id);
   };

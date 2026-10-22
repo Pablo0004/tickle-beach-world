@@ -200,7 +200,9 @@
   // ---------- world clicks ----------
   const tmpV = new THREE.Vector3();
   App.onWorldClick = (ndc) => {
-    if (App.inside) return;
+    const looking = !ui.tool || ui.tool === "select";
+    // inside: whoever or whatever was clicked, in the inspect window (inspect.js)
+    if (App.inside) { if (looking && App.inspectPick) { const o = App.inspectPick(ndc); if (o) App.showInspect(o.fn); else App.closeInspect(); } return; }
     const r = App.rayFrom(ndc);
     let hit = null, hd = Infinity;
     for (const t of st.tickles) {
@@ -238,17 +240,36 @@
       if (hit.type === "prop") { App.order(selT, { kind: "prop", prop: hit.p }); return; }
       if (hit.type === "voxel") { App.order(selT, { kind: "goto", spot: { x: hit.v.point.x, z: hit.v.point.z } }); App.say(selT, "On my way!", 2); return; }
     }
+    // what is under the cursor by how near it looks on the screen (inspect.js): a Tickle, an animal or a boat in front
+    // of a building is what was meant
+    const seen = looking && App.inspectPick ? App.inspectPick(ndc) : null;
     // a building or landmark under the cursor (closer than anything else): its card
-    if ((!ui.tool || ui.tool === "select") && App.pickPlace && !(hit && hit.type === "tickle")) {
+    if (looking && App.pickPlace && !(hit && hit.type === "tickle") && !(seen && seen.live && seen.d < 18)) {
       const P = App.pickPlace(r);
       if (P && P.name && P.dist < hd + 2) { showPlaceCard(P, ndc); return; }
     }
-    if (hit && hit.type === "tickle") { selectTickle(hit.t.id); return; }
-    if (hit && hit.type === "voxel" && (!ui.tool || ui.tool === "select")) {
+    // a Tickle, a creature, an animal, a monster, a dragon or a boat: the one nearest the cursor on the screen (a pet at
+    // its Tickle's feet can be told from it). A Tickle is also selected (V, F and the Tickles tab follow it).
+    if (seen && seen.live) {
+      if (seen.tickle != null) { ui.sel = seen.tickle; if (ui.tab === "tickles") refresh(true); }
+      App.showInspect(seen.fn);
+      return;
+    }
+    if (hit && hit.type === "tickle") {
+      if (!App.inspectTickle || !looking) { selectTickle(hit.t.id); return; }
+      ui.sel = hit.t.id; if (ui.tab === "tickles") refresh(true);
+      App.inspectTickle(hit.t.id);
+      return;
+    }
+    if (hit && hit.type === "voxel" && looking) {
       const T = App.enterableAt(hit.v.point.x, hit.v.point.z);
       if (T) { showDoorChip(T, ndc); return; }
     }
+    if (seen) { App.showInspect(seen.fn); return; }
     if (hit && hit.type === "prop") { const a = App.assetById(hit.p.assetId); if (a) { ui.review = "a:" + a.id; setTab("review"); } return; }
+    // nothing but the ground or the water
+    const g = looking && App.inspectGround ? App.inspectGround(r) : null;
+    if (g) App.showInspect(g);
     if (ui.tool === "select") { ui.sel = null; refresh(true); }
   };
   // "Go inside" for the building, cave or mine that was clicked
@@ -266,6 +287,7 @@
   });
   // the card of a building or landmark: name, what is going on, its story, and a way in
   function showPlaceCard(P, ndc) {
+    if (App.inspectYield) App.inspectYield();
     const el = $("placeCard");
     ui.doorT = P.enter;
     el.innerHTML = '<div class="pc-head"><div><div class="pc-name">' + esc(P.name) + '</div><div class="pc-sub">' + P.sub + '</div></div><button class="btn" id="placeClose" aria-label="Close">Close</button></div>' +
@@ -278,6 +300,9 @@
     ui.sel = id;
     if (ui.tab !== "tickles") setTab("tickles"); else refresh(true);
   }
+  // (the inspect window's buttons)
+  App.selectTickle = selectTickle;
+  App.openReview = (aid) => { ui.review = "a:" + aid; setTab("review"); };
   App.goToToken = (id, select) => {
     const P = App.pop;
     const t = P.agent[id];
@@ -588,6 +613,7 @@
     if (a.phase === "walk") return "Heading to: " + a.act.name;
     return a.act.verb ? a.act.verb.replace(/^is /, "").replace(/^./, (c) => c.toUpperCase()) : a.act.name;
   }
+  App.actionText = actionText;
   function planText(t) {
     const { step } = App.planStep(t.id, st.T);
     const c = clockOf(Math.floor(st.T / 1440) * 1440 + step.e);

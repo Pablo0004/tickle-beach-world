@@ -1152,7 +1152,7 @@
       for (let k = 0; k < 3; k++) { const a = hash2(x * 7 + k, y, 51) * 6.28, d = 1.6 + hash2(x, y * 7 + k, 53) * 1.2; peb.push([px + Math.cos(a) * d, pz + Math.sin(a) * d, 0.12 + hash2(x + k, y, 55) * 0.22]); }
     }
     if (peb.length) {
-      const pm = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(1), new THREE.MeshLambertMaterial({ color: 0xffffff, flatShading: true }), peb.length), pc = new THREE.Color(0x5e5a54);
+      const pm = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(1), new THREE.MeshLambertMaterial({ color: 0xffffff }), peb.length), pc = new THREE.Color(0x5e5a54);
       peb.forEach(([x, z, s], i) => { M.compose(P.set(x, s * 0.4, z), Q.setFromAxisAngle(Y, i), O.set(s * 1.3, s, s)); pm.setMatrixAt(i, M); pm.setColorAt(i, c.copy(pc).multiply(TINTS[i % 3]).lerp(c1, 0.35)); });
       pm.instanceColor.needsUpdate = true;
       g.add(pm);
@@ -1782,6 +1782,20 @@
     C.target.x = T.door.x; C.target.z = T.door.z; C.radius = Math.min(w.r, 30); C.theta = w.theta; C.phi = w.phi;
   }
   App.leaveInterior = () => fade(() => leave());
+  // what is under the cursor inside (inspect.js): a Tickle, a monster, or a piece of furniture or of the cave
+  App.insidePick = (ndc) => {
+    if (!cur) return null;
+    const rc = App.renderer.domElement.getBoundingClientRect(), W = rc.width, H = rc.height, sx = ((ndc.x + 1) / 2) * W, sy = ((1 - ndc.y) / 2) * H, P = new THREE.Vector3();
+    let best = null, bd = 1e9;
+    const consider = (o, x, y, z, r, bias) => { P.set(x, y, z).project(cam); if (P.z > 1) return; const d = Math.hypot(((P.x + 1) / 2) * W - sx, ((1 - P.y) / 2) * H - sy); if (d < r && d + bias < bd) { bd = d + bias; best = o; } };
+    for (const f of cur.figures) if (!f.gone && f.holder) consider({ kind: "tickle", id: f.id, pose: f.pose }, f.holder.position.x, (f.F.height || 3) * 0.5, f.holder.position.z, 34, 0);
+    for (const m of cur.mons || []) if (m.holder && !m.dead) consider({ kind: "umonster", m, room: cur.map.rooms[cur.ri] }, m.holder.position.x, (m.tall || 2) * 0.5, m.holder.position.z, m.mo.boss ? 70 : 36, 1);
+    const R = cur.map.rooms[cur.ri];
+    if (R) for (const it of R.items) consider({ kind: "item", it, room: R, map: cur.map }, it.x, (it.y || 0) + 0.8, it.z, 24, 10);
+    // nothing in particular: the floor or the walls, so the room itself
+    return best || (R ? { kind: "room", room: R, map: cur.map, ri: cur.ri, mons: cur.mons || [] } : null);
+  };
+  App.MON_NAME = MON_NAME;
   // drawn instead of the world while inside; the view orbits and zooms as usual, and a drag pans within the room
   App.renderInside = (renderer, camera) => {
     const C = App.cam, R = cur.map.rooms[cur.ri], w = cur.worldCam;

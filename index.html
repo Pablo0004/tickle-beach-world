@@ -129,6 +129,13 @@ p { margin: 0; line-height: 1.45; }
 #placeCard .pc-sub { color: #ffd23f; font-weight: 700; font-size: 12px; }
 #placeCard .pc-text p { margin: 6px 0; color: #dfe8f0; }
 #placeCard .kv { margin: 6px 0; }
+/* the inspect window (inspect.js) shares the card */
+#placeCard .insp-bars { margin: 8px 0; grid-template-columns: 56px 1fr auto; gap: 5px 8px; } #placeCard .insp-bars .num { max-width: 150px; text-align: right; color: #dfe8f0; }
+#placeCard .insp-chips { margin: 6px 0; } #placeCard .insp-chips span { display: inline-block; background: rgba(255,255,255,0.1); border-radius: 8px; padding: 2px 8px; margin: 0 4px 4px 0; font-size: 11.5px; font-weight: 700; }
+#placeCard .insp-arms { margin: 4px 0 6px; color: #dfe8f0; } #placeCard .insp-arms b { color: #ffd23f; margin-right: 4px; }
+#placeCard .insp-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; } #placeCard .insp-btns .btn { padding: 5px 10px; font-size: 12px; }
+#placeCard.inside { left: 388px; width: min(340px, calc(100% - 784px)); }
+@media (max-width: 1060px) { #placeCard.inside { left: 16px; top: auto; bottom: 16px; width: min(380px, calc(100% - 32px)); max-height: 45%; } }
 .hpbar.tbar { min-width: 30px; padding: 2px 3px; border-radius: 5px; } .hpbar.tbar .nm { display: none; } .hpbar.tbar .hb { margin-top: 0; height: 4px; }
 .k-creature { color: #c9a6ff; } .k-death { color: #c9d4ff; } .k-ritual { color: #ffd23f; } .k-ruin { color: #ff9a3c; } .k-box { color: #ff8fc0; } .k-hunt { color: #ffb48a; } .k-outlaw { color: #ff6b5e; } .k-trade { color: #7be08f; } .k-train { color: #c9a6ff; } .k-dungeon, .k-level { color: #ffb48a; }
 .clandot { display: inline-block; width: 10px; height: 10px; border-radius: 3px; vertical-align: -1px; margin-right: 4px; }
@@ -500,7 +507,7 @@ input[type="text"] { background: rgba(0,0,0,0.3); border: 1px solid var(--line);
           <li><b>Turn the view:</b> Z and X, or the &#x27f2; &#x27f3; buttons under the small map, or right-drag (Ctrl-drag); twist two fingers on a touch screen.</li>
           <li><b>Zoom:</b> the mouse wheel, or pinch.</li>
           <li><b>Pick up and throw:</b> press on a Tickle, an animal, a creature, a dragon, a horse or a griffin, a sea beast, a boat, an object, a tree or a building and drag to lift it; let go to set it down, or let go while moving to throw it. Buildings and trees break when thrown; a sea beast thrown hard is hurt, then slides back into the water; a boat set down on land is carried back to its mooring (holders can only pick up their own Tickles).</li>
-          <li><b>Look and go in:</b> click a building or landmark for its card; E goes inside the nearest door, cave or mine; Esc comes back out (and closes cards).</li>
+          <li><b>Look and go in:</b> click anything (a Tickle, a creature, a monster, an animal, a dragon, a boat, a tree, the ground or the water, and inside every piece of furniture) for a small window about it, with its health, what it can do and what it fights with; click a building or landmark for its card; E goes inside the nearest door, cave or mine; Esc comes back out (and closes cards).</li>
           <li><b>Follow:</b> select a Tickle and press F, and the camera follows it.</li>
           <li><b>Time:</b> Space pauses; 1, 2 and 3 set the speed.</li>
         </ul>
@@ -535,6 +542,7 @@ input[type="text"] { background: rgba(0,0,0,0.3); border: 1px solid var(--line);
         <li><b>Weather:</b> fronts of cloud, rain and storm drift across the map with the wind, so it can pour in one region while the sun shines in the next; each region has its own climate (the Waterfall is the wettest, Beach Sand the driest, the Palm gets tropical storms). The clock shows the weather where you are; the Weather card in the Adventure tab shows every region and the next hours. Near you the sky darkens, rain falls, clouds drift over, mornings can be foggy, and in a storm lightning strikes (thunder follows, later the further away) and now and then splits a tree or a roof. Tickles shelter at home from storms (many from heavy rain too) and the birds fall quiet. Rarer still: a tornado tears across a region, wrecking what is in its way and throwing Tickles through the air; and very rarely the sea draws back from a coast before a tsunami, and the people of the shore run inland before the wave breaks over the beach.</li>
         <li><b>Sound (Menu &gt; Sound):</b> music, ambience and effects each have their own volume and their own switch. The ambience is the world around you: songbirds in the trees (sunfinches, meadow warblers, palm robins, coral thrushes and turtle doves; gulls over the sea; the moon owl at night) all singing in one key and to one pulse, so they sound together in harmony, fullest at dawn; frogs croaking in bouts on the lily pads; the smiths' anvils and the hooves of the horses. The effects are the screams, crashes, bells, punches and the cries of whatever you throw.</li>
         <li><b>Music:</b> the &#9834; button in the top bar turns on music that follows the camera: each village plays its region's town tune (a calmer one at night, muffled indoors), mines and dungeons have their own uneasy tunes, arenas a battle tune, and the lake, the roads and the Maker's Isle theirs. A sleeping dragon nearby makes it hushed and tense, an awake dragon or monsters close by bring the danger tune, and a fight with a dragon the boss tune. All of it is free music from OpenGameArt (see Credits).</li>
+        <li><b>Inspect:</b> click anything in the world to see what it is in a small window. A living thing shows its health bar and keeps it up to date while the window is open (a fight can be followed in it); a Tickle also shows its needs, what it is doing and its day, its job, guild, faction and role (warrior, mage, healer, tamer), its arms and their wear, its creatures, relics, mount, on-chain items, shells and belongings, with buttons for its full card, to follow it and to see through its eyes. Creatures show their type, level, attack and stats, monsters their health and attack, dragons and sea beasts their health in a fight, boats and mounts whose they are, scenery what the Tickles come to it for, and the ground and the water their region and the weather there. Inside, the Tickles, the monsters and the guardians of the Underworld, the chests and the teleport gems can be clicked too.</li>
         <li><b>Places:</b> click any building or landmark (a house, a town hall, a granary, an arena, a dungeon, a mine, a dock, an altar, an Ether field, the Maker's statue) to see its card: what it is, what is going on there now, a little of its story, and "Go inside" when it has an inside.</li>
         <li><b>Going inside:</b> click a house, a town hall, a granary, a dungeon, a mine or a guild hall and press "Go inside" (or press E near one). Like in the old Pokemon games every place has its own rooms joined by numbered exits (the doormat, stairs, ladders). Homes show their owner's things: its on-chain Ground item, its creature, its trophies. The town hall has the village's notice board and, upstairs, the treasury of ores; the granary is as full as the stores. The caves lead into the Great Underworld, 36 floors of labyrinth under the whole map with a guardian on every floor, and mines are three levels of tunnels with monsters on patrol; you see the party fighting its way through and the miners at the rock. Drag to look around a floor; Esc takes you back out.</li>
         <li><b>Mines and orichalcum:</b> every region has a mine. Each is rich in two of the lesser ores. Miners bring up stone (faster rebuilding), coal (it feeds the forge), copper (tools: the village works faster), iron (weapons and shields, so more villagers can fight a dragon), silver (silver-tipped weapons that monsters fear), gems (collars that make creatures stronger), gold (sold for shells and offered to the Maker) and, from the deep veins, orichalcum: the legendary metal of the Orichalcum Blade. The way in is a timber portal sunk into a cutting, with rails and a loaded cart coming out.</li>
@@ -571,15 +579,15 @@ input[type="text"] { background: rgba(0,0,0,0.3); border: 1px solid var(--line);
 <script src="js/critters.js?v=225"></script>
 <script src="js/village.js?v=250"></script>
 <script src="js/wildlife.js?v=225"></script>
-<script src="js/creatures.js?v=250"></script>
+<script src="js/creatures.js?v=252"></script>
 <script src="js/dungeons.js?v=251"></script>
 <script src="js/fate.js?v=235"></script>
 <script src="js/boxing.js?v=225"></script>
 <script src="js/factions.js?v=250"></script>
 <script src="js/faith.js?v=225"></script>
-<script src="js/rampage.js?v=225"></script>
+<script src="js/rampage.js?v=252"></script>
 <script src="js/lairs.js?v=225"></script>
-<script src="js/boats.js?v=225"></script>
+<script src="js/boats.js?v=252"></script>
 <script src="js/lakelife.js?v=225"></script>
 <script src="js/mines.js?v=225"></script>
 <script src="js/fx.js?v=225"></script>
@@ -589,16 +597,17 @@ input[type="text"] { background: rgba(0,0,0,0.3); border: 1px solid var(--line);
 <script src="js/contests.js?v=250"></script>
 <script src="js/diving.js?v=225"></script>
 <script src="js/firstperson.js?v=250"></script>
-<script src="js/seabeasts.js?v=250"></script>
-<script src="js/wealth.js?v=250"></script>
+<script src="js/seabeasts.js?v=252"></script>
+<script src="js/wealth.js?v=252"></script>
 <script src="js/prison.js?v=250"></script>
 <script src="js/parliament.js?v=250"></script>
 <script src="js/birds.js?v=225"></script>
 <script src="js/weather.js?v=248"></script>
-<script src="js/interiors.js?v=251"></script>
+<script src="js/interiors.js?v=252"></script>
 <script src="js/places.js?v=251"></script>
+<script src="js/inspect.js?v=252"></script>
 <script src="js/sfx.js?v=225"></script>
 <script src="js/music.js?v=225"></script>
 <script src="js/hand.js?v=225"></script>
-<script src="js/ui.js?v=250"></script>
+<script src="js/ui.js?v=252"></script>
 <script src="js/directory.js?v=225"></script>

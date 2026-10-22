@@ -823,14 +823,24 @@
     }
   }
 
+  // ---------- what the inspect window says about a mount (inspect.js) ----------
+  function mountInfo(id) {
+    const M = App.mountOf(id);
+    if (!M) return null;
+    return { title: M.name, sub: "The mount of " + App.nameOf(id), tickle: id,
+      chips: [M.fly ? "Flies straight over everything" : "Trots on the long trips", "x" + M.mul + " the walking speed"],
+      rows: [["Rider", App.nameOf(id)], ["Kind", M.kind === "beast" ? "a riding beast" : M.kind === "monster" ? "a tamed monster" : M.fly ? "a riding griffin" : "a horse"]].concat(M.kind === "horse" || M.fly ? [["Worth", CAT.mount[M.tier] ? CAT.mount[M.tier].price + " shells" : "-"]] : []),
+      text: "<p>It waits by its rider, and at night by the house. On a long trip its rider gets on and rides; in first person, M gets you into the saddle.</p>" };
+  }
+  App.mountInfo = mountInfo;
   // ---------- the hand can pick them all up (hand.js) ----------
   // a horse, a pony, a charger or a griffin: waiting by its rider, in the guild's paddock or on the roost
-  function handThing(m, P, sound, onLand) {
+  function handThing(m, P, sound, onLand, info) {
     const T = { x: P.x, y: m.obj.position.y, z: P.z, sound, lift: 2.4,
       grab() { m.held = true; m.goal = null; },
       set(x, y, z) { P.x = x; P.z = z; if (P.y != null) P.y = y; m.obj.position.set(x, y, z); },
       land(hard) { m.held = false; m.goal = null; if (onLand) onLand(T, hard); } };
-    return { kind: "thing", obj: T, x: P.x, y: m.obj.position.y + 1.6, z: P.z, r: 36 };
+    return { kind: "thing", obj: T, x: P.x, y: m.obj.position.y + 1.6, z: P.z, r: 36, info };
   }
   (App.handThings = App.handThings || []).push((tx, tz) => {
     const out = [];
@@ -842,13 +852,15 @@
         grab() { b.hand = { x: P.x, z: P.z, y: App.WATER_Y, held: true, until: 0 }; },
         set(x, y, z) { if (b.hand) { b.hand.x = x; b.hand.y = y; b.hand.z = z; } },
         land() { if (!b.hand) return; b.hand.held = false; b.hand.y = App.isLand(b.hand.x, b.hand.z) ? App.surfaceAt(b.hand.x, b.hand.z).y : null; b.hand.until = performance.now() + (App.isLand(b.hand.x, b.hand.z) ? 6000 : 40000); } };
-      out.push({ kind: "thing", obj: T, x: P.x, y: App.WATER_Y + 1, z: P.z, r: 40 });
+      const B = CAT.boat[(st.own[id] || {}).b || 1];
+      out.push({ kind: "thing", obj: T, x: P.x, y: App.WATER_Y + 1, z: P.z, r: 40, info: () => ({ title: B.short, sub: "The boat of " + App.nameOf(id), rows: [["Owner", App.nameOf(id)], ["Moored", App.docks[st.own[id].dock] ? "in the marina of " + App.docks[st.own[id].dock].name : "in a marina"], ["Worth", B.price + " shells"]], text: "<p>Bought at the Blacksmiths' Guild. Some afternoons its owner takes it out on the lake.</p>", tickle: id }) });
     }
-    for (const m of mounts.values()) if (m.obj && m.park && m.obj.parent === App.scene && Math.abs(m.park.x - tx) + Math.abs(m.park.z - tz) < 140) out.push(handThing(m, m.park, m.fly ? "griffin" : "horse"));
+    for (const [id, m] of mounts) if (m.obj && m.park && m.obj.parent === App.scene && Math.abs(m.park.x - tx) + Math.abs(m.park.z - tz) < 140) out.push(handThing(m, m.park, m.fly ? "griffin" : "horse", null, () => mountInfo(id)));
     for (const D of deco.values()) {
-      for (const h of D.horses) if (h.obj) out.push(handThing(h, h, "horse", () => { h.goal = null; h.wait = 1 + rnd() * 2; }));
+      const forSale = (t, x) => () => ({ title: t, sub: "For sale at the Blacksmiths' Guild", rows: [["Price", x]], chips: [t === "A riding griffin" ? "Flies straight over everything" : "Trots on the long trips"], text: "<p>Bought by Tickles with shells to spare (and by you for yours, from their card). A trade-in pays half of what the old one cost.</p>" });
+      for (const h of D.horses) if (h.obj) out.push(handThing(h, h, "horse", () => { h.goal = null; h.wait = 1 + rnd() * 2; }, forSale("A horse in the paddock", "a pony " + CAT.mount[1].price + ", a saddle horse " + CAT.mount[2].price + ", a white charger " + CAT.mount[3].price + " shells")));
       const g = D.griffin;
-      if (g && g.obj && g.x != null) out.push(handThing(g, g, "griffin", (T) => { g.back = { x: T.x, y: T.y, z: T.z, t0: performance.now() }; }));
+      if (g && g.obj && g.x != null) out.push(handThing(g, g, "griffin", (T) => { g.back = { x: T.x, y: T.y, z: T.z, t0: performance.now() }; }, forSale("A riding griffin", CAT.mount[4].price + " shells")));
     }
     return out;
   });

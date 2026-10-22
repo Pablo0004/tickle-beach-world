@@ -436,6 +436,10 @@ casino, mine and dungeon leads into its own small maps (rooms) drawn apart on bl
   wallet's Tickles, enter them in contests, sit them at the casino, send them diving and buy for them.
 - **Tickle Directory**: search and filter all 9,629 Tickles, with a short biography, skills and today's
   routine (and an optional story written by Claude when the page runs inside claude.ai).
+- **Inspect window** (js/inspect.js): click anything else (a Tickle, a creature, a monster, a dragon, a sea beast, an
+  animal, a bird, a boat, a mount, a tree, a placed object, the ground or the water; inside, the Tickles, monsters,
+  guardians, furniture, chests, gems and the room itself) for a small window about it that keeps itself up to date: health
+  bar, needs, what it is doing, what it can do (role, spells, its attack and type), what it fights with and carries.
 - **Place cards**: click any building or landmark for what it is, what is going on there now, a little of
   its story and "Go inside". The giant statue tells the legend of the Maker.
 - **The hand**: the same button that drags the map picks things up. Press on a Tickle, an animal, a

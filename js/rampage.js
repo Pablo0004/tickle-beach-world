@@ -131,6 +131,7 @@
 
   // ---------- health ----------
   const maxHP = (id) => (60 + App.levelOf(id) * 6 + (((App.gearOf(id) || {}).armor || 0) * 25) * (App.armsMul ? App.armsMul(id).s : 1)) * (App.heroHP ? App.heroHP(id) : 1);
+  App.maxHPOf = maxHP; // (the inspect window)
   function initHP(t) {
     if (!(t.hpMax > 0) || !(t.hp > 0) || st.T - (t.hpAt || -1e9) > 120) { t.hpMax = maxHP(t.id); t.hp = t.hpMax; }
     t.hpAt = st.T;

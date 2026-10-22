@@ -221,7 +221,7 @@
         grab() { b.held = true; },
         set(x, y, z) { b.x = x; b.z = z; b.hy = y; },
         land() { b.held = false; b.hy = null; if (App.isLand(b.x, b.z)) { b.x = b.home.x; b.z = b.home.z; b.h = b.home.h; } } };
-      out.push({ kind: "thing", obj: T, x: b.x, y: App.WATER_Y + 0.6, z: b.z, r: 30 });
+      out.push({ kind: "thing", obj: T, x: b.x, y: App.WATER_Y + 0.6, z: b.z, r: 30, info: () => ({ title: "Rowing boat", sub: App.docks[b.dock] ? "One of the four of " + App.docks[b.dock].name : "A rowing boat", rows: [["Who rows it", b.user != null ? App.nameOf(b.user) + " (out fishing)" : "nobody now: it waits at the jetty"]], text: "<p>On lake days the fishers of the shore villages row out and fish; what they catch goes to the granary. A sea beast can sink it (then it lies on the bottom until morning).</p>" }) });
     }
     return out;
   });

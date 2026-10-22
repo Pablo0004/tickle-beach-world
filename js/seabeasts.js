@@ -327,7 +327,12 @@
           if (A.hp <= 0) finish(A, true);
         }
       } };
-    return [{ kind: "thing", obj: T, x: p.x, y: p.y + 4, z: p.z, r: 90 }];
+    // what the inspect window says about it (inspect.js)
+    const info = () => ({ title: BEASTS[A.kind].name.replace(/^the /, "The "), sub: (A.kind === "serpent" ? "Sea beast of the great lake" : "Sea beast of the open sea") + " \u00b7 " + App.regions[A.r].name, hp: { now: A.hp, max: A.max },
+      chips: ["Smashes rowing boats", "Spits " + (App.SPELLS[BEASTS[A.kind].school] ? App.SPELLS[BEASTS[A.kind].school].name.toLowerCase() + "s" : "magic") + " at the shore", "Pulls Tickles off the jetty"],
+      rows: [["Defenders", A.def.filter((id) => !App.isKO(id)).length + " of " + A.def.length + " still on their feet"], ["Reward", Math.round(30 * (App.lawMul ? App.lawMul("bounty") : 1)) + " shells, 2 Ethernum and experience for each defender; the last blow wins its " + App.relicInfo(BEASTS[A.kind].trophy).name]],
+      text: "<p>Now and then it rises near a dock or a beach and attacks. The armed, the mages and the tamers of the villages round about come down to fight it; if they cannot beat it before it tires, it goes back down and the boats stay sunk until morning. You can lift it out of the water with the hand and throw it.</p>" });
+    return [{ kind: "thing", obj: T, x: p.x, y: p.y + 4, z: p.z, r: 90, info }];
   });
   // what to call the action (ui.js)
   App.seaActionText = (t) => { const A = st.seaAttacks.find((x) => x.id === t.action.attack); return A ? "Fighting " + BEASTS[A.kind].name : "Fighting a sea beast"; };
