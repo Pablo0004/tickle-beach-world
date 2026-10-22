@@ -753,14 +753,29 @@
       h += '<div class="card"><h3>' + ids.length + " Tickles in this wallet</h3>" + (ids.length ? "" : '<p class="note">None in the snapshot.</p>') +
         Object.entries(byIsl).sort((a, b) => b[1].length - a[1].length).slice(0, 60).map(([i, list]) => '<div class="isl"><button class="btn" data-island="' + i + '">' + esc(App.villages[i].name) + " \u00b7 " + list.length + '</button><span class="note">' + list.slice(0, 12).map((id) => '<a href="#" data-token="' + id + '">#' + id + "</a>").join(" ") + (list.length > 12 ? " \u2026" : "") + "</span></div>").join("") + "</div>";
     }
+    // which ownership snapshot the map follows, and reading a newer one from Ethereum
+    { const I = App.ownersInfo ? App.ownersInfo() : null;
+      if (I) h += '<div class="card"><h3>Who owns what</h3><p class="note">The map follows ' + (I.source === "browser" ? "a newer reading kept in this browser" : "the snapshot that came with the game") + ": block " + I.block.toLocaleString() + " (" + esc(I.date) + ")" + (I.source === "browser" ? ", " + I.changed + " Tickles changed hands since the game's own" : "") + ". When owners change, everyone who still fits keeps their plot; only those who grew or shrank past a size move.</p>" +
+        '<div class="row"><button class="btn" id="ownersUpdate">Read the owners from Ethereum now</button>' + (I.source === "browser" ? '<button class="btn" id="ownersClear">Back to the game\'s snapshot</button>' : "") + '</div><p class="note" id="ownersNote">' + (ui.ownersMsg || "") + "</p></div>"; }
     // every holder's place: an estate, a mansion, or a house in a shared town
     const placeOf = (addr) => App.villages.find((v) => v.holder === addr) || (() => { const ids = App.tokensOf(addr); return ids.length ? App.villageOfToken(ids[0]) : null; })();
     if (st.wallet) { const pv = placeOf(st.wallet); if (pv) h += '<div class="card"><h3>Your place</h3><div class="row"><button class="btn primary" data-island="' + pv.i + '">' + esc(pv.name) + '</button><span class="note">' + esc(App.placeKindText(pv)) + "</span></div></div>"; }
-    h += '<div class="card"><h3>Biggest holders</h3><p class="note">Every holder has a place of its own: an estate from ' + App.SETTLE.ESTATE + " Tickles, a mansion from " + App.SETTLE.MANSION + ", and a house in a town of small holders below that. Click a place to fly there.</p>" + App.topHolders(12).map((x, i) => { const pv = placeOf(x.addr); return '<div class="row" style="justify-content:space-between"><span class="pix">' + (i + 1) + ". " + esc(short(x.addr)) + (pv ? ' <button class="btn" data-island="' + pv.i + '">' + esc(pv.name) + "</button>" : "") + '</span><span class="row"><span class="note">' + x.count + ' Tickles</span><button class="btn" data-wallet="' + x.addr + '">Play as</button></span></div>'; }).join("") + "</div>";
+    h += '<div class="card"><h3>Biggest holders</h3><p class="note">Every holder has a place of its own: from ' + App.SETTLE.GRAND + " Tickles an estate with a mansion for every " + App.SETTLE.GRAND + ", from " + App.SETTLE.MEDIUM + " a small plot with four houses, from " + App.SETTLE.PAIR + " two houses in a town, and below that a house in a town. Click a place to fly there.</p>" + App.topHolders(12).map((x, i) => { const pv = placeOf(x.addr); return '<div class="row" style="justify-content:space-between"><span class="pix">' + (i + 1) + ". " + esc(short(x.addr)) + (pv ? ' <button class="btn" data-island="' + pv.i + '">' + esc(pv.name) + "</button>" : "") + '</span><span class="row"><span class="note">' + x.count + ' Tickles</span><button class="btn" data-wallet="' + x.addr + '">Play as</button></span></div>'; }).join("") + "</div>";
     $("holdersBody").innerHTML = h;
   }
   $("tab-holders").addEventListener("click", (e) => {
     const b = e.target.closest("button, a");
+    if (b && b.id === "ownersUpdate") {
+      // (the message is kept, so it survives the tab being drawn again while the owners are read)
+      const say = (html) => { ui.ownersMsg = html; const el = $("ownersNote"); if (el) el.innerHTML = html; };
+      b.disabled = true; say("Asking an Ethereum node for the owner of every Tickle\u2026");
+      App.refreshOwners((f) => say("Reading ownerOf() for every Tickle\u2026 " + Math.round(f * 100) + "%"))
+        .then((r) => say(r.changed + " Tickles have changed hands since (block " + r.block.toLocaleString() + "). " + (r.changed ? '<button class="btn primary" id="ownersReload">Rebuild the map now</button>' : "Nothing to move.")))
+        .catch((err) => { const el = $("ownersUpdate"); if (el) el.disabled = false; say("Could not read the owners here (" + (err && err.message ? esc(err.message) : "no network") + "). Where the page cannot reach the network, as in the claude.ai viewer, run tools/update_owners.py on a computer and publish the new js/owners.js."); });
+      return;
+    }
+    if (b && b.id === "ownersReload") { App.save(); location.reload(); return; }
+    if (b && b.id === "ownersClear") { App.clearOwners(); App.save(); location.reload(); return; }
     if (!b) return;
     if (b.dataset.token) { e.preventDefault(); App.goToToken(+b.dataset.token, true); return; }
     if (b.dataset.island) { const o = App.villages[+b.dataset.island]; App.flyTo(o.x, o.z, 40); return; }
@@ -1225,9 +1240,13 @@
       window.addEventListener("resize", App.resize);
       setLoad(0.05, "Deriving all " + TB.SUPPLY.toLocaleString() + " seeds with the contract's formula and reading their traits\u2026");
       await nextFrame();
-      App.initPopulation();
+      // the save is read first: the map keeps everyone on the plot it had them on (geo.js)
       const saved = hot && hot.v === 3 ? hot : App.loadSaved();
+      App.bootSave = saved;
+      App.initPopulation();
+      App.bootSave = null;
       if (saved && App.migrateLayout) App.migrateLayout(saved);
+      if (saved && App.reconcilePlots && App.reconcilePlots(saved)) console.info("Ownership changed since the save: places carried over to their plots");
       App.initActs();
       if (saved) {
         const merged = App.dedupeSaved(saved);

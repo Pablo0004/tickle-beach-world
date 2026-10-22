@@ -101,30 +101,41 @@ Tickles.
 
 ## 3. Every holder has its own place
 
-*(Version 49, in this repository, not yet published.)* All of a holder's Tickles live together, and the
-map follows the ownership snapshot:
+*(Version 49, in this repository, not yet published.)* All of a holder's Tickles live together, on a place
+that depends on how many it owns:
 
-- **Estates** — holders with **20 or more** Tickles: the holder's manor in the middle (a big house with a
-  tower, 1.6 times the normal size) and a house for each Tickle round it. 93 estates in the current
-  snapshot, from 384 Tickles down to 20.
-- **Mansions** — holders with **5 to 19** Tickles: one big house where they all live under one roof,
-  larger the more Tickles there are (+3.5 % per Tickle over five), with a dormitory holding a bed for each.
-  254 mansions.
-- **Towns of small holders** — holders with **1 to 4** Tickles: each household gets its own house (a
-  two-storey townhouse for three or four, a cottage or a round hut for one or two) in a town of about three
-  dozen Tickles shared with other small holders. 60 towns. Burned or unowned tokens live alone.
-- Every place has its square with a big campfire and rings of log seats (one seat for every resident), a
-  town hall or manor, a granary, a revival altar, fields and a farm.
-- The places are spread **evenly over the six regions** (about 1,605 Tickles and 67 to 69 places each),
-  biggest first, without overlapping.
-- **Every place is its own clan**, with its colour on the roofs (the species is just a trait now). The
-  Holders tab shows "Your place" and the place of every big holder, with a button that flies you there.
-- Saved games from before this change keep everything each Tickle owns and has done (level, shells, arms,
-  relics, creatures, outfits) and reset what belonged to the old species villages.
-- **Requirements set by the project owner for what comes next**: ownership changes often, so the layout
-  must update smoothly — fixed plots that never move, holders keeping their plot when ownership changes, and
-  **room for everyone however many holders there are**, underground or under water if the surface is full.
-  That redesign is the work in progress (PENDING.md).
+| Tickles | Where they live |
+| --- | --- |
+| 1 to 4 | a house for the household (a cottage, a round hut, or a two-storey townhouse for three or four) in a town shared with other small holders |
+| 5 to 9 | two medium houses (two-storey townhouses) in such a town |
+| 10 to 19 | four medium houses on a small plot of their own |
+| 20 to 179 | an estate with one mansion for every 20 Tickles, in the style of its region |
+| 180 or more | a fortress: walls round the plot, with round towers and a gate wherever a road comes in, and a great castle (Camping, Duck Pond, Waterfall) or a great palace (The Pier, Beach Sand, The Palm) where all of them live |
+
+- **Mansions by region**: a log lodge in the Camping, a country house by the Duck Pond, a little stone keep at
+  the Waterfall, a captain's house on the Pier, a white villa on Beach Sand and a tropical villa under the Palm,
+  each with its roof, doors or awnings in the clan's colour. Inside: a great hall, a dormitory with a bed for
+  every Tickle living there, and a strong room.
+- **Castles and palaces**: a throne (or great) hall with long tables, a dormitory in every tower with 48 beds,
+  and a treasury; the biggest holder's castle has eight tower dormitories for its 384 Tickles.
+- **Plots that never move**: the land is laid out in plots that do not depend on ownership (in every region one
+  fortress plot, 20 estate plots sized by how many mansions they hold, 22 small plots and 13 town plots), so the
+  terrain, roads, fields and farms stay the same whoever owns what. Every place has its square with a big
+  campfire and rings of log seats, a granary, a revival altar, fields and a farm; towns also have a town hall.
+- **Ownership changes**: who lives on each plot is remembered in the save. When the snapshot changes, every holder
+  who still fits keeps its plot, its households keep their slots, and only those who grew or shrank past a
+  threshold move (taking their granary, friendships and record in the Underworld with them); newcomers take a
+  free plot, and empty plots show a "for sale" sign. Tested with a simulated change: 248 of 249 places stayed put.
+- **Room for everyone**: if the plots of a kind ever run out, a holder gets an underground warren (a grassy hill
+  with a round door, and a cavern inside with a bed for each), with no limit to how many can be dug; the first
+  one waiting moves up when a plot comes free.
+- With the current snapshot: 4 fortresses, 89 estates (236 mansions in all), 95 small plots and 61 towns, about
+  1,600 Tickles in each region; no warren is needed.
+- **Every place is its own clan**, with its colour on the roofs (the species is just a trait). The Holders tab
+  shows "Your place" and the place of every big holder, with a button that flies you there.
+- A newer ownership snapshot can be kept in the browser (`App.setOwners`), the basis of the planned "Update
+  owners" button. Saved games from before the plots keep everything each Tickle owns and has done and reset what
+  belonged to the old villages.
 
 ## 4. A day in the life
 
@@ -147,6 +158,8 @@ map follows the ownership snapshot:
   others can join in with some of them, and skaters ride theirs on long trips. The village lends rods,
   boards, weights, balls and skates to whoever has none. Paw items (Chips, Snacks, Games, Towel, Tube, Wake
   Board) are put away when both paws are needed, and bulky ones are carried at the side.
+- **Buildings are in the way**: Tickles walk round houses, halls, mansions, castles, walls and the other
+  buildings rather than through them, and in through a fortress's gates; the path-finder plans the way round.
 - **Arms move as they should**: lifting a weight or a sword uses one arm and the other paw keeps what it
   holds; both arms only for a shield and a weapon, rowing, dancing, the ball, digging, driving a kart,
   casting spells or celebrating on a podium.

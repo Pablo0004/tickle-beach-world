@@ -18,19 +18,23 @@
   App.clanColor = (c) => { const v = App.villages[c]; return TB.CLANS[v ? v.style : 0].color; };
   App.clanOfVillage = (v) => v.clan;
   // what kind of place it is, and whose
-  App.placeKindText = (v) => v.kind === "estate" ? (st.wallet && v.holder === st.wallet ? "your estate" : "the estate of " + shortAddr(v.holder)) + " (" + v.residents.length + " Tickles)"
-    : v.kind === "mansion" ? (st.wallet && v.holder === st.wallet ? "your mansion" : "the mansion of " + shortAddr(v.holder)) + " (" + v.residents.length + " Tickles)" : "a town of small holders (" + v.houses.length + " households)";
+  App.placeKindText = (v) => {
+    const whose = (what) => (st.wallet && v.holder === st.wallet ? "your " + what : "the " + what + " of " + shortAddr(v.holder)) + " (" + v.residents.length + " Tickles)";
+    const t = v.kind === "fortress" || v.kind === "keep" || v.kind === "citadel" ? whose(v.kind === "citadel" ? "citadel" : "fortress").replace(" Tickles)", " Tickles in its castle)") : v.kind === "grand" ? whose("estate").replace(" Tickles)", " Tickles in " + v.slots.length + " mansion" + (v.slots.length === 1 ? "" : "s") + ")") : v.kind === "medium" ? whose("plot").replace(" Tickles)", " Tickles in 4 houses)") : "a town of small holders (" + v.households.length + " households)";
+    return v.warren ? t + ", underground in a warren until a plot is free" : t;
+  };
   // relations between the clans: neutral (50) unless something has happened between them
   const relKey = (a, b) => Math.min(a, b) + ":" + Math.max(a, b);
   App.clanRel = (a, b) => (a === b ? 100 : st.clanRel && st.clanRel[relKey(a, b)] != null ? st.clanRel[relKey(a, b)] : 50);
   function bumpClan(a, b, d) { if (a !== b) st.clanRel[relKey(a, b)] = clamp(App.clanRel(a, b) + d, 0, 100); }
   App.relWord = (v) => (v >= 75 ? "allies" : v >= 55 ? "friendly" : v >= 35 ? "wary" : "rivals");
 
-  // ---------- the map's layout: every holder's place, from the ownership snapshot ----------
-  // A save from another layout (before the holders' places, or another snapshot) keeps what belongs to each
-  // Tickle (level, shells, arms, relics, creatures, Ethernum, medals, mounts and boats) and starts what belongs
-  // to the old villages afresh (granaries, ruins, things moved by hand, the Underworld's progress by village).
-  App.LAYOUT = "holders-1:" + (TB.OWNERS ? TB.OWNERS.block : 0);
+  // ---------- the map's layout: plots that never move, and every holder on one (geo.js) ----------
+  // A save from another layout (before the plots) keeps what belongs to each Tickle (level, shells, arms, relics,
+  // creatures, Ethernum, medals, mounts and boats) and starts what belongs to the old villages afresh (granaries,
+  // ruins, things moved by hand, the Underworld's progress by village). A save from this layout keeps everything:
+  // when ownership has changed since, App.reconcilePlots carries each place's things over to where it is now.
+  App.LAYOUT = "plots-2"; // plots-2: the sizes of 16 October (houses, small plots, a mansion for every 20)
   App.migrateLayout = (S) => {
     if (S.layout === App.LAYOUT) return false;
     S.moved = {};
@@ -43,8 +47,81 @@
     if (S.factions) { S.factions.hunts = {}; S.factions.hiding = {}; S.factions.nights = {}; S.factions.trades = {}; }
     if (S.contests) S.contests.contests = {};
     if (S.wealth && S.wealth.own) { for (const id in S.wealth.own) { delete S.wealth.own[id].h; if (!Object.keys(S.wealth.own[id]).length) delete S.wealth.own[id]; } S.wealth.orders = null; }
-    S.log = [{ t: S.T || 0, kind: "world", text: "The island has been rebuilt: every holder now has its own place.", why: "Estates for the big holders, mansions for the middling ones, a house in a shared town for the small ones. Every Tickle kept its level, its shells, its arms, its relics and its creatures." }].concat(S.log || []);
+    S.plots = null;
+    S.log = [{ t: S.T || 0, kind: "world", text: "The island has been rebuilt: every holder now has its own place.", why: "Estates for the big holders, mansions for the middling ones, a house in a shared town for the small ones, and a warren underground for whoever the plots cannot hold. Every Tickle kept its level, its shells, its arms, its relics and its creatures." }].concat(S.log || []);
     S.layout = App.LAYOUT;
+    return true;
+  };
+
+  // ---------- when ownership has changed since the save ----------
+  // A place is known by who it is (its holder; a town by its plot), so a holder who moved to another plot, or up out
+  // of a warren, keeps its granary, its friendships and its record in the Underworld. The pieces made after the
+  // fixed scenery (houses, the outer logs, the warrens) are known by their key (place and slot), so ruins and things
+  // moved by hand follow them. What belonged to places that are gone, and short-lived business between places
+  // (raids under way, parties, trades, contests, rituals), starts afresh.
+  App.plotsSave = () => (App.plotsAssigned ? { lots: App.plotsAssigned.lots, warrens: App.plotsAssigned.warrens, keys: App.villages.map((v) => v.key), ids: App.villages.map((v) => v.ident),
+    names: App.villages.map((v) => v.name), tail: { start: App.tailStart, keys: App.tailKeys } } : null);
+  App.homeKeyOf = (id) => { const v = App.villageOfToken(id); if (!v) return null; const H = v.homes[v.residents.indexOf(id)]; return H && H.sc ? H.sc.tkey || null : null; };
+  App.placeName = (i, fallback) => (App.villages[i] ? App.villages[i].name : fallback || "a place that is gone");
+  App.reconcilePlots = (S) => {
+    const P = S && S.plots;
+    if (!P || S.layout !== App.LAYOUT || !P.ids || !P.keys) return false;
+    const now = new Map(App.villages.map((v) => [v.ident, v.i])), map = P.ids.map((id) => (now.has(id) ? now.get(id) : -1));
+    const T = P.tail || { start: 0, keys: [] }, tailNow = new Map(App.tailKeys.map((k, i) => [k, App.tailStart + i]));
+    const sameV = map.length === App.villages.length && map.every((k, i) => k === i);
+    const sameT = T.start === App.tailStart && T.keys.length === App.tailKeys.length && T.keys.every((k, i) => k === App.tailKeys[i]);
+    if (sameV && sameT) return false;
+    const V = (i) => (i >= 0 && i < map.length ? map[i] : -1);
+    const reKeys = (obj) => { const out = {}; for (const k in obj || {}) { const n = V(+k); if (n >= 0) out[n] = obj[k]; } return out; };
+    // a piece of scenery: the fixed ones keep their index; a tail piece follows its key while its place is the same place
+    const identOf = new Map(P.keys.map((k, i) => [k, P.ids[i]]));
+    const idx = (k) => {
+      k = +k;
+      if (k < T.start) return k;
+      const key = T.keys[k - T.start];
+      if (!key) return -1;
+      const place = key.split("/")[0], v = App.placeByKey.get(place);
+      if (!v || identOf.get(place) !== v.ident) return -1;
+      return tailNow.has(key) ? tailNow.get(key) : -1;
+    };
+    const reIdx = (obj) => { const out = {}; for (const k in obj || {}) { const n = idx(k); if (n >= 0) out[n] = obj[k]; } return out; };
+    if (S.villages) {
+      const food = new Array(App.villages.length), rel = {};
+      (S.villages.food || []).forEach((f, i) => { const n = V(i); if (n >= 0) food[n] = f; });
+      for (const k in S.villages.clanRel || {}) { const [a, b] = k.split(":").map(Number), A = V(a), B = V(b); if (A >= 0 && B >= 0 && A !== B) rel[Math.min(A, B) + ":" + Math.max(A, B)] = S.villages.clanRel[k]; }
+      S.villages.food = food; S.villages.clanRel = rel; S.villages.raids = []; S.villages.attacks = [];
+    }
+    if (S.dungeons) {
+      const D = S.dungeons;
+      D.conquered = reKeys(D.conquered); D.depth = reKeys(D.depth); D.parties = {};
+      const fix = (o, chosen) => { if (chosen) return; const n = V(o.village); if (n >= 0) o.village = n; else { o.vname = o.vname || P.names[o.village] || null; o.village = -2; } };
+      for (const f in D.guardians || {}) fix(D.guardians[f], D.guardians[f].chosen);
+      for (const e of D.uwlog || []) fix(e, e.village === -1);
+    }
+    if (S.fate) {
+      for (const id in S.fate.fallen || {}) S.fate.fallen[id].village = App.pop.village[+id];
+      const ruins = {};
+      for (const k in S.fate.ruins || {}) {
+        const n = idx(k), r = S.fate.ruins[k], s0 = n >= 0 ? App.sceneryAll[n] : null;
+        if (!s0) continue;
+        if (r.village != null) { r.village = V(r.village); if (r.village < 0 || (s0.village != null && s0.village !== r.village)) continue; }
+        ruins[n] = r;
+      }
+      S.fate.ruins = ruins; S.fate.broken = reIdx(S.fate.broken); S.fate.rituals = {};
+    }
+    S.moved = reIdx(S.moved);
+    if (S.mines) S.mines.ore = reKeys(S.mines.ore);
+    if (S.lairs && S.lairs.anger) for (const k in S.lairs.anger) { const A = S.lairs.anger[k]; if (A && A.by != null) { const n = V(A.by); A.by = n >= 0 ? n : null; } }
+    if (S.factions) { S.factions.nights = {}; S.factions.trades = {}; }
+    if (S.contests) S.contests.contests = {};
+    if (S.wealth) {
+      for (const id in S.wealth.own || {}) { const o = S.wealth.own[id]; if (o.h && o.hk !== App.homeKeyOf(+id)) { delete o.h; delete o.hk; } }
+      S.wealth.orders = null;
+    }
+    S.event = null;
+    const oldKey = new Map(P.ids.map((id, i) => [id, P.keys[i]]));
+    const moved = App.villages.filter((v) => oldKey.get(v.ident) !== v.key).length;
+    S.log = [{ t: S.T || 0, kind: "world", text: "Ownership has changed: the plots have new neighbours.", why: moved ? moved + " place" + (moved === 1 ? " is" : "s are") + " new or moved; everyone else kept their plot, their granary and their friends." : "Everyone kept their plot; some households moved house." }].concat(S.log || []);
     return true;
   };
 
@@ -72,6 +149,7 @@
   App.chorePlace = (id) => {
     const v = App.villageOfToken(id), c = App.choreOf(id);
     const j = (k, r) => (hash2(id, k, 3) - 0.5) * r;
+    if (c === "farm" && v.warren) return { x: v.hall.door.x + j(13, 4), z: v.hall.door.z + j(14, 4), type: "plaza", label: "the mushroom beds of " + v.name, cx: v.hall.x, cz: v.hall.z };
     if (c === "farm" && v.fields.length) {
       const f = v.fields[Math.floor(hash2(id, 12, 3) * v.fields.length)];
       return { x: f.x + j(13, f.w * 1.7), z: f.z + j(14, f.d * 1.7), type: "field", label: "the fields of " + v.name, field: f.i, cx: f.x, cz: f.z };
@@ -92,7 +170,7 @@
     const crew = { farm: 0, hunt: 0, pigs: 0, sheep: 0, chickens: 0, gather: 0, fish: 0 };
     for (const id of v.residents) if (App.doesChores(id)) crew[App.choreOf(id)]++;
     v.crew = crew;
-    const fieldK = v.fields.length ? Math.min(1.2, v.fields.length / 2.4) : 0.4, tools = App.toolBonus ? App.toolBonus(v) : 1;
+    const fieldK = v.warren ? 1 : v.fields.length ? Math.min(1.2, v.fields.length / 2.4) : 0.4, tools = App.toolBonus ? App.toolBonus(v) : 1;
     return { farm: crew.farm * CHORE_INFO.farm.rate * v.fert * fieldK * tools,
       other: tools * crew.hunt * CHORE_INFO.hunt.rate * v.game + (crew.pigs * CHORE_INFO.pigs.rate + crew.sheep * CHORE_INFO.sheep.rate + crew.chickens * CHORE_INFO.chickens.rate) + crew.gather * CHORE_INFO.gather.rate * v.fruit + crew.fish * CHORE_INFO.fish.rate };
   }

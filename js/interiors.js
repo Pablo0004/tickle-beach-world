@@ -41,8 +41,8 @@
     return best;
   };
   function nameOf(T) {
-    if (T.kind === "house") { const ids = App.residentsOf(T.sc); return (ids.length ? App.nameOf(ids[0]) + "'s" : "A") + " " + (T.sc.type.startsWith("manor") ? "manor" : T.sc.type.startsWith("townhouse") ? "townhouse" : "house"); }
-    if (T.kind === "hall") { const v = App.villages[T.sc.village]; return v.kind === "town" ? v.name + " Town Hall" : v.kind === "estate" ? v.name + ": the Manor" : v.name; }
+    if (T.kind === "house") { const ids = App.residentsOf(T.sc); if (T.sc.castle) return App.villages[T.sc.village].name; if (/^(mlodge|mfarm|mkeep|mcaptain|mvilla|mtropic)_/.test(T.sc.type)) return App.villages[T.sc.village].name + ": a mansion of " + ids.length; if (ids.length > 1) return "The house of a household of " + ids.length; return (ids.length ? App.nameOf(ids[0]) + "'s " : "A ") + (T.sc.type.startsWith("manor") ? "manor" : T.sc.type.startsWith("townhouse") ? "townhouse" : "house"); }
+    if (T.kind === "hall") { const v = App.villages[T.sc.village]; return v.warren ? v.name : v.kind === "town" || !v.kind ? v.name + " Town Hall" : v.kind === "estate" ? v.name + ": the Manor" : v.name; }
     if (T.kind === "granary") return App.villages[T.sc.village].name + " Granary";
     if (T.kind === "dungeon") return T.dg.name;
     if (T.kind === "guild") return App.GUILDS[T.hall.guild].name + " of " + App.regions[T.hall.region].name;
@@ -82,6 +82,61 @@
     map.title = v.name;
     return map;
   }
+  // a warren: one great cavern dug under the hill, walls of bare rock; the hearth and the long table by the round door,
+  // a bed for every Tickle who lives there in rows at the back, the stores along the sides, glowing mushrooms
+  function warrenMap(T) {
+    const v = App.villages[T.sc.village], c = v.style, n = Math.max(1, App.residentsOf(T.sc).length);
+    const perRow = n > 60 ? 12 : n > 24 ? 8 : 6, rows = Math.ceil(n / perRow), dx = 2.9, w = Math.max(24, perRow * dx + 8), d = 16 + rows * 5.4;
+    const A = room("The cavern", w, d, { h: 7, floor: ["#7a6a58", "#6e5f4f"], wall: "#8a7a68", trim: "#5a4a3a", dark: true });
+    const front = A.d / 2, x0 = -((perRow - 1) * dx) / 2, tz = front - 6;
+    A.items.push({ k: "mat", x: 0, z: front - 1 }, { k: "rug", v: c, x: 3, z: front - 4.5 }, { k: "banner", v: c, x: -4, z: back(A, 0.2), y: 0.6 }, { k: "banner", v: c, x: 4, z: back(A, 0.2), y: 0.6 },
+      { k: "longtable", x: -w / 2 + 7, z: tz, rot: Math.PI / 2, tag: "table" }, { k: "stove", x: -w / 2 + 1.6, z: front - 2.2 },
+      { k: "lantern", x: -w / 2 + 7, z: tz - 2.6, light: true }, { k: "lantern", x: w / 2 - 6, z: front - 3, light: true });
+    for (let k = 0; k < 3; k++) for (const side of [-1, 1]) A.items.push({ k: "chair", x: -w / 2 + 4 + k * 2.4, z: tz + side * 1.9, rot: side > 0 ? Math.PI : 0 });
+    // the stores along the walls, the mushrooms in the corners, torches all the way back
+    A.items.push({ k: "barrel", x: w / 2 - 1.3, z: front - 7 }, { k: "barrel", x: w / 2 - 1.3, z: front - 8.8 }, { k: "sacks", x: w / 2 - 1.5, z: front - 11 }, { k: "crate", x: w / 2 - 3.2, z: front - 7.6, rot: 0.3 },
+      { k: "mushrooms", x: -w / 2 + 1.4, z: back(A, 1.4) }, { k: "mushrooms", x: w / 2 - 1.4, z: back(A, 1.4) }, { k: "mushrooms", x: -w / 2 + 1.6, z: front - 9 });
+    for (let z = front - 4; z > -front + 2; z -= 7) for (const side of [-1, 1]) A.items.push({ k: "torch", x: side * (w / 2 - 0.3), z, y: 2.4, rot: -side * Math.PI / 2 });
+    A.items.push({ k: "bed", v: c, x: x0, z: back(A, 2.2) });
+    bedsFor(A, n, c, x0, perRow, dx);
+    A.spots.table = { x: -w / 2 + 4, z: tz + 1.8, face: Math.PI };
+    A.warps.push({ id: 0, x: 0, z: front - 1, kind: "mat", label: "Outside", to: { outside: true } });
+    A.note = v.name + ": " + App.placeKindText(v) + ". A bed for each of them; they grow mushrooms in the dark until a plot comes free on the land above.";
+    return { title: v.name, rooms: [A] };
+  }
+  // a castle (or a great palace) for all of a holder's Tickles: the throne hall with its long tables, a dormitory in
+  // every tower with a bed for each (48 to a tower), and the treasury
+  const PER_DORM = 48;
+  function castleMap(T) {
+    const s = T.sc, v = App.villages[s.village], c = v.style, ids = App.residentsOf(s), n = Math.max(1, ids.length), dorms = Math.ceil(n / PER_DORM), keep = s.type.startsWith("castle");
+    const A = room(keep ? "Throne hall (1F)" : "Great hall (1F)", 34, 24, { h: 9, floor: keep ? ["#9a948a", "#8a847a"] : ["#d8c8a8", "#c8b898"], wall: keep ? "#b0aa9e" : "#fff8e8", trim: keep ? "#6e665a" : "#a0703a" });
+    A.items.push({ k: "mat", x: 0, z: A.d / 2 - 1 }, { k: "rug", v: c, x: 0, z: 0 }, { k: "throne", x: 0, z: back(A, 2.6) }, { k: "banner", v: c, x: -5, z: back(A, 0.2), y: 0.6 }, { k: "banner", v: c, x: 5, z: back(A, 0.2), y: 0.6 },
+      { k: "longtable", x: -8, z: 3, rot: Math.PI / 2, tag: "table" }, { k: "longtable", x: 8, z: 3, rot: Math.PI / 2 }, { k: "brazier", x: -3, z: back(A, 3), light: true }, { k: "brazier", x: 3, z: back(A, 3), light: true });
+    for (const tx of [-8, 8]) for (let k = 0; k < 3; k++) for (const side of [-1, 1]) A.items.push({ k: "chair", x: tx - 2.4 + k * 2.4, z: 3 + side * 1.9, rot: side > 0 ? Math.PI : 0 });
+    for (const z of [-6, 2, 8]) for (const side of [-1, 1]) A.items.push({ k: "torch", x: side * (A.w / 2 - 0.3), z, y: 2.6, rot: -side * Math.PI / 2 });
+    A.spots.table = { x: -10.4, z: 4.9, face: Math.PI };
+    A.warps.push({ id: 0, x: 0, z: A.d / 2 - 1, kind: "mat", label: "Outside", to: { outside: true } });
+    const rooms = [A];
+    for (let d = 0; d < dorms; d++) {
+      const nb = Math.min(PER_DORM, n - d * PER_DORM), perRow = 8, rows = Math.ceil(nb / perRow), x0 = -((perRow - 1) * 2.9) / 2;
+      const R = room("Tower dormitory " + (d + 1), perRow * 2.9 + 6, 8 + rows * 5.4, { floor: keep ? ["#8a847a", "#7e786e"] : ["#d8b98a", "#c9a978"], wall: keep ? "#b0aa9e" : "#fff4d6" });
+      R.items.push({ k: "bed", v: c, x: x0, z: back(R, 2.2) }, { k: "stairs", x: R.w / 2 - 2, z: R.d / 2 - 2 }, { k: "torch", x: -R.w / 2 + 0.3, z: 0, y: 2.4, rot: Math.PI / 2 }, { k: "torch", x: R.w / 2 - 0.3, z: 0, y: 2.4, rot: -Math.PI / 2 });
+      bedsFor(R, nb, c, x0, perRow);
+      R.warps.push({ id: 0, x: R.w / 2 - 2, z: R.d / 2 - 2, kind: "stairs", label: "Down to the hall", to: { room: 0, warp: d + 1 } });
+      // the stairs up to the towers, along both side walls of the hall
+      const sx = (d % 2 ? 1 : -1) * (A.w / 2 - 2), sz = back(A, 3 + Math.floor(d / 2) * 4);
+      A.items.push({ k: "stairs", x: sx, z: sz });
+      A.warps.push({ id: d + 1, x: sx, z: sz, kind: "stairs", label: "Up to tower dormitory " + (d + 1), to: { room: d + 1, warp: 0 } });
+      rooms.push(R);
+    }
+    const Tr = room("Treasury (1F)", 14, 11, { floor: ["#9a9a9a", "#8a8a8a"], wall: "#e8e0d0" });
+    Tr.items.push({ k: "chest", v: 1, x: -4, z: back(Tr, 1.2) }, { k: "chest", v: 1, x: -1.3, z: back(Tr, 1.2) }, { k: "chest", v: 1, x: 1.4, z: back(Tr, 1.2) }, { k: "chest", v: 0, x: 4, z: back(Tr, 1.2) }, { k: "sacks", x: -Tr.w / 2 + 1.5, z: 1.5 }, { k: "barrel", x: Tr.w / 2 - 1.3, z: 1.6 }, { k: "mat", x: 0, z: Tr.d / 2 - 1 });
+    Tr.warps.push({ id: 0, x: 0, z: Tr.d / 2 - 1, kind: "mat", label: "Back to the hall", to: { room: 0, warp: 99 } });
+    A.warps.push({ id: 99, x: A.w / 2 - 4, z: A.d / 2 - 1.2, kind: "mat", label: "The treasury", to: { room: rooms.length, warp: 0 } });
+    rooms.push(Tr);
+    A.note = v.name + ": " + App.placeKindText(v) + ". " + dorms + " tower dormitor" + (dorms === 1 ? "y" : "ies") + ", a bed for every one of them.";
+    return { title: v.name, rooms, perDorm: PER_DORM, firstDorm: 1, maxEat: 24 };
+  }
   function richMap(T, tier) {
     const s = T.sc, v = App.villages[s.village], c = v.style, id = App.residentsOf(s)[0];
     const A = room(tier === 2 ? "Great hall (1F)" : "Parlour (1F)", tier === 2 ? 24 : 18, tier === 2 ? 16 : 13, { h: tier === 2 ? 7 : 6, floor: tier === 2 ? ["#d8c8a8", "#c8b898"] : ["#c79a62", "#b58850"], wall: tier === 2 ? "#fff8e8" : "#fff4d6" });
@@ -104,7 +159,7 @@
     if (tier === 2) B.items.push({ k: "bed", v: c, x: -0.2, z: back(B, 2.2) }, { k: "window", x: -6, z: back(B, 0.15) });
     B.warps.push({ id: 0, x: B.w / 2 - 2, z: back(B, 1.8), kind: "stairs", label: "Down to the " + (tier === 2 ? "great hall" : "parlour") + " (1F)", to: { room: 0, warp: 1 } });
     B.spots.bed = { x: -3.8, z: back(B, 2.0) };
-    { const n = App.residentsOf(s).length; if (n > 1 && !s.mansion) bedsFor(B, Math.min(4, n), c, -3.8, 2); }
+    { const n = App.residentsOf(s).length; if (n > 1 && !s.mansion && !s.type.startsWith("palace")) bedsFor(B, Math.min(6, n), c, -3.8, 3); }
     const rooms = [A, B];
     // a manor's strong room: the family's shells in open chests, its Ethernum, its arms on the wall
     if (tier === 2) {
@@ -130,6 +185,8 @@
   }
   function houseMap(T) {
     const s = T.sc, v = App.villages[s.village], c = v.style, r = rngOf(s.idx * 31 + 5), cottage = s.type.startsWith("cottage");
+    if (s.castle) return castleMap(T);
+    if (/^(mlodge|mfarm|mkeep|mcaptain|mvilla|mtropic)_/.test(s.type)) return mansionMap(T);
     if (s.type.startsWith("manor") || s.type.startsWith("townhouse")) return richMap(T, s.type.startsWith("manor") ? 2 : 1);
     const A = room(cottage ? "Living room (1F)" : "One room", cottage ? 16 : 15, cottage ? 12 : 12);
     A.items.push({ k: "mat", x: 0, z: A.d / 2 - 1 }, { k: "rug", v: c, x: 0, z: 0.5 }, { k: "table", v: 0, x: -3.2, z: 0.2, tag: "table" },
@@ -603,7 +660,7 @@
   }
   App.mapOf = (T) => {
     const key = T.kind + ":" + (T.sc ? T.sc.idx : T.dg ? "great" : T.hall ? T.hall.guild + ":" + T.hall.region : T.casino ? T.casino.i : T.mine.i + ":" + (App.mineLevel ? App.mineLevel(T.mine) : 1));
-    if (T.kind === "granary" || T.kind === "hall" || T.kind === "house" || T.kind === "guild" || T.kind === "casino" || !maps.has(key)) maps.set(key, T.kind === "house" ? houseMap(T) : T.kind === "hall" && T.sc && T.sc.mansion ? mansionMap(T) : T.kind === "hall" ? hallMap(T) : T.kind === "granary" ? granaryMap(T) : T.kind === "guild" ? guildMap(T) : T.kind === "casino" ? casinoMap(T) : T.kind === "dungeon" ? greatUnderworld() : mineMap(T));
+    if (T.kind === "granary" || T.kind === "hall" || T.kind === "house" || T.kind === "guild" || T.kind === "casino" || !maps.has(key)) maps.set(key, T.kind === "house" ? houseMap(T) : T.kind === "hall" && T.sc && T.sc.warren ? warrenMap(T) : T.kind === "hall" && T.sc && T.sc.mansion ? mansionMap(T) : T.kind === "hall" ? hallMap(T) : T.kind === "granary" ? granaryMap(T) : T.kind === "guild" ? guildMap(T) : T.kind === "casino" ? casinoMap(T) : T.kind === "dungeon" ? greatUnderworld() : mineMap(T));
     const m = maps.get(key);
     m.key = key; m.target = T;
     return m;
@@ -620,11 +677,16 @@
     const T = map.target, out = [], day = Math.floor(st.T / DAY), m = st.T - day * DAY;
     if (T.kind === "casino") return App.casinoOccupants ? App.casinoOccupants(T.casino, ri).slice(0, 40) : [];
     if (T.kind === "house" || (T.kind === "hall" && T.sc && T.sc.mansion)) {
+      // (in a castle each Tickle sleeps in the dormitory of its tower; only so many fit round the tables at once)
       const bedRoom = Math.max(0, map.rooms.findIndex((R) => R.spots.beds || R.spots.bed));
-      for (const id of App.residentsOf(T.sc)) if (insideNow(id)) {
+      let awake = 0;
+      App.residentsOf(T.sc).forEach((id, k) => {
+        if (!insideNow(id)) return;
         const step = App.planStep(id, st.T).step, asleep = step.k === "sleep" || App.isKO(id);
-        if (asleep ? ri === bedRoom : ri === 0) out.push({ id, pose: asleep ? "sleep" : step.k === "shelter" ? "cower" : "eat" });
-      }
+        const where = asleep ? (map.perDorm ? map.firstDorm + Math.floor(k / map.perDorm) : bedRoom) : 0;
+        if (ri !== where || (!asleep && map.maxEat && ++awake > map.maxEat)) return;
+        out.push({ id, pose: asleep ? "sleep" : step.k === "shelter" ? "cower" : "eat" });
+      });
     }
     if (T.kind === "hall" && ri === 0 && !(T.sc && T.sc.mansion)) {
       const v = App.villages[T.sc.village];
@@ -1473,7 +1535,7 @@
     el.innerHTML = '<div class="rh-title">' + esc(map.title) + '</div><div class="rh-room">' + esc(R.name) + ((map.floors || map.rooms.length) > 1 ? " &middot; " + (map.floors ? "floor " : "room ") + (ri + 1) + " of " + (map.floors || map.rooms.length) : "") + "</div>" +
       (R.note ? '<div class="rh-note">' + esc(R.note) + "</div>" : "") +
       (R.boss ? '<div class="rh-note"><b>Guardian:</b> ' + esc(R.boss.name) + (cur && cur.mons && cur.mons.some((m) => m.mo.boss && m.dead) ? " (beaten! it will rise again)" : "") +
-        (map.floors && st.guardians ? (st.guardians[ri] ? " \u00b7 first beaten by " + (st.guardians[ri].chosen ? "the Maker's Chosen" : esc(App.villages[st.guardians[ri].village].name)) : " \u00b7 never beaten" + (App.guardianNeed ? " (a party needs about " + Math.round(App.guardianNeed(ri)) + " strength)" : "")) : "") + "</div>" : "") +
+        (map.floors && st.guardians ? (st.guardians[ri] ? " \u00b7 first beaten by " + (st.guardians[ri].chosen ? "the Maker's Chosen" : esc(App.placeName(st.guardians[ri].village, st.guardians[ri].vname))) : " \u00b7 never beaten" + (App.guardianNeed ? " (a party needs about " + Math.round(App.guardianNeed(ri)) + " strength)" : "")) : "") + "</div>" : "") +
       (map.floors && App.bandLoot ? '<div class="rh-note"><b>Treasure:</b> ' + esc(App.bandLoot(ri)) + " in the chests and the veins" + (App.RELICS ? "; relics: " + esc(Object.values(App.RELICS).filter((x) => x.band === Math.floor(ri / 6)).map((x) => x.name).join(", ")) : "") + "</div>" : "") +
       (R.big ? (() => { const k = Math.min(240 / R.maze.W, 200 / R.maze.H, 4); return '<canvas id="roomMap" width="' + Math.round(R.maze.W * k) + '" height="' + Math.round(R.maze.H * k) + '" title="The whole floor: click to look there"></canvas>'; })() : "") +
       (R.maze ? '<div class="rh-note">' + (R.mons.length ? R.mons.length + " monster" + (R.mons.length > 1 ? "s" : "") + " on this floor" : "") + (R.items.some((i) => i.chest) ? " \u00b7 " + R.items.filter((i) => i.chest && !i.v).length + " treasure chest" + (R.items.filter((i) => i.chest && !i.v).length === 1 ? "" : "s") + " still closed" : "") + " \u00b7 drag to look around the floor</div>" : "") +

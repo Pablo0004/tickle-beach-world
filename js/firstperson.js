@@ -38,7 +38,7 @@
     fp = null;
     App.camera.fov = FOV0; App.camera.updateProjectionMatrix();
     App.cam.radius = 18; App.cam.phi = 0.95;
-    if (App.scene.fog) { App.scene.fog.near = 90; App.scene.fog.far = 175; }
+    if (App.scene.fog) { App.scene.fog.near = App.NO_FOG.near; App.scene.fog.far = App.NO_FOG.far; }
     tint(false);
     const el = hud();
     if (el) el.hidden = true;
@@ -82,7 +82,7 @@
     const fog = App.scene.fog;
     if (fog) {
       if (EYE.y < App.WATER_Y) { fog.color.setHex(0x1b6f8a).convertSRGBToLinear(); App.scene.background = fog.color; fog.near = 0.5; fog.far = 16; }
-      else { fog.near = 70; fog.far = 175; }
+      else { fog.near = App.NO_FOG.near; fog.far = App.NO_FOG.far; }
     }
     tint(EYE.y < App.WATER_Y);
     return true;

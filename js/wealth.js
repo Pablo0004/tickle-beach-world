@@ -439,7 +439,11 @@
     applyHouses();
     boatsDirty = true;
   };
-  App.saveWealth = () => ({ own: st.own, log: st.wealthLog, orders: st.orders, init: true });
+  // a bigger house belongs to the house: the save notes which one (its key), so it stays with it when ownership changes
+  App.saveWealth = () => {
+    for (const id in st.own) { const o = st.own[id]; if (o.h) o.hk = App.homeKeyOf ? App.homeKeyOf(+id) : null; else delete o.hk; }
+    return { own: st.own, log: st.wealthLog, orders: st.orders, init: true };
+  };
 
   // ---------- the brain (sim.js): at the anvil, with the horses, shopping, out sailing ----------
   const SHOP_ACT = { id: "shop", name: "Shopping", verb: "is looking over the wares", needs: { fun: 6 }, capacity: 30, minutes: 10, where: "self", source: "core", status: "core" };

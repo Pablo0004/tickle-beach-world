@@ -19,74 +19,87 @@ mansions.
 - Places are spread evenly over the six regions.
 - Small holders (1 to 4 Tickles) each get a house for their household in towns shared with other small
   holders.
-- "From 20" Tickles: an estate. Read as: 5 to 19 Tickles, a mansion that grows with their number; 20 or
-  more, an estate with the holder's manor and a house for each Tickle. *(To be confirmed with the owner.)*
+- Sizes (replaced on 16 and 22 October 2026): 1–4 a house in a town; 5–9 two medium houses in a town; 10–19 four
+  medium houses on a small plot of their own; 20+ one mansion for every 20 Tickles, bigger than four medium houses
+  together, in the style of its region; more than eight mansions' worth (180+) a fortress with walls round the plot
+  and one great castle or palace for all of them. Mansions to be editable inside and out later.
+- Ownership changes often: the layout must update smoothly, and there must always be room for everyone (underground
+  or under water if the surface is full).
 
-**Done (in this repository, not published)**:
-- Generation by holder from the ownership snapshot: 93 estates, 254 mansions and 60 towns (407 places),
-  about 1,605 Tickles and 67 to 69 places per region, no overlaps.
-- Estates: manor 1.6 times normal size in the middle and a house per Tickle; mansions scaled +3.5 % per
-  Tickle over five, with a dormitory holding a bed for each (up to 19); town houses per household (a
-  two-storey townhouse for three or four).
-- Clans = places (colours, names, allies, rivals, food shared between allies, raids), interiors with a bed
-  for every member, Holders tab with "Your place" and a button to fly to every big holder's place, saved
-  games migrated (each Tickle keeps everything it owns and has done; what belonged to the old villages is
-  reset).
-- Tested: generation, views of an estate, a mansion and a town, one simulated day without errors.
+**Done and tested locally (22 October 2026), not yet published** (layout tag `plots-2`):
+- Fixed plots and an assignment remembered in the save; a simulated ownership change kept 248 of 249 places on
+  their plots, moved the holder who changed size with its granary, and gave the newcomer a free plot.
+- The owner's sizes: 1–4 a house in a town; 5–9 two medium houses in a town; 10–19 four medium houses on a small
+  plot; 20+ an estate with a mansion for every 20; 180+ a fortress with walls, towers and gates and a great castle
+  or palace for all (throne hall, a 48-bed dormitory per tower, treasury).
+- Mansions in one style per region (log lodge, country house, stone keep, captain's house, white villa, tropical
+  villa). Castles and first mansions are placed away from the roads.
+- Warrens for overflow (not needed with today's snapshot), the "for sale" sign, place cards and interiors.
+- All 12 dungeon caves and 12 Ether fields fit again; two days simulated without errors.
+- A newer ownership snapshot can be stored in the browser (`App.setOwners` / `App.ownersInfo` / `App.clearOwners`).
 
-**To do — the owner's requirements of 15 October**:
+**Still to do for item 11**:
+1. The in-game "Update owners" button (reading `ownerOf()` from a public RPC where the page may reach the network)
+   and `tools/update_owners.py` to rebuild `js/owners.js`.
+2. Mansions editable inside and out (later, as the owner asked).
+3. Push to GitHub and publish version 49.
 
-1. **The layout must update smoothly, because ownership changes often.** Design under way (patch drafted,
-   not yet applied to `js/geo.js`):
-   - **Fixed plots** that never depend on ownership, placed once per region: 18 estate plots with set
-     capacities (400, 170, 120, 90, 70, 60, 50, 44, 38, 34, 30, 28, 26, 24, 24, 22, 22, 22 Tickles),
-     48 mansion plots and 13 town plots (36 Tickles each). Terrain, roads, fields and farms are laid out for
-     every plot, lived on or not, so nothing else in the world moves when ownership changes.
-   - **Who lives on each plot** is worked out from the snapshot and **remembered in the save**: when
-     ownership changes, every holder who still fits keeps its plot (an estate keeps its plot up to 1.4 times
-     the plot's capacity; a town keeps its households); only those who grew or shrank past a threshold
-     move; newcomers take a free plot in the region with the fewest Tickles; empty plots go back up for sale
-     (a "for sale" sign, nothing else on them).
-   - Houses are generated **last** (after every fixed piece of scenery), each household in a **stable
-     slot**, so the index of every fixed piece never changes and saved state stays valid.
-   - Places are renumbered over the occupied plots only; the save stores the plot of every place and every
-     house, and on loading after an ownership change it **carries each place's data over by plot** (food,
-     relations, guardians beaten, depth reached, ruins, moved pieces, house upgrades), dropping only what
-     belonged to holders who left and short-lived events in progress (raids, parties, hunts, contests).
-2. **Room for everyone, however many holders there are** — even underground or under water. Planned:
-   - When the surface plots of a kind are full, a holder gets an **underground warren**: a cave mouth on a
-     hillside (with its small square: fire, logs, granary, altar) and, inside, a cavern with a bed for every
-     resident, sized to their number. There is no limit to how many warrens can be dug; in the coastal
-     regions they can be sea grottos.
-   - When a surface plot frees up, the first holder waiting in a warren moves up to it.
-   - Every holder always has a defined amount of room: an estate plot by capacity, a mansion plot, a house in
-     a town, or a warren sized to its Tickles.
-3. **Restore what the holder layout squeezed out**: two of the twelve dungeon caves and four of the twelve
-   Ether fields currently find no room (10 and 8 are placed); the fixed plan must leave space for all of
-   them.
-4. **Refreshing the ownership snapshot**:
-   - `tools/update_owners.py`: read `ownerOf()` for all 9,629 tokens from a public Ethereum RPC in batches
-     (contract `0x6f4388602c5dd6c593bf7c9cf3128aaa2a3e09ce`, selector `0x6352211e`) and rewrite
-     `js/owners.js` with the block number and date.
-   - An in-game "Update owners" button that reads the same data from a public RPC and keeps it in the
-     browser (with a clear message where the page is not allowed to reach the network, as in the artifact).
-5. **Checks before publishing version 49**: inside a mansion and a shared house, the migration of a real
-   saved game, a changed snapshot keeping most holders on their plots, a day simulated without errors; then
-   publish, update `ESTADO_Y_PENDIENTES.md`, and confirm the thresholds (1–4 / 5–19 / 20+) with the owner.
+Fixed on 22 October: **Tickles no longer walk through buildings**. Houses, halls, granaries, mansions, castles,
+the fortress walls, guild halls, casinos and the like are obstacles they walk round (a footprint from each model's
+box, turned with it; a gatehouse leaves its arch open; fences, pens, docks, piers, arenas, caves and mines are
+walked into as before); the path-finder goes round them and finds a fortress's gate. In a test, about 0.2% of
+thousands of positions fell inside a building, all of them passing moments. Distant figures still walk straight.
 
 ## 2. Next — item 12: ride more animals
 
 Besides horses and griffins, Tickles should be able to ride **deer, sheep, boars and the dungeon monsters
 they have tamed** (asked 15 October 2026).
 
-## 3. Open question
+## 3. Then — item 13: a prison for the Tickles put up for sale
+
+Asked for on 16 October 2026; decided with the owner:
+- **One prison, underground**: a penitentiary with its entrance on the surface and the cells below.
+- **While a Tickle is listed for sale it lives in the prison**: it leaves its holder's place, sleeps in a cell, goes
+  out to the yard and does prison work. If it is sold it walks free and moves in with its new holder; if the
+  listing is withdrawn it goes home.
+- Listings live on the marketplaces (OpenSea and the like), not on the chain, so a script has to take a snapshot
+  of them the way `owners.js` does for ownership. OpenSea's API needs a (free) API key that the owner gets and
+  keeps on their own machine.
+
+## 3b. Then — item 14: a great Parliament instead of the town halls
+
+Asked for on 16 October 2026:
+- The town halls are replaced by one **huge parliament**.
+- **Tickle ministers are elected according to how many Tickles each holder has** (more Tickles, more seats).
+- The parliament **approves or rejects changes of every kind to the game**: the game's way of showing democracy
+  when everything is put to the vote.
+- To decide with the owner when it starts: one parliament for the whole map or more, and where; how many seats
+  and which of a holder's Tickles sit; who proposes changes and how what is approved is applied; what happens to
+  what the town halls did (notice board, ore treasury, shelter for those who lost their house).
+
+## 3c. Then — item 15: the dungeon's save points and floors of their own kind
+
+Dictated on 16 October 2026:
+- **Save points** shown as **great teleport gems**, placed **beside each floor's boss**.
+- The **same dungeon rocks used in different ways**: floors that look like **ice**, **volcanic** floors, floors that
+  seem **part of the surface, with natural light and water**, and **a floor that is a great labyrinthine forest**.
+- **Cut the Underworld to 12 floors**, keeping the hardest.
+
+## 3d. Item 16: checking on the chain who owns each Tickle and which are for sale
+
+- Ownership is read from the chain with `ownerOf()` (a script that rebuilds `js/owners.js`, and an in-game button).
+- Listings: most (OpenSea, Blur...) live on the marketplaces, not on the chain; only Tickles placed in automatic
+  sale contracts (Sudoswap-style pools) show on the chain, because that contract becomes their owner. The rest need
+  the marketplace's API (with the owner's own key).
+
+## 4. Open question
 
 - **Waves in the rivers and the lake** (item 8b): the waves at the mouths of the channels were removed (the
   "open sea" no longer includes the channels between regions), and the lake and ponds are calm. If the owner
   meant something else — for example the dark stripes of the stepped riverbed seen through the water — it is
   still to be changed.
 
-## 4. Half-done or to confirm
+## 5. Half-done or to confirm
 
 - **Credits**: Menu → Credits still names the author of the Tickle Beach collection (a real-world credit,
   not lore). Asked whether to remove it; no answer yet.
@@ -98,7 +111,7 @@ they have tamed** (asked 15 October 2026).
   everything else, never closed.
 - **Creature tournament fights** may resolve too fast to be watched comfortably.
 
-## 5. After this list
+## 6. After this list
 
 The owner has a separate list of new requests to hand over once this one is finished.
 

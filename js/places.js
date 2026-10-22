@@ -19,11 +19,16 @@
     if (t === "smithy_0") return [6, 9];
     if (t === "paddock_0") return [6, 2.5];
     if (t === "roost_0") return [2.6, 13];
+    if (s.castle) return t.startsWith("castle3_") ? [24, 58] : t.startsWith("castle_") ? [20, 50] : t.startsWith("castle2_") ? [10, 30] : [16, 22];
+    if (s.house && /^(mlodge|mfarm|mkeep|mcaptain|mvilla|mtropic)_/.test(t)) return [6.5, 10];
+    if (s.wall) return null;
     if (s.house && t.startsWith("manor_")) return [3.6, 8];
     if (s.house && t.startsWith("townhouse_")) return [2.4, 6.5];
     if (t === "dock_0") return [5, 2];
     if (t === "etherfield_0") return [1.8, 4];
     if (t === "altar_0") return [1.4, 1.8];
+    if (t === "plotsign_0") return [1.3, 2.4];
+    if (s.warren) return [5.5, 4.5];
     if (s.hall) return [3.6, 6.5];
     if (s.granary) return [2.4, 5];
     if (s.house) return [2.3, 4.5];
@@ -66,26 +71,38 @@
     const out = { s, name: "", sub: "", text: "", rows: [], enter: null };
     const v = s.village != null ? App.villages[s.village] : null, day = Math.floor(st.T / 1440), m = st.T - day * 1440;
     const doorAt = (x, z) => App.enterableAt(x, z);
+    if (s.forSale) {
+      // a plot nobody lives on: what it is for, and how it gets someone
+      const L = App.lots && App.lots[s.lot], R = L ? App.regions[L.region] : null;
+      out.name = (L ? L.name : "A plot") + ": for sale";
+      out.sub = L ? (L.cls === "grand" ? "an estate plot, for a holder of " + App.SETTLE.GRAND + " Tickles or more (room for " + L.cap + " mansion" + (L.cap === 1 ? "" : "s") + ")" : L.cls === "medium" ? "a small plot, for a holder of " + App.SETTLE.MEDIUM + " to " + (App.SETTLE.GRAND - 1) + " Tickles (four houses)" : "a town plot, for small holders") + (R ? " in " + R.name : "") : "";
+      out.text = "<p>The land is laid out in plots that never move. Who lives on each one follows who owns the Tickles: when ownership changes, everyone who still fits keeps their plot, and a holder who arrives or grows takes a free one like this (or, if none is left, a warren dug underground until one comes free). Nothing stands here yet but the fields and the farm, left fallow.</p>";
+      return out;
+    }
     if (s.house) {
       const ids = App.residentsOf(s), id = ids[0];
-      const big = s.type.startsWith("manor") ? "manor" : s.type.startsWith("townhouse") ? "townhouse" : null;
+      const big = s.castle ? (s.type.startsWith("castle") ? "castle" : "palace") : /^(mlodge|mfarm|mkeep|mcaptain|mvilla|mtropic)_/.test(s.type) ? "mansion" : s.type.startsWith("manor") ? "manor" : s.type.startsWith("townhouse") ? "townhouse" : null;
       const what = big || (s.type.startsWith("cottage") ? "cottage" : s.ruined && s.orig && /^(manor|townhouse)/.test(s.orig) ? "new house" : "round hut");
-      out.name = ids.length > 1 ? "The " + what + " of a household of " + ids.length : (id != null ? App.nameOf(id) + "'s" : "A") + " " + what;
+      out.name = big === "castle" || big === "palace" ? v.name : big === "mansion" ? v.name + ": a mansion of " + ids.length : ids.length > 1 ? "The " + what + " of a household of " + ids.length : (id != null ? App.nameOf(id) + "'s" : "A") + " " + what;
       out.sub = v.name + DOT + App.placeKindText(v);
       if (ids.length > 1) { out.rows.push(["Who lives here", ids.map((x) => esc(App.nameOf(x))).join(", ")]); const o = App.ownerOf(id); if (o) out.rows.push(["Their holder", esc(st.wallet && o === st.wallet ? "you" : App.shortAddr(o))]); }
       else if (id != null) { const step = App.planStep(id, st.T).step; out.rows.push(["Who lives here", esc(App.nameOf(id)) + DOT + esc(App.isDead(id) ? "fallen; its spirit waits at the altar" : App.isKO(id) ? "knocked out, resting inside" : (App.stepLabel(step.k) || step.k).toLowerCase())]); }
       if (s.ruined) out.rows.push(["State", ruinText(s)]);
-      out.text = big === "manor" ? "<p>A manor: two floors, a pillared porch, a tower with a flag and a gold vane. Only the richest Tickles have one; the village builders put it up when its owner paid for it. Inside: a great hall, a bedroom upstairs and a strong room.</p>"
+      out.text = big === "castle" || big === "palace" ? "<p>The " + big + " of a fortress: a holder of " + App.SETTLE.KEEP + " Tickles or more has walls round its plot (wider, with a bigger " + big + ", from " + App.SETTLE.FORT + " and again from " + App.SETTLE.CITADEL + "), with towers and a gate wherever a road comes in, and all of its Tickles live together in its " + big + " (" + (big === "castle" ? "a tall keep, four round towers and battlements" : "a domed middle with a columned portico and two long wings") + "). Inside: the " + (big === "castle" ? "throne" : "great") + " hall with its long tables, a dormitory in every tower with a bed for each of them, and the treasury.</p>"
+        : big === "mansion" ? "<p>A mansion: a holder has one for every " + App.SETTLE.GRAND + " Tickles it owns, built in the style of its region (a log lodge in the Camping, a country house by the Duck Pond, a little stone keep at the Waterfall, a captain's house on the Pier, a white villa on Beach Sand, a tropical villa under the Palm). Inside, a great hall, a dormitory with a bed for each Tickle who lives here, and a strong room.</p>"
+        : big === "townhouse" && ids.length > 1 ? "<p>A medium house: two storeys, timbered upstairs, a balcony over the door and flowers at the windows, with a bed for each of the household. Holders of " + App.SETTLE.PAIR + " to " + (App.SETTLE.MEDIUM - 1) + " Tickles have two of them in a town; holders of " + App.SETTLE.MEDIUM + " to " + (App.SETTLE.GRAND - 1) + ", four on a plot of their own.</p>"
+        : big === "manor" ? "<p>A manor: two floors, a pillared porch, a tower with a flag and a gold vane. Only the richest Tickles have one; the village builders put it up when its owner paid for it. Inside: a great hall, a bedroom upstairs and a strong room.</p>"
         : big === "townhouse" ? "<p>A townhouse: two storeys, timbered upstairs, a balcony over the door and flowers at the windows. Its owner paid the village builders to rebuild its old house bigger.</p>"
         : "<p>Every Tickle has a home of its own: a cottage with a bedroom upstairs or a round hut, its roof in the colour of the clan. Inside: a rug, a stove, a bookshelf and a picture of the Maker on the wall.</p>";
       if (id != null && App.wealthText && App.wealthText(id)) out.rows.push(["Belongings", esc(App.wealthText(id))]);
       if (!s.ruined) out.enter = doorAt(s.x + Math.sin(s.rot) * 2.7, s.z + Math.cos(s.rot) * 2.7);
     } else if (s.hall) {
       const o = App.oreOf ? App.oreOf(v) : null;
-      out.name = v.kind === "town" ? v.name + " Town Hall" : v.kind === "estate" ? v.name + ": the Manor" : v.name; out.sub = App.placeKindText(v);
+      out.name = v.warren ? v.name : v.name + " Town Hall"; out.sub = App.placeKindText(v);
       out.rows.push(["Granary", Math.round(v.food) + " food (" + App.foodWord(v) + ")"]);
       if (o) { const list = Object.keys(App.ORES).filter((k) => o[k] >= 1).map((k) => Math.floor(o[k]) + " " + k); out.rows.push(["Stores", list.length ? list.join(", ") : "nothing from the mine yet"]); }
-      out.text = v.kind === "mansion" ? "<p>A mansion: every Tickle of its holder lives here under one roof (the more of them, the bigger it is). A great hall, bedrooms for all of them, a strong room. Its granary, altar and fields are round it.</p>"
+      out.text = v.warren ? "<p>A warren: when the land has no plot left for a holder, one is dug for it under a hill, and all of its Tickles live together in one great cavern with a bed for each, the hearth and the long table by the round door, the stores along the walls and glowing mushrooms in the corners (they grow mushrooms down there instead of fields). The square in front has its fire and its altar. When a plot of its kind comes free on the land above, the warren's folk are the first to move up to it.</p>"
+        : v.kind === "mansion" ? "<p>A mansion: every Tickle of its holder lives here under one roof (the more of them, the bigger it is). A great hall, bedrooms for all of them, a strong room. Its granary, altar and fields are round it.</p>"
         : v.kind === "estate" ? "<p>The holder's manor, in the middle of its estate: every Tickle of the holder has its own house round it. The great hall is where the estate's council meets; Tickles whose houses burned sleep here until theirs is rebuilt.</p>"
         : "<p>The heart of a town of small holders, each household in its own house: the elder's seat, the banners, a long table for the council and a council room upstairs. Tickles whose houses burned sleep here until theirs is rebuilt.</p>";
       if (s.ruined) out.rows.push(["State", ruinText(s)]);

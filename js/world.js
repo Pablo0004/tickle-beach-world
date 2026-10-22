@@ -142,6 +142,9 @@
     return null;
   };
   App.surfaceAt = (x, z) => {
+    // (the walk along the top of a fortress's walls, geo.js)
+    const wd = App.wallDeckY ? App.wallDeckY(x, z) : null;
+    if (wd != null) return { y: wd, water: false, deck: true };
     const h = App.columnHeight(Math.floor(x), Math.floor(z));
     if (h < SEA) { const d = App.deckY(x, z); return d != null ? { y: d, water: false, deck: true } : { y: WATER_Y - 0.45, water: true, floor: h }; }
     return { y: h, water: false };
@@ -245,7 +248,7 @@
   // keep chunk meshes alive around the camera target
   App.streamTerrain = (budget) => {
     const tx = fdiv(Math.floor(cam.target.x)), tz = fdiv(Math.floor(cam.target.z));
-    const R = RANGE.chunks;
+    const R = RANGE.chunks + (cam.radius > 85 ? 1 : 0); // a ring more when zoomed far out, so the land fills the screen
     const want = [];
     for (let dz = -R; dz <= R; dz++) for (let dx = -R; dx <= R; dx++) {
       if (dx * dx + dz * dz > (R + 0.5) * (R + 0.5)) continue;
@@ -480,6 +483,10 @@
 
   // ---------- daylight ----------
   const C = (r, g, b) => new THREE.Color(r, g, b);
+  // no haze over the land: everything on the screen is shown clear (the fog object stays only for the blue
+  // under the water in first person, firstperson.js)
+  App.NO_FOG = { near: 1e5, far: 2e5 };
+  App.fogRange = () => App.NO_FOG;
   App.daylight = (minuteOfDay) => {
     const h = minuteOfDay / 60;
     const sky = TB.SKIES[0];
@@ -500,6 +507,7 @@
     sun.position.set(Math.cos(a) * 40, Math.max(8, Math.sin(a) * 55), 25);
     water.material.color.setHex(k > 0.5 ? 0x2aa7c9 : 0x1b5f7a);
     App.isNight = k < 0.4;
+    if (!(App.fpOn && App.fpOn())) { const f = App.fogRange(); scene.fog.near = f.near; scene.fog.far = f.far; }
     if (App.weatherLight) App.weatherLight(scene, hemi, sun, k); // cloud, rain, fog and lightning (weather.js)
     return k;
   };

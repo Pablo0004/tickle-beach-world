@@ -73,8 +73,14 @@
   };
 
   // ---------- owners ----------
-  let ownerIdx = null;
+  // The snapshot that ships with the game (js/owners.js), and on top of it a newer one this browser may keep
+  // (App.setOwners: only the tokens whose owner has changed since, with the block it was read at). The map follows
+  // whichever is newer: geo.js keeps everyone who still fits on their plot.
+  const OWN_KEY = "tickle-owners-v1";
+  let ownerIdx = null, newer = null;
+  try { const o = JSON.parse(localStorage.getItem(OWN_KEY) || "null"); if (o && o.changes && TB.OWNERS && o.block > TB.OWNERS.block) newer = o; } catch (e) { newer = null; }
   App.ownerOf = (id) => {
+    if (newer && Object.prototype.hasOwnProperty.call(newer.changes, id)) return newer.changes[id];
     if (!TB.OWNERS) return null;
     if (!ownerIdx) {
       const b = atob(TB.OWNERS.index);
@@ -84,12 +90,57 @@
     const k = ownerIdx[id];
     return k === 0xffff ? null : TB.OWNERS.holders[k];
   };
+  // which snapshot the map follows: its block and date, and whether it came with the game or was read since
+  App.ownersInfo = () => (newer ? { block: newer.block, date: newer.date, changed: Object.keys(newer.changes).length, source: "browser" } : { block: TB.OWNERS ? TB.OWNERS.block : 0, date: TB.OWNERS ? TB.OWNERS.date : "", changed: 0, source: "game" });
+  // keep a newer reading of ownerOf() in this browser: { block, date, owners: [address or null for every token] };
+  // only what differs from the snapshot that ships with the game is stored. The map is rebuilt on the next load.
+  App.setOwners = (snap) => {
+    if (!snap || !snap.owners || snap.owners.length !== N) return false;
+    const keep = newer; newer = null;
+    const changes = {};
+    for (let id = 0; id < N; id++) { const o = snap.owners[id] ? String(snap.owners[id]).toLowerCase() : null; if (o !== App.ownerOf(id)) changes[id] = o; }
+    newer = keep;
+    try { localStorage.setItem(OWN_KEY, JSON.stringify({ block: snap.block, date: snap.date, changes })); return true; } catch (e) { return false; }
+  };
+  App.clearOwners = () => { try { localStorage.removeItem(OWN_KEY); } catch (e) { /* storage blocked */ } };
+  // read ownerOf() for every Tickle from Ethereum now, through a public node, and keep it in this browser (where the
+  // page may reach the network: the claude.ai viewer does not let it, and then tools/update_owners.py does the same)
+  const RPC = "https://ethereum-rpc.publicnode.com", CONTRACT = "0x6f4388602c5dd6c593bf7c9cf3128aaa2a3e09ce";
+  App.refreshOwners = async (onProgress) => {
+    // (a public node only takes so much at once: a pause between batches, and a longer one when it says "slow down")
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    const post = async (body) => {
+      for (let k = 0; ; k++) {
+        const r = await fetch(RPC, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+        if (r.ok) return r.json();
+        if ((r.status === 429 || r.status >= 500) && k < 7) { await wait(1500 * (k + 1)); continue; }
+        throw new Error("the node answered " + r.status);
+      }
+    };
+    const head = await post({ jsonrpc: "2.0", id: 1, method: "eth_blockNumber", params: [] });
+    const tag = head.result, block = parseInt(tag, 16), owners = new Array(N).fill(null);
+    for (let a = 0; a < N; a += 100) {
+      const batch = [];
+      for (let id = a; id < Math.min(N, a + 100); id++) batch.push({ jsonrpc: "2.0", id, method: "eth_call", params: [{ to: CONTRACT, data: "0x6352211e" + id.toString(16).padStart(64, "0") }, tag] });
+      let res = await post(batch);
+      if (!Array.isArray(res)) res = [res];
+      for (const r of res) if (r && typeof r.result === "string" && r.result.length >= 66) owners[r.id] = "0x" + r.result.slice(-40).toLowerCase();
+      if (onProgress) onProgress(Math.min(N, a + 100) / N);
+      await wait(350);
+    }
+    const missing = owners.filter((o) => !o).length;
+    if (missing > N * 0.05) throw new Error(missing + " answers missing");
+    if (block <= (TB.OWNERS ? TB.OWNERS.block : 0)) throw new Error("the node is behind the game's own snapshot");
+    let changed = 0;
+    for (let id = 0; id < N; id++) if (owners[id] !== App.ownerOf(id)) changed++;
+    if (!App.setOwners({ block, date: new Date().toISOString().slice(0, 10), owners })) throw new Error("this browser would not keep it");
+    return { block, changed };
+  };
   App.tokensOf = (addr) => { addr = (addr || "").toLowerCase(); const out = []; for (let id = 0; id < N; id++) if (App.ownerOf(id) === addr) out.push(id); return out; };
   App.topHolders = (n) => {
-    App.ownerOf(0);
     const cnt = new Map();
-    for (let id = 0; id < N; id++) { const k = ownerIdx[id]; cnt.set(k, (cnt.get(k) || 0) + 1); }
-    return [...cnt].sort((a, b) => b[1] - a[1]).slice(0, n).map(([k, c]) => ({ addr: TB.OWNERS.holders[k], count: c }));
+    for (let id = 0; id < N; id++) { const o = App.ownerOf(id); if (o) cnt.set(o, (cnt.get(o) || 0) + 1); }
+    return [...cnt].sort((a, b) => b[1] - a[1]).slice(0, n).map(([addr, count]) => ({ addr, count }));
   };
   App.isMine = (id) => !!st.wallet && App.ownerOf(id) === st.wallet;
 
@@ -364,6 +415,9 @@
     // the Warriors' Guild: an afternoon guarding a mine (one at the door, one down inside on its rounds)
     const gp = App.guildPlan && App.guildPlan(id, day);
     if (gp) steps = overlay(steps, gp);
+    // a turn on the walls of its fortress (geo.js)
+    const ww = App.wallWatch && App.wallWatch(id, day, v);
+    if (ww) steps = overlay(steps, ww);
     // a night at the casino (the gamblers often; others now and then; the dealers every night)
     const cv = App.casinoVisit && App.casinoVisit(id, day);
     if (cv) steps = overlay(steps, { k: "casino", s: cv.s, e: cv.e, p: { x: cv.Cs.door.x + (App.hash2(id, 345, 3) - 0.5) * 3, z: cv.Cs.door.z + (App.hash2(id, 347, 3) - 0.5) * 3, label: cv.Cs.name + (cv.staff ? " (dealing at the tables)" : " (a night at the casino)"), casino: cv.Cs.i, staff: !!cv.staff } });
@@ -429,6 +483,7 @@
     const { step, m } = App.planStep(id, T);
     const el = m - step.s;
     if (el < step.travel) { const p = App.alongPath(step.path, el * (step.spd || SPEED)); return { x: p.x, z: p.z, moving: true }; }
+    if (step.k === "wallwatch" && step.ww && App.wallPos) { const q = App.wallPos(step.ww, el - step.travel); return { x: q.x, z: q.z, moving: true }; }
     if (step.k === "sail" && App.boatPose) { const b = App.boatPose(id, T); if (b && b.out) return { x: b.x, z: b.z, moving: true, boat: true }; }
     if (step.k === "boat" && el >= step.travel) { const f = App.ferryAt(App.ferries[step.ferry], T); return { x: f.x, z: f.z, moving: true, boat: true }; }
     if (step.k === "ferry") {
@@ -534,8 +589,8 @@
   }
   function heightAt(id, x, z) {
     if (Math.abs(x - P.pyx[id]) + Math.abs(z - P.pyz[id]) > 0.6) {
-      const h = App.genHeight(x, z);
-      P.py[id] = h < App.SEA ? App.WATER_Y - 0.5 : h;
+      const h = App.genHeight(x, z), wd = App.wallDeckY ? App.wallDeckY(x, z) : null;
+      P.py[id] = wd != null ? wd : h < App.SEA ? App.WATER_Y - 0.5 : h;
       P.pyx[id] = x; P.pyz[id] = z;
     }
     return P.py[id];

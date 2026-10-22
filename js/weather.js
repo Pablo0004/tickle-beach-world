@@ -207,12 +207,12 @@
     const grey = new THREE.Color(0.5, 0.54, 0.6).multiplyScalar(0.35 + k * 0.65).convertSRGBToLinear();
     const mix = clamp(here.cloud * 0.5 + here.rain * 0.4 + here.fog * 0.7, 0, 0.92);
     scene.background.lerp(grey, mix); scene.fog.color.lerp(grey, mix);
-    if (!(App.fpOn && App.fpOn())) { scene.fog.near = 90 - here.rain * 45 - here.fog * 75; scene.fog.far = 175 - here.rain * 70 - here.fog * 105; }
     if (flash > 0) { hemi.intensity += flash * 1.6; scene.background.lerp(new THREE.Color(0.85, 0.88, 1), flash * 0.6); }
   };
   let rainMesh = null, cloudMesh = null, funnel = null, wave = null, bolt = null;
   const M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), E = new THREE.Euler(), V = new THREE.Vector3(), SC = new THREE.Vector3();
-  const RAIN = 1400, CLOUDS = 18, drops = [];
+  // the clouds sail above the camera's usual height (the view looks down, so they show below you as you zoom out)
+  const RAIN = 1400, CLOUDS = 18, CLOUD_Y = 42, SPAN = 320, drops = [];
   function makeMeshes() {
     rainMesh = new THREE.InstancedMesh(new THREE.BoxGeometry(0.05, 1.1, 0.05), new THREE.MeshBasicMaterial({ color: 0xcfe6ff, transparent: true, opacity: 0.55 }), RAIN);
     rainMesh.frustumCulled = false; rainMesh.count = 0; App.scene.add(rainMesh);
@@ -222,7 +222,7 @@
     // the funnel: grey rings, wide at the top and narrow at the ground, turning
     funnel = new THREE.Group();
     const fm = new THREE.MeshLambertMaterial({ color: 0x6a6e78, transparent: true, opacity: 0.55, side: THREE.DoubleSide });
-    for (let k = 0; k < 12; k++) { const r0 = 1.4 + k * 0.85, r1 = 1.4 + (k + 1) * 0.85, c = new THREE.Mesh(new THREE.CylinderGeometry(r1, r0, 3.4, 14, 1, true), fm); c.position.y = 1.7 + k * 3.3; c.userData.k = k; funnel.add(c); }
+    for (let k = 0; k < 16; k++) { const r0 = 1.4 + k * 0.85, r1 = 1.4 + (k + 1) * 0.85, c = new THREE.Mesh(new THREE.CylinderGeometry(r1, r0, 3.4, 14, 1, true), fm); c.position.y = 1.7 + k * 3.3; c.userData.k = k; funnel.add(c); }
     funnel.visible = false; App.scene.add(funnel);
     // the wave: a long wall of water with a white crest
     wave = new THREE.Group();
@@ -236,10 +236,10 @@
   function strike(x, z) {
     const gy = App.surfaceAt(x, z).y;
     while (bolt.children.length) bolt.remove(bolt.children[0]);
-    let px = x + (rnd() - 0.5) * 6, py = gy + 55, pz = z + (rnd() - 0.5) * 6;
+    let px = x + (rnd() - 0.5) * 6, py = gy + CLOUD_Y, pz = z + (rnd() - 0.5) * 6;
     const mat = boltMat();
     for (let k = 0; k < 9; k++) {
-      const ny = gy + 55 - ((k + 1) / 9) * 55, nx = k === 8 ? x : x + (rnd() - 0.5) * 5, nz = k === 8 ? z : z + (rnd() - 0.5) * 5;
+      const ny = gy + CLOUD_Y - ((k + 1) / 9) * CLOUD_Y, nx = k === 8 ? x : x + (rnd() - 0.5) * 5, nz = k === 8 ? z : z + (rnd() - 0.5) * 5;
       const len = Math.hypot(nx - px, ny - py, nz - pz), seg = new THREE.Mesh(new THREE.BoxGeometry(0.35, len, 0.35), mat);
       seg.position.set((px + nx) / 2, (py + ny) / 2, (pz + nz) / 2); seg.lookAt(nx, ny, nz); seg.rotateX(Math.PI / 2); bolt.add(seg);
       px = nx; py = ny; pz = nz;
@@ -294,11 +294,11 @@
     rainMesh.count = n; rainMesh.instanceMatrix.needsUpdate = true;
     // the clouds, drifting over with the wind, darker the heavier the weather
     const nc = inside ? 0 : Math.round(CLOUDS * clamp(W.cloud * 1.2, 0, 1));
-    const drift = (st.T * WIND.x * 0.6) % 240;
+    const drift = (st.T * WIND.x * 0.6) % SPAN;
     let ci = 0;
     for (let k = 0; k < nc; k++) {
-      const gx = (hash2(k, 1, 941) - 0.5) * 240, gz = (hash2(k, 2, 941) - 0.5) * 240, x = tx + ((gx + drift + 360) % 240) - 120, z = tz + gz, y = cy + 34 + hash2(k, 3, 941) * 10;
-      const w = 18 + hash2(k, 4, 941) * 22, d = 10 + hash2(k, 5, 941) * 14;
+      const gx = (hash2(k, 1, 941) - 0.5) * SPAN, gz = (hash2(k, 2, 941) - 0.5) * SPAN, x = tx + ((gx + drift + SPAN * 1.5) % SPAN) - SPAN / 2, z = tz + gz, y = cy + CLOUD_Y + hash2(k, 3, 941) * 12;
+      const w = 24 + hash2(k, 4, 941) * 30, d = 14 + hash2(k, 5, 941) * 18;
       for (const [ox, oz, s, h] of [[0, 0, 1, 3], [w * 0.25, d * 0.2, 0.6, 4.5], [-w * 0.3, -d * 0.15, 0.55, 4]]) {
         M4.compose(V.set(x + ox, y + h * 0.4, z + oz), Q.identity(), SC.set(w * s, h, d * s)); cloudMesh.setMatrixAt(ci++, M4);
       }

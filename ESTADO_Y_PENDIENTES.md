@@ -19,6 +19,23 @@ Código en GitHub (privado): https://github.com/Pablo0004/tickle-beach-world —
   - **Sitio para todos aunque crezca el número de poseedores**, aunque sea bajo tierra o bajo el agua: cuando se llenen las parcelas de superficie, madrigueras subterráneas (boca de cueva en una ladera con su placita, y dentro una caverna con una cama para cada uno), sin límite de número; en las regiones de costa pueden ser grutas marinas. Cuando se libere una parcela de superficie, el primero que espere en una madriguera sube a ella.
   - Detectado de paso: con el reparto por poseedores faltan 2 de las 12 cuevas de mazmorra y 4 de los 12 campos de éter (no encuentran sitio); el plan de parcelas fijas debe dejarles hueco.
   - Herramienta para refrescar los dueños (`tools/update_owners.py`) y botón "Update owners" en el juego.
+- **HECHO Y PROBADO EN LOCAL (22 de octubre), SIN PUBLICAR NI SUBIR A GITHUB** (en local ?v=236; layout "plots-2"):
+  - **Parcelas fijas que no se mueven** aunque cambien los dueños, y el reparto se recuerda en la partida. Probado con un cambio de dueños simulado: 248 de 249 sitios se quedaron en su parcela; el que vendió 10 Tickles pasó de finca a parcela pequeña conservando su granero; el comprador nuevo recibió una parcela pequeña libre; el registro lo cuenta.
+  - **Tus tamaños**: 1-4 una casa en un pueblo; 5-9 dos casas medianas en un pueblo; 10-19 cuatro casas medianas en una parcela pequeña propia; 20 o más, una mansión por cada 20 en una finca; **desde 180, una fortaleza** con murallas, torres y puertas (donde entran los caminos) y un gran castillo (Camping, Duck Pond, Waterfall) o un gran palacio (The Pier, Beach Sand, The Palm) donde viven todos (dentro: salón del trono, un dormitorio de 48 camas por torre y tesoro; el tuyo tiene 8 dormitorios para 384).
+  - **Mansiones con un estilo por región**: refugio de troncos (Camping), casa de campo (Duck Pond), castillito de piedra (Waterfall), casa de capitán (The Pier), villa blanca (Beach Sand), villa tropical (The Palm). Dentro, gran salón, dormitorio con una cama por Tickle y cámara del tesoro.
+  - Hoy: 4 fortalezas, 89 fincas, 95 parcelas pequeñas, 61 pueblos; ninguna madriguera hace falta (siguen preparadas por si crece el número de poseedores); regiones equilibradas (1.597-1.613 Tickles); caben las 12 cuevas, los 12 campos de éter y todo lo demás. Castillos y mansiones se colocan lejos de los caminos. Dos días simulados sin errores.
+  - **El juego ya puede guardar en el navegador una lista de dueños más nueva** que la que trae (`App.setOwners`): es la base del botón "actualizar dueños".
+  - **Los Tickles ya no atraviesan los edificios** (22 de octubre): casas, ayuntamientos, graneros, mansiones, castillos, murallas, gremios, casinos... son obstáculos que rodean (las puertas de la muralla dejan pasar por el arco; vallas, corrales, muelles, arenas, cuevas y minas siguen como antes). En la prueba, de miles de posiciones solo un 0,2 % caía dentro de un edificio, y eran momentos de transición. Los que están lejos (figuras pequeñas) siguen yendo en línea recta.
+  - **Falta del 11**: el botón "Update owners" en el juego y `tools/update_owners.py`; las mansiones editables por dentro y por fuera (más adelante); subir a GitHub y publicar la versión 49. Nota: con 384 Tickles y una sola puerta, al salir del castillo por la mañana se forma una multitud delante (se puede dar más salidas si quieres).
+- **Reparto por tamaño, decidido el 16 de octubre (sustituye lo anterior de mansiones de 5 a 19 y de fincas):**
+  - **1 a 4 Tickles**: una casa para su hogar en un pueblo compartido (como hasta ahora).
+  - **5 a 9 Tickles**: **2 casas medianas** en un pueblo compartido.
+  - **10 a 19 Tickles**: **4 casas medianas** en una parcela propia, aunque sea pequeña.
+  - **20 o más**: una mansión por cada 20 Tickles que tenga (de 20 a 39, una; de 40 a 59, dos; 384 Tickles, 19 mansiones), y **cada mansión más grande que 4 casas medianas juntas**. Ya no hay "una casa por Tickle" ni la regla de mansiones de 25 por encima de 50.
+  - Las mansiones tienen que ser **más grandes y majestuosas**, y más adelante **editables por dentro y por fuera**.
+  - **Más de 8 mansiones (desde 180 Tickles): una fortaleza** con murallas por el borde de la parcela y **un gran castillo o palacio para todos sus Tickles** (sin mansiones), con diseños distintos (decidido el 22 de octubre).
+  - **Las mansiones, un estilo por región (6 diseños)**: Camping, mansión de troncos; Duck Pond, casa de campo; Waterfall, castillito de piedra; The Pier, casa de capitán; Beach Sand, villa blanca; The Palm, villa tropical (decidido el 22 de octubre).
+- **Visto el 16 de octubre: los Tickles atraviesan las casas** al andar (no hay choque con los edificios); hay que hacer que las rodeen.
 - **GitHub (15 de octubre)**: todo el código, la descripción completa del juego en inglés (`README.md`) y lo pendiente en inglés (`PENDING.md`) están en el repositorio privado https://github.com/Pablo0004/tickle-beach-world
 
 **11. Un lugar por poseedor** (en vez de pueblos por especie):
@@ -30,7 +47,37 @@ Código en GitHub (privado): https://github.com/Pablo0004/tickle-beach-world —
 
 **12. Montar más animales** (pedido el 15 de octubre): además de caballos y grifos, que se puedan montar los ciervos, las ovejas, los jabalíes… y los monstruos de mazmorra que se hayan domado.
 
+**13. Cárcel para los Tickles puestos a la venta** (pedido el 16 de octubre):
+- **Una sola cárcel, bajo tierra**: un penal subterráneo con su entrada en la superficie y las celdas dentro.
+- **Mientras el Tickle esté en venta, vive en la cárcel**: deja la casa de su poseedor, duerme en una celda, sale al patio y hace trabajos de presos. Si se vende, sale y se muda con su nuevo poseedor; si se retira el anuncio, vuelve a casa.
+- Para saber qué Tickles están en venta hace falta leer los anuncios de los mercados (OpenSea y similares), que no están en la cadena: un script que guarde una "foto" de los anuncios como la de los poseedores. La API de OpenSea pide una clave gratuita que tendrías que sacar tú y poner en tu ordenador (yo no manejo claves).
+
+**14. Un gran Parlamento en lugar de los ayuntamientos** (pedido el 16 de octubre):
+- Sustituye a los ayuntamientos de antes: un **enorme parlamento**.
+- Se eligen **Tickles ministros según los Tickles que tenga cada poseedor** (más Tickles, más escaños).
+- En el parlamento se **aprueban o rechazan los cambios de todo tipo en el juego**: es la forma de representar la democracia en el juego a la hora de votarlo todo.
+- **Por decidir** (preguntar al empezarlo): si es uno solo para todo el mapa y dónde está; cuántos escaños hay y qué Tickle de cada poseedor se sienta; quién propone los cambios y cómo se aplica lo aprobado; qué pasa con lo que hacían los ayuntamientos (tablón, tesoro de minerales, refugio de quien pierde su casa).
+
+**15. Mazmorra: puntos de guardado y pisos distintos** (dictado el 16 de octubre):
+- **Puntos de guardado** representados como **grandes gemas de teletransporte**, **al lado del jefe de cada piso**.
+- Usar **las mismas rocas de la mazmorra de formas distintas**: unos pisos que parezcan de **hielo**, otros **volcánicos**, otros como si fueran **parte de la superficie, con luz natural y con agua**, y **otro piso como un gran bosque laberíntico**.
+- **Reducir los pisos a 12**, quedándonos con los más complicados.
+
+**16. Comprobar en la cadena quién posee cada Tickle y cuáles están en venta** (pedido el 16 de octubre):
+- Poseedores: se leen de la cadena con `ownerOf()` (script que rehace `js/owners.js` y botón en el juego).
+- En venta: la mayoría de los anuncios (OpenSea, Blur…) no están en la cadena sino en los mercados; solo están en la cadena los Tickles metidos en contratos de venta automática (pools tipo Sudoswap), que se ven porque su dueño pasa a ser ese contrato. Para el resto hace falta la API del mercado (clave tuya).
+
 ---
+
+**PAUSA (22 de octubre, a petición tuya). Estado exacto para retomar:**
+- Hecho y probado en el juego: lo del punto 11 descrito arriba, más que los Tickles no atraviesen edificios (pasos comprobados en todo su tramo, para que los jinetes no se salten los muros), los caminos que entran o salen de una fortaleza pasan por sus puertas (también los Tickles lejanos), las puertas pegadas al muro (los tramos se calculan de puerta a puerta), el castillo grande nuevo (el doble que el primero) y la herramienta `tools/update_owners.py` (probada en modo `--check`).
+- **ESCRITO PERO SIN PROBAR** (el siguiente paso al volver: cargar el juego, mirar y corregir):
+  - **Castillos por tamaño (lo que pediste el 22)**: de 100 a 149 Tickles el castillo pequeño (el primer diseño, `castle2`); de 150 a 249 el castillo grande (`castle`); desde 250 uno enorme nuevo, la ciudadela (`castle3`: muralla propia con seis torres, torre del homenaje gigante con aguja, dos torres con aguja, gran salón, capilla con campanario, puerta monumental). En las regiones de palacio, el palacio en tres tamaños. Parcelas de fortaleza por región: 1 ciudadela, 1 fortaleza grande y 2 pequeñas; las de mansiones pasan a ser de 1 a 4 mansiones (20 a 99 Tickles).
+  - **Muralla el doble de ancha con adarve** y **guardias que patrullan por encima**: uno de cada diez Tickles de cada fortaleza hace cada día un turno (mañana, tarde o noche) subiendo por una puerta y recorriendo el muro hasta la siguiente y vuelta; los lejanos también se dibujan arriba.
+  - El botón **"Read the owners from Ethereum now"** de la pestaña Holders: con pausas y reintentos (el nodo público cortaba con error 429); falta comprobar que termina y que el mapa se rehace bien.
+- **Tu pregunta de si terminé lo pendiente de antes (como los ajustes de la mazmorra): no.** Seguimos en el punto 11; la mazmorra (gemas de guardado junto al jefe, 12 pisos de hielo, volcánicos, de superficie con luz y agua, y uno de bosque laberíntico) es el punto 15 y está sin empezar, igual que el 12 (montar ciervos, ovejas, jabalíes y monstruos domados), el 13 (cárcel de los Tickles en venta), el 14 (Parlamento) y el 16 (comprobar ventas en la cadena; la parte de dueños ya está). Si quieres, se puede adelantar la mazmorra.
+- **Lo que me has pedido como forma de trabajar (22 de octubre)**: crear una gran variedad de estructuras, sin prisa por terminar: el juego se va a desarrollar durante meses.
+- Notas: con 384 Tickles y una sola puerta se forma una multitud al salir del castillo por la mañana (se puede dar más salidas); las mansiones editables por dentro y por fuera quedan para más adelante; subir a GitHub y publicar la versión 49 cuando lo pruebes y te guste.
 
 ## 2. Cosas a medias o por confirmar
 

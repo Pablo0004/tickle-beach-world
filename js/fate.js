@@ -131,7 +131,7 @@
   // ---------- ruins and rebuilding ----------
   App.isRuined = (s) => !!(s && s.ruined);
   App.ruin = (s, cause) => {
-    if (!s || s.ruined || !s.building || !st.ruins) return;
+    if (!s || s.ruined || !s.building || !st.ruins || s.warren || s.castle || s.wall) return; // a warren is a hill, a castle and its walls are stone: nothing to burn down
     s.orig = s.type; s.ruined = true; s.type = "ruins_0";
     st.ruins[s.idx] = { orig: s.orig, progress: 0, since: st.T, village: s.village != null ? s.village : App.nearestVillage(s.x, s.z).i, cause };
     App.sceneryDirty = true;
@@ -185,7 +185,7 @@
     if (!list.length) return null;
     const k = list[Math.floor(hash2(id, day, 113) * Math.min(2, list.length))], s = App.sceneryAll[k], a = hash2(id, day, 114) * 6.283;
     // builders stand round the outside of the footprint (a town hall is much bigger than a house), never inside the walls
-    const R = s.hall ? 5.4 : s.granary ? 3.8 : st.ruins[k] && st.ruins[k].upgrade === 2 ? 4.8 : 3.3;
+    const R = s.hall ? 5.4 : /^(palace|castle|mlodge|mfarm|mkeep|mcaptain|mvilla|mtropic)_/.test(s.type) || (s.orig && /^(palace|castle|mlodge|mfarm|mkeep|mcaptain|mvilla|mtropic)_/.test(s.orig)) ? 8 : s.granary ? 3.8 : st.ruins[k] && st.ruins[k].upgrade === 2 ? 4.8 : 3.3;
     return { x: s.x + Math.cos(a) * R, z: s.z + Math.sin(a) * R, type: "build", label: "rebuilding in " + v.name, cx: s.x, cz: s.z };
   };
 

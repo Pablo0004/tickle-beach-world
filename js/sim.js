@@ -464,7 +464,9 @@
     return !!a && (a.where === "stroll" || a.where === "self") && o.needs.social < 75;
   }
   function startDo(t, ad, order, until) {
-    const spread = ad.exact ? 0 : ad.self || ad.ownItem ? 0.3 : ad.joinItem ? 1.6 : ad.prop ? ad.prop.rad + 0.7 : ad.item ? ad.item.rad + 0.6 : ad.pondR ? ad.pondR + 2.5 : ad.scenery ? sceneryReach(ad.scenery) : ad.water ? 0.2 : ad.project ? 2.6 : ad.act.where === "plaza" ? 3.5 : ad.work ? 2.5 : 0.9;
+    // (the folk of a mansion or a castle spread out along its front instead of crowding its door)
+    const bigHome = ad.act && ad.act.where === "home" && (() => { const v = App.villageOfToken(t.id); return !!v && (v.kind === "fortress" || v.kind === "grand"); })();
+    const spread = bigHome ? 5 : ad.exact ? 0 : ad.self || ad.ownItem ? 0.3 : ad.joinItem ? 1.6 : ad.prop ? ad.prop.rad + 0.7 : ad.item ? ad.item.rad + 0.6 : ad.pondR ? ad.pondR + 2.5 : ad.scenery ? sceneryReach(ad.scenery) : ad.water ? 0.2 : ad.project ? 2.6 : ad.act.where === "plaza" ? 3.5 : ad.work ? 2.5 : 0.9;
     let spot = null;
     for (let k = 0; k < 14 && !spot; k++) {
       const ang = rnd() * Math.PI * 2;
@@ -472,6 +474,7 @@
       if (ad.water || ad.self || App.isLand(c.x, c.z)) spot = c;
     }
     if (!spot) spot = { x: ad.spot.x, z: ad.spot.z };
+    if (!ad.water) spot = App.clearOfBuildings(spot);
     t.action = { kind: "do", act: ad.act, ref: ad.ref, key: occKey(ad.act.id, ad.ref), spot, center: ad.face || ad.spot, phase: "walk", started: st.T,
       water: !!ad.water, project: ad.project || null, prop: ad.prop || null, order: !!order, host: ad.host, until: until || null, item: !!ad.ownItem,
       itemName: ad.itemName || null, shore: ad.spot && ad.spot.lx != null ? { x: ad.spot.lx, z: ad.spot.lz } : null };
@@ -824,6 +827,13 @@
       t.action = { kind: "rounds", until: Math.floor(st.T / 1440) * 1440 + step.e, started: st.T, bye: "Good to catch up at the guild.", what: "At the hall of the " + (App.GUILDS && App.GUILDS[step.p.hall] ? App.GUILDS[step.p.hall].name : "guild") };
       return;
     }
+    if (step.k === "wallwatch" && step.ww) {
+      // a turn on the walls: in through the gate, up the stairs of its tower, along the top and back
+      if (Math.hypot(step.p.x - t.pos.x, step.p.z - t.pos.z) > 2.5 && !(t.action && t.action.kind === "wallwatch")) return startTravel(t, step.p, "to keep watch on the walls");
+      t.action = { kind: "wallwatch", ww: step.ww, start: st.T, until: Math.floor(st.T / 1440) * 1440 + step.e, back: { x: step.p.x, z: step.p.z } };
+      if (rnd() < 0.4) say(t, "Up on the walls. Nothing gets past us.", 2);
+      return;
+    }
     if (step.k === "rounds") {
       // the guard who goes down inside: out of sight in the mine until the afternoon is over
       if (Math.hypot(step.p.x - t.pos.x, step.p.z - t.pos.z) > 2) return startTravel(t, step.p, "to guard the mine");
@@ -916,6 +926,62 @@
     if (h0 < S0 && h1 >= S0) return h1 <= S0 + MAX_STEP; // climbing out of the water onto a low bank
     return true;
   };
+  // ---------- buildings stand in the way ----------
+  // Every building (houses, halls, granaries, mansions, castles, a fortress's walls, the guild halls, the casinos...)
+  // is something a Tickle walks round, never through: its footprint is the box of its model, turned with it. A gate
+  // leaves its arch open. Fences and pens, docks and piers, arenas, caves, mines and the like are walked into as
+  // before, and a building is no obstacle to whoever is going into it or is already standing in it.
+  const BC = 8, bcells = new Map(), NO_BLOCK = /^(fence|dock|pier|arena|dungeon|mine|trough|sty|coop|etherfield|altar|logseat|campfire|plotsign|paddock|roost|maker)/;
+  let bBuilt = -1e9;
+  const bkey = (cx, cz) => cx * 100003 + cz;
+  function footprintsOf(s0) {
+    const F = App.frag[s0.type];
+    if (!F || !F.box) return null;
+    const k = s0.scale || 1, c = Math.cos(s0.rot || 0), sn = Math.sin(s0.rot || 0);
+    if (s0.type.startsWith("gatehouse")) {
+      // the two towers either side of the arch
+      const off = (300 / 160) * k, hw = (140 / 160) * k, hd = (150 / 160) * k;
+      return [{ x: s0.x + c * off, z: s0.z - sn * off, c, s: sn, hx: hw, hz: hd, sc: s0 }, { x: s0.x - c * off, z: s0.z + sn * off, c, s: sn, hx: hw, hz: hd, sc: s0 }];
+    }
+    const shrink = s0.wall ? 1 : 0.88, pad = s0.wall ? 0.35 : 0; // (a wall's stretches overlap, so there is no gap to slip through)
+    return [{ x: s0.x, z: s0.z, c, s: sn, hx: ((F.box.max.x - F.box.min.x) / 2) * k * shrink + pad, hz: Math.max(s0.wall ? 0.9 : 0, ((F.box.max.z - F.box.min.z) / 2) * k * shrink), sc: s0 }];
+  }
+  // (rebuilt every few seconds: buildings are moved by the hand, burn down and go back up, and their models load late)
+  function buildBlocks() {
+    bcells.clear();
+    for (const s0 of App.sceneryAll || []) {
+      if (!s0.building || s0.gone || s0.y != null && s0.y > App.genHeight(s0.x, s0.z) + 0.5 || NO_BLOCK.test(s0.type)) continue;
+      const fps = footprintsOf(s0);
+      if (!fps) continue;
+      for (const f of fps) {
+        const r = Math.hypot(f.hx, f.hz);
+        for (let cx = Math.floor((f.x - r) / BC); cx <= Math.floor((f.x + r) / BC); cx++) for (let cz = Math.floor((f.z - r) / BC); cz <= Math.floor((f.z + r) / BC); cz++) {
+          const kk = bkey(cx, cz);
+          (bcells.get(kk) || bcells.set(kk, []).get(kk)).push(f);
+        }
+      }
+    }
+  }
+  const insideF = (f, x, z) => { const dx = x - f.x, dz = z - f.z; return Math.abs(dx * f.c - dz * f.s) < f.hx && Math.abs(dx * f.s + dz * f.c) < f.hz; };
+  // the footprint of the building standing at a point, if any
+  App.buildingAt = (x, z) => {
+    const now = performance.now();
+    if (now - bBuilt > 4000) { bBuilt = now; buildBlocks(); }
+    const list = bcells.get(bkey(Math.floor(x / BC), Math.floor(z / BC)));
+    if (list) for (const f of list) if (insideF(f, x, z)) return f;
+    return null;
+  };
+  // in the way of t going from where it stands to target: a building that holds neither of them
+  const inTheWay = (x, z, t, a, b) => { const f = App.buildingAt(x, z); return !!f && !insideF(f, t.pos.x, t.pos.z) && !(a && insideF(f, a.x, a.z)) && !(b && insideF(f, b.x, b.z)); };
+  // a spot inside a building is moved out to just beside it, through its nearest side
+  App.clearOfBuildings = (p) => {
+    const f = App.buildingAt(p.x, p.z);
+    if (!f) return p;
+    const dx = p.x - f.x, dz = p.z - f.z, lx = dx * f.c - dz * f.s, lz = dx * f.s + dz * f.c;
+    let nx = lx, nz = lz;
+    if (f.hx - Math.abs(lx) < f.hz - Math.abs(lz)) nx = Math.sign(lx || 1) * (f.hx + 0.8); else nz = Math.sign(lz || 1) * (f.hz + 0.8);
+    return { x: f.x + nx * f.c + nz * f.s, z: f.z - nx * f.s + nz * f.c };
+  };
   function walkTo(t, target, dm, dtReal, water, mult) {
     // follow a planned detour first, if there is one for this target
     if (t.detour && (t.detour.tx !== target.x || t.detour.tz !== target.z)) t.detour = null;
@@ -932,7 +998,13 @@
     // a way round that crosses water is swum
     const swim = water || !!(t.detour && t.detour.wet);
     const blocked = (x, z) => (!swim && !App.isLand(x, z) && App.isLand(t.pos.x, t.pos.z)) || (!swim && !App.canFloat(t) && App.pondWater(x, z) && !App.pondWater(t.pos.x, t.pos.z)) ||
-      !App.climbOK(t.pos.x, t.pos.z, x, z);
+      !App.climbOK(t.pos.x, t.pos.z, x, z) || acrossBuilding(x, z);
+    // (the whole stretch of the step is looked at, not just where it ends: a rider covers more than a wall is thick)
+    function acrossBuilding(x, z) {
+      const ddx = x - t.pos.x, ddz = z - t.pos.z, n = Math.max(1, Math.ceil(Math.hypot(ddx, ddz) / 0.5));
+      for (let i = 1; i <= n; i++) if (inTheWay(t.pos.x + (ddx * i) / n, t.pos.z + (ddz * i) / n, t, target, goal)) return true;
+      return false;
+    }
     // getting no closer to where it is going (edging from side to side at a river bank, say) counts as stuck too
     const dNow = Math.hypot(target.x - t.pos.x, target.z - t.pos.z);
     if (t.edgeX !== target.x || t.edgeZ !== target.z) { t.edgeX = target.x; t.edgeZ = target.z; t.bestD = dNow; t.edge = 0; }
@@ -970,7 +1042,15 @@
     const sx = Math.floor(x0), sz = Math.floor(z0), tx = Math.floor(x1), tz = Math.floor(z1);
     if (Math.abs(tx - sx) + Math.abs(tz - sz) > 160) return null;
     const key = (x, z) => (x + 4096) * 8192 + (z + 4096);
-    const pass = (x, z) => { const h = App.columnHeight(x, z); if (h < App.SEA && !opts.water) return false; if (!opts.float && App.pondWater(x + 0.5, z + 0.5) && !(x === sx && z === sz)) return false; return true; };
+    // (round the buildings too, except the one it starts in or is going into)
+    const fromB = App.buildingAt(x0, z0), toB = App.buildingAt(x1, z1);
+    const pass = (x, z) => {
+      const h = App.columnHeight(x, z);
+      if (h < App.SEA && !opts.water) return false;
+      if (!opts.float && App.pondWater(x + 0.5, z + 0.5) && !(x === sx && z === sz)) return false;
+      const f = App.buildingAt(x + 0.5, z + 0.5);
+      return !f || f.sc === (fromB && fromB.sc) || f.sc === (toB && toB.sc) || (x === sx && z === sz) || (x === tx && z === tz);
+    };
     const step = (ax, az, bx, bz) => pass(bx, bz) && App.climbOK(ax + 0.5, az + 0.5, bx + 0.5, bz + 0.5);
     const g = new Map(), from = new Map(), heap = [];
     const push = (f, k, x, z) => { heap.push([f, k, x, z]); let i = heap.length - 1; while (i > 0) { const p = (i - 1) >> 1; if (heap[p][0] <= heap[i][0]) break; [heap[p], heap[i]] = [heap[i], heap[p]]; i = p; } };
@@ -979,7 +1059,7 @@
     const k0 = key(sx, sz);
     g.set(k0, 0); push(hfn(sx, sz), k0, sx, sz);
     let n = 0, found = null;
-    while (heap.length && n++ < 6000) {
+    while (heap.length && n++ < 16000) { // (room enough to find the gate of a fortress)
       const [, k, x, z] = pop();
       if (x === tx && z === tz) { found = k; break; }
       const gk = g.get(k);
@@ -1089,6 +1169,14 @@
       }
       animate(t, false, dtReal);
       if (t.action) t.group.visible = false;
+      return;
+    }
+    if (a.kind === "wallwatch") {
+      // walking the top of the wall; at the end of the turn, down the stairs again by the gate
+      if (st.T >= a.until || App.isKO(t.id)) { t.pos.x = a.back.x; t.pos.z = a.back.z; t.action = null; if (rnd() < 0.4) say(t, "All quiet out there.", 2); animate(t, false, dtReal); return; }
+      const q = App.wallPos(a.ww, st.T - a.start);
+      t.pos.x = q.x; t.pos.z = q.z; t.heading = turn(t.heading, q.h, dtReal * 6);
+      animate(t, true, dtReal);
       return;
     }
     if (a.kind === "rounds") {
@@ -1691,7 +1779,7 @@
       if (d < 1.05 && d > 1e-4) {
         const push = (1.05 - d) * 0.25;
         // a nudge never pushes anyone into water they shouldn't be in
-        const ok = (t, x, z) => (App.isLand(x, z) || !App.isLand(t.pos.x, t.pos.z)) && (App.canFloat(t) || !App.pondWater(x, z) || App.pondWater(t.pos.x, t.pos.z)) && App.climbOK(t.pos.x, t.pos.z, x, z);
+        const ok = (t, x, z) => (App.isLand(x, z) || !App.isLand(t.pos.x, t.pos.z)) && (App.canFloat(t) || !App.pondWater(x, z) || App.pondWater(t.pos.x, t.pos.z)) && App.climbOK(t.pos.x, t.pos.z, x, z) && !inTheWay(x, z, t, null, null); // (two Tickles side by side never push each other into a wall)
         const ax = a.pos.x - (dx / d) * push, az = a.pos.z - (dz / d) * push, bx = b.pos.x + (dx / d) * push, bz = b.pos.z + (dz / d) * push;
         if (ok(a, ax, az)) { a.pos.x = ax; a.pos.z = az; }
         if (ok(b, bx, bz)) { b.pos.x = bx; b.pos.z = bz; }
@@ -2169,6 +2257,7 @@
       props: st.props.map((p) => ({ uid: p.uid, assetId: p.assetId, x: p.x, z: p.z, rot: p.rot })),
       acts: st.acts.filter((a) => a.source !== "core" && a.source !== "onchain"), projects: st.projects, log: st.log.slice(0, 120), event: st.event, kit: st.kit,
       villages: App.saveVillages(), raidDay: st.raidDay, dragonDay: st.dragonDay, shareDay: st.shareDay,
+      plots: App.plotsSave ? App.plotsSave() : null,
       creatures: App.saveCreatures(), tourneyDay: st.tourneyDay, creatureDay: st.creatureDay, dungeons: App.saveDungeons(), settleDay: st.settleDay, fate: App.saveFate(), factions: App.saveFactions ? App.saveFactions() : null, rampage: App.saveRampage ? App.saveRampage() : null, lairs: App.saveLairs ? App.saveLairs() : null, faith: App.saveFaith ? App.saveFaith() : null, mines: App.saveMines ? App.saveMines() : null, guilds: App.saveGuilds ? App.saveGuilds() : null, casinos: App.saveCasinos ? App.saveCasinos() : null, contests: App.saveContests ? App.saveContests() : null, diving: App.saveDiving ? App.saveDiving() : null, seabeasts: App.saveSeaBeasts ? App.saveSeaBeasts() : null, wealth: App.saveWealth ? App.saveWealth() : null, weather: App.saveWeather ? App.saveWeather() : null,
     };
   };
