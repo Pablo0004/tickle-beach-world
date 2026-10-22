@@ -16,6 +16,8 @@
     if (t.startsWith("dungeon_") || t.startsWith("mine_")) return [6.5, 7];
     if (t.startsWith("guildhall_")) return [4.4, 7];
     if (t.startsWith("casino_")) return [7, 9];
+    if (t === "prison_0") return [4.5, 6];
+    if (t === "parliament_0") return [17, 22];
     if (t === "smithy_0") return [6, 9];
     if (t === "paddock_0") return [6, 2.5];
     if (t === "roost_0") return [2.6, 13];
@@ -122,9 +124,9 @@
       out.text = "<p>Every evening the region's best tamers battle their creatures here, and the Lucky Shells bet on every match. Drop two fighters into its ring with the hand, Tickles, creatures, monsters or farm animals, and it turns into a boxing ring.</p>";
     } else if (s.type.startsWith("dungeon_")) {
       const d = (App.dungeons || []).find((x) => Math.hypot(x.x - s.x, x.z - s.z) < 3);
-      out.name = d ? d.name : "Dungeon"; out.sub = "A way into the Great Underworld" + DOT + "36 floors under the whole map";
+      out.name = d ? d.name : "Dungeon"; out.sub = "A way into the Great Underworld" + DOT + "12 floors under the whole map";
       if (d) { const parties = Object.values(st.parties || {}).filter((p) => p && p.day === day && p.dungeon === d.i); out.rows.push(["Today", parties.length ? parties.length + " part" + (parties.length > 1 ? "ies" : "y") + " of adventurers" : "nobody is going down"], ["Delves so far", String((st.delves && st.delves[d.i]) || 0)]); }
-      out.text = "<p>A way down into the Great Underworld: one dungeon that runs under the whole map, 36 floors deep, and every cave on the map leads into it. Each floor is a labyrinth as wide as all the land above, joined under the channels, with chests at the dead ends, spike traps, bones and cobwebs. Six bands of six floors, each deeper and darker than the last (the Goblin Warrens, the Catacombs, the Serpent Halls, the Labyrinth, the Burning Deep and the Abyss), and on every floor a guardian behind whom an iron gate seals the stairs down: no Tickle goes deeper until it is beaten. From Grubnose the goblin boss on the first, all the way to the bottom of the world, right beneath the Maker's Isle, where every way through meets and the Golden Tickle waits, the strongest of all. Treasure on the way (Ether crystals, silver, gold, gems, orichalcum and relics) makes the adventurers strong enough to go deeper. Every afternoon the parties of adventurers (warriors with blades, mages with spells, healers with light) go down floor by floor; a message tells you when one faces a guardian, with a button to watch the fight.</p>";
+      out.text = "<p>A way down into the Great Underworld: one dungeon that runs under the whole map, 12 floors deep, and every cave on the map leads into it. Each floor is a labyrinth as wide as all the land above, joined under the channels, with chests at the dead ends, spike traps, bones and cobwebs. The same rock dug out in different ways, floor after floor: the Goblin Warrens, the Catacombs, a Sunlit Grotto open to the sky with pools of water, a Forest Maze walled with trees, the Ice Caverns, the Burning Deep with its lava and the Abyss. On every floor a guardian behind whom an iron gate seals the stairs down (no Tickle goes deeper until it is beaten), and beside it a great teleport gem, the save point where a party that has beaten it starts next time. From the Goblin King on the first, all the way to the bottom of the world, right beneath the Maker's Isle, where every way through meets and the Golden Tickle waits, the strongest of all. Treasure on the way (Ether crystals, silver, gold, gems, orichalcum and relics) makes the adventurers strong enough to go deeper. Every afternoon the parties of adventurers (warriors with blades, mages with spells, healers with light) go down floor by floor; a message tells you when one faces a guardian, with a button to watch the fight.</p>";
       if (d) out.enter = doorAt(d.door.x, d.door.z);
     } else if (s.type.startsWith("mine_")) {
       const M = (App.mines || []).find((x) => x.i === s.mine);
@@ -151,6 +153,14 @@
       }
       out.text = "<p>" + esc(GUILD_TEXT[s.guild] || "") + "</p>";
       out.enter = doorAt(s.x + Math.sin(s.rot) * 4.2, s.z + Math.cos(s.rot) * 4.2);
+    } else if (s.parliament && App.parliamentInfo && App.parliamentInfo()) {
+      const I = App.parliamentInfo();
+      out.name = I.name; out.sub = I.sub; out.rows = I.rows; out.text = I.text;
+      out.enter = doorAt(App.parliament.door.x, App.parliament.door.z);
+    } else if (s.prison && App.prisonInfo && App.prisonInfo()) {
+      const I = App.prisonInfo();
+      out.name = I.name; out.sub = I.sub; out.rows = I.rows; out.text = I.text;
+      out.enter = doorAt(App.prison.door.x, App.prison.door.z);
     } else if (s.type.startsWith("casino_") && App.casinos && App.casinos[s.casino]) {
       const Cs = App.casinos[s.casino], guests = App.casinoGuests ? App.casinoGuests(Cs).filter((g) => !g.staff) : [], bank = (st.casinoBank && st.casinoBank[Cs.i]) || 0;
       out.name = Cs.name; out.sub = "Casino" + DOT + App.regions[Cs.region].name + DOT + "open from 19:00 to 23:30";

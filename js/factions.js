@@ -268,7 +268,7 @@
       if (r.done) continue;
       r.done = true;
       const o = App.villages[r.to], guards = o.residents.filter((id) => n.watch.includes(id) && !App.isKO(id)).length;
-      if (rnd() < clamp(guards * 0.18, 0, 0.8)) { caught++; r.caught = true; jail(r.outlaw, o, null); continue; }
+      if (rnd() < clamp(guards * 0.18 * (App.lawMul ? App.lawMul("watch") : 1), 0, 0.9)) { caught++; r.caught = true; jail(r.outlaw, o, null); continue; }
       outlawDeed(r, o, false);
       if (r.kind === "theft") thefts++; else fires++;
     }

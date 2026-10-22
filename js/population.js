@@ -292,8 +292,20 @@
     // the on-chain job in the morning, chores for the village in the afternoon, free time, dinner
     // on the square with everyone, then bed
     const wake = 390 + r() * 90, jobS = wake + 25 + r() * 20, jobE = 750 + r() * 40, lunchE = jobE + 50 + r() * 20;
-    const chores = App.doesChores(id), choreE = lunchE + 170 + r() * 50;
+    // a day of rest (the Rest Day Act, parliament.js): no work and no chores, free time from breakfast to dinner
+    const rest = App.restDay && App.restDay(day);
+    // (a minister on a sitting day has no chores either: it has a Parliament to get to)
+    const chores = !rest && !(App.sitsToday && App.sitsToday(id, day)) && App.doesChores(id), choreE = lunchE + 170 + r() * 50;
     const leisS = chores ? choreE : lunchE, leisE = Math.max(leisS + 50, 1080 + r() * 50), homeT = 1290 + r() * 70;
+    // up for sale on a marketplace: the day in the prison (prison.js)
+    const jail = App.prisonPlan && App.prisonPlan(id, day);
+    if (jail) {
+      let pv = jail[0].p;
+      for (const s of jail) { s.path = App.route(pv.x, pv.z, s.p.x, s.p.z); s.len = App.pathLength(s.path); s.travel = s.len / SPEED; pv = s.p; }
+      pl = { id, day, job: "prisoner", steps: jail };
+      planCache.set(id, pl);
+      return pl;
+    }
     const line = App.boatmanLine && App.boatmanLine(id);
     if (line) {
       const D = App.docks[line.a], H = App.ferryHours;
@@ -306,7 +318,7 @@
       return pl;
     }
     let steps = [{ k: "sleep", s: 0, e: wake, p: home }, { k: "morning", s: wake, e: jobS, p: home },
-      { k: "job", s: jobS, e: jobE, p: work.boat != null || work.exact ? work : standAt(work, id, 1) }, { k: "lunch", s: jobE, e: lunchE, p: standAt(lunch, id, day * 7 + 2) }];
+      rest ? { k: "leisure", s: jobS, e: jobE, p: standAt(leisure, id, day * 7 + 5) } : { k: "job", s: jobS, e: jobE, p: work.boat != null || work.exact ? work : standAt(work, id, 1) }, { k: "lunch", s: jobE, e: lunchE, p: standAt(lunch, id, day * 7 + 2) }];
     // a village with something in ruins sends some of its farmers and gatherers to rebuild
     let chore = App.choreOf(id), site = null;
     if (chores && (chore === "farm" || chore === "gather") && App.hash2(id, day, 111) < 0.45 && App.buildSite && (site = App.buildSite(id, day))) chore = "build";
@@ -342,6 +354,11 @@
     if (nearDock && myDock.launch != null && !taming && App.prayerOf && App.prayerOf(id, day)) {
       const F = App.ferries[myDock.launch];
       pilgrim = trip(F, myDock, F.isleLand, "the Maker's Isle", App.prayerSpot(id), { k: "pray" });
+    }
+    // a minister on a sitting day crosses on the launch to its seat in the Parliament (parliament.js)
+    if (!pilgrim && nearDock && myDock.launch != null && !taming && App.sitsToday && App.sitsToday(id, day)) {
+      const F = App.ferries[myDock.launch];
+      pilgrim = trip(F, myDock, F.isleLand, "the Parliament", App.parliamentSeat(id), { k: "parliament" });
     }
     // or a trip to an Ether field to gather crystals
     const ef = !pilgrim && App.etherOf ? App.etherOf(id, day) : null;
@@ -491,10 +508,11 @@
       if (m < step.arr) { const f = App.ferryAt(App.ferries[step.ferry], T); return { x: f.x, z: f.z, moving: true, boat: true }; }
     }
     // at home asleep or at breakfast means indoors
-    return { x: step.p.x, z: step.p.z, moving: false, inside: step.k === "sleep" || step.k === "morning" || step.k === "shelter" || step.k === "rainshelter" || step.k === "mine" || step.k === "rounds" || step.k === "guildhall" || step.k === "casino" };
+    return { x: step.p.x, z: step.p.z, moving: false, inside: step.k === "sleep" || step.k === "morning" || step.k === "shelter" || step.k === "rainshelter" || step.k === "mine" || step.k === "rounds" || step.k === "guildhall" || step.k === "casino" || step.k === "cell" || step.k === "canteen" || step.k === "parliament" };
   };
   const STEP_LABEL = { sleep: "Sleeping", morning: "Breakfast at home", job: "At work", lunch: "Having lunch", chore: "Chores for the village", leisure: "Free time", evening: "Dinner and friends on the square", raid: "Raiding", defend: "Defending against a dragon", arena: "Creature tournament", adventure: "Adventuring in a dungeon", ritual: "Revival ritual",
-    hunt: "Dragon hunt with the Guild", train: "Creature training at the arena", bet: "Betting at the tournament", watch: "Night watch", outlaw: "Out in the night", trade: "Buying food to trade", trade2: "Delivering food", shelter: "Hiding at home from the dragon", ferry: "Crossing the lake by ferry", pray: "Praying to the Maker", mine: "Down the mine", guard: "Guarding the mine (Warriors' Guild)", rounds: "On guard down the mine (Warriors' Guild)", guildhall: "At the guild hall", casino: "A night at the casino", contest: "In a contest", contestWatch: "At a contest", dive: "Diving", seadefend: "Fighting a sea beast", ether: "Gathering Ether crystals", boat: "At the helm of the boat", smith: "At the anvil (Blacksmiths' Guild)", rainshelter: "Sheltering at home from the weather", flee: "Running inland from the sea", groom: "Tending the horses (Blacksmiths' Guild)", shop: "Out shopping", sail: "Out sailing its own boat" };
+    hunt: "Dragon hunt with the Guild", train: "Creature training at the arena", bet: "Betting at the tournament", watch: "Night watch", outlaw: "Out in the night", trade: "Buying food to trade", trade2: "Delivering food", shelter: "Hiding at home from the dragon", ferry: "Crossing the lake by ferry", pray: "Praying to the Maker", mine: "Down the mine", guard: "Guarding the mine (Warriors' Guild)", rounds: "On guard down the mine (Warriors' Guild)", guildhall: "At the guild hall", casino: "A night at the casino", contest: "In a contest", contestWatch: "At a contest", dive: "Diving", seadefend: "Fighting a sea beast", ether: "Gathering Ether crystals", boat: "At the helm of the boat", smith: "At the anvil (Blacksmiths' Guild)", rainshelter: "Sheltering at home from the weather", flee: "Running inland from the sea", groom: "Tending the horses (Blacksmiths' Guild)", shop: "Out shopping", sail: "Out sailing its own boat",
+    cell: "Locked in its cell (up for sale)", canteen: "In the prison canteen", yard: "Out in the prison yard", pwork: "Breaking rocks in the prison yard", parliament: "In the Parliament (minister)" };
   App.stepLabel = (k) => STEP_LABEL[k];
 
   // ---------- simplified needs for everyone off-screen ----------

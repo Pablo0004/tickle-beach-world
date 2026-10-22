@@ -341,12 +341,22 @@
     const key = (X, Y, Z) => ((X + 1024) * 2048 + (Y + 1024)) * 2048 + (Z + 1024);
     const occ = new Set();
     for (let i = 0; i < n; i++) occ.add(key(P[3 * i], P[3 * i + 2], P[3 * i + 1]));
-    const IN = vox.inner || [];
+    // the solid inside comes as octree boxes; they are looked up by coarse cell rather than filled in voxel by voxel
+    // (a big model's inside holds more voxels than a Set can)
+    const IN = vox.inner || [], CELL = 16, cells = new Map();
+    const ck = (X, Y, Z) => key(Math.floor(X / CELL), Math.floor(Y / CELL), Math.floor(Z / CELL));
     for (let i = 0; i < IN.length; i += 4) {
-      const x0 = IN[i], y0 = IN[i + 1], z0 = IN[i + 2], sz = IN[i + 3];
-      for (let x = x0; x < x0 + sz; x++) for (let y = y0; y < y0 + sz; y++) for (let z = z0; z < z0 + sz; z++) occ.add(key(x, z, y));
+      const x0 = IN[i], y0 = IN[i + 2], z0 = IN[i + 1], sz = IN[i + 3]; // (in the mesh's axes: y and z swapped)
+      for (let cx = Math.floor(x0 / CELL); cx <= Math.floor((x0 + sz - 1) / CELL); cx++)
+        for (let cy = Math.floor(y0 / CELL); cy <= Math.floor((y0 + sz - 1) / CELL); cy++)
+          for (let cz = Math.floor(z0 / CELL); cz <= Math.floor((z0 + sz - 1) / CELL); cz++) { const k = key(cx, cy, cz); (cells.get(k) || cells.set(k, []).get(k)).push(i); }
     }
-    const has = (X, Y, Z) => (occ.has(key(X, Y, Z)) ? 1 : 0);
+    const inside = (X, Y, Z) => {
+      const L = cells.get(ck(X, Y, Z));
+      if (L) for (const i of L) { const sz = IN[i + 3]; if (X >= IN[i] && X < IN[i] + sz && Y >= IN[i + 2] && Y < IN[i + 2] + sz && Z >= IN[i + 1] && Z < IN[i + 1] + sz) return true; }
+      return false;
+    };
+    const has = (X, Y, Z) => (occ.has(key(X, Y, Z)) || inside(X, Y, Z) ? 1 : 0);
     const pos = [], nor = [], col = [], idx = [];
     let vc = 0;
     for (let i = 0; i < n; i++) {

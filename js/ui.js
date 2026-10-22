@@ -15,7 +15,7 @@
   let jid = 1, workerError = null;
   const busy = new Array(NW).fill(0);
   for (let i = 0; i < NW; i++) {
-    const w = new Worker("js/worker.js?v=119");
+    const w = new Worker("js/worker.js?v=120");
     w.onmessage = (e) => {
       const p = pending.get(e.data.id);
       if (!p) return;
@@ -757,6 +757,8 @@
     { const I = App.ownersInfo ? App.ownersInfo() : null;
       if (I) h += '<div class="card"><h3>Who owns what</h3><p class="note">The map follows ' + (I.source === "browser" ? "a newer reading kept in this browser" : "the snapshot that came with the game") + ": block " + I.block.toLocaleString() + " (" + esc(I.date) + ")" + (I.source === "browser" ? ", " + I.changed + " Tickles changed hands since the game's own" : "") + ". When owners change, everyone who still fits keeps their plot; only those who grew or shrank past a size move.</p>" +
         '<div class="row"><button class="btn" id="ownersUpdate">Read the owners from Ethereum now</button>' + (I.source === "browser" ? '<button class="btn" id="ownersClear">Back to the game\'s snapshot</button>' : "") + '</div><p class="note" id="ownersNote">' + (ui.ownersMsg || "") + "</p></div>"; }
+    // who is up for sale, and so in the prison (prison.js)
+    if (App.prisonHoldersHTML) h += App.prisonHoldersHTML();
     // every holder's place: an estate, a mansion, or a house in a shared town
     const placeOf = (addr) => App.villages.find((v) => v.holder === addr) || (() => { const ids = App.tokensOf(addr); return ids.length ? App.villageOfToken(ids[0]) : null; })();
     if (st.wallet) { const pv = placeOf(st.wallet); if (pv) h += '<div class="card"><h3>Your place</h3><div class="row"><button class="btn primary" data-island="' + pv.i + '">' + esc(pv.name) + '</button><span class="note">' + esc(App.placeKindText(pv)) + "</span></div></div>"; }
@@ -1039,6 +1041,7 @@
     try { for (const m of ms.slice(1)) reviewOne(m, what); } finally { App.log = log; }
     App.save();
   }
+  App.reviewOne = (item, what) => reviewOne(item, what); // the Parliament decides the Director's proposals too (parliament.js)
   function reviewOne(item, what) {
     const o = item.obj;
     if (item.type === "kit") {
@@ -1273,6 +1276,7 @@
       App.initMines(saved && saved.mines);
       App.initGuilds && App.initGuilds(saved && saved.guilds);
       App.initCasinos && App.initCasinos(saved && saved.casinos);
+      App.initParliament && App.initParliament(saved && saved.parliament);
       App.initContests && App.initContests(saved && saved.contests);
       App.initDiving && App.initDiving(saved && saved.diving);
       App.initSeaBeasts && App.initSeaBeasts(saved && saved.seabeasts);
@@ -1327,7 +1331,7 @@
       setLoad(0.8, "Building the terrain around you\u2026");
       for (let i = 0; i < 40 && App.streamTerrain(8) > 0; i++) await nextFrame();
       App.updatePopulation();
-      if (!saved) App.log("world", "Day 1. All " + TB.SUPPLY.toLocaleString() + " Tickles wake up in " + App.villages.length + " villages across six regions, one per on-chain Location.", "Each Tickle has a job from its on-chain items and a daily plan: work, lunch, free time, evenings on the village square. Bridges join the regions.");
+      if (!saved) App.log("world", "Day 1. All " + TB.SUPPLY.toLocaleString() + " Tickles wake up in " + App.villages.length + " places across six regions, one per on-chain Location: every holder's Tickles live together, in a town, on a plot, an estate or in a fortress.", "Each Tickle has a job from its on-chain items and a daily plan: work, lunch, free time, evenings on the village square. Bridges join the regions.");
       setMode(saved ? saved.mode || "auto" : "auto", true);
       setSpeed(st.speed);
       $("freeWill").checked = st.freeWill;

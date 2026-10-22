@@ -977,7 +977,7 @@
     const K = KINDS[c.kind], R = App.regions[c.region], top = c.res.slice(0, 3);
     top.forEach((r, k) => {
       if (k > 0 && r.s == null && K.race) return;
-      App.pay(r.id, PRIZE[k]); App.giveXP && App.giveXP(r.id, XPS[k]);
+      App.pay(r.id, PRIZE[k] * (App.lawMul ? App.lawMul("prizes") : 1)); App.giveXP && App.giveXP(r.id, XPS[k]);
       const w = (st.contestWins[r.id] = st.contestWins[r.id] || [0, 0, 0]); w[k]++;
     });
     for (const id of c.entrants) if (!top.some((r) => r.id === id) && App.giveXP) App.giveXP(id, 5);

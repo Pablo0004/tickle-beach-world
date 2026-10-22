@@ -296,11 +296,20 @@
     const nc = inside ? 0 : Math.round(CLOUDS * clamp(W.cloud * 1.2, 0, 1));
     const drift = (st.T * WIND.x * 0.6) % SPAN;
     let ci = 0;
+    // seen from above, the clouds part where the view looks down through them, so they never hide what you are watching
+    const camP = App.camera ? App.camera.position : null;
     for (let k = 0; k < nc; k++) {
       const gx = (hash2(k, 1, 941) - 0.5) * SPAN, gz = (hash2(k, 2, 941) - 0.5) * SPAN, x = tx + ((gx + drift + SPAN * 1.5) % SPAN) - SPAN / 2, z = tz + gz, y = cy + CLOUD_Y + hash2(k, 3, 941) * 12;
       const w = 24 + hash2(k, 4, 941) * 30, d = 14 + hash2(k, 5, 941) * 18;
+      let part = 1;
+      if (camP && camP.y > y - 4) {
+        const f = clamp((camP.y - y) / Math.max(1, camP.y - cy), 0, 1), px = camP.x + (tx - camP.x) * f, pz = camP.z + (tz - camP.z) * f;
+        const gap = Math.max(Math.abs(x - px) - w / 2, Math.abs(z - pz) - d / 2);
+        part = clamp((gap - 6 - App.cam.radius * 0.25) / 16, 0, 1);
+      }
+      if (part <= 0.02) continue;
       for (const [ox, oz, s, h] of [[0, 0, 1, 3], [w * 0.25, d * 0.2, 0.6, 4.5], [-w * 0.3, -d * 0.15, 0.55, 4]]) {
-        M4.compose(V.set(x + ox, y + h * 0.4, z + oz), Q.identity(), SC.set(w * s, h, d * s)); cloudMesh.setMatrixAt(ci++, M4);
+        M4.compose(V.set(x + ox, y + h * 0.4, z + oz), Q.identity(), SC.set(w * s * part, h * part, d * s * part)); cloudMesh.setMatrixAt(ci++, M4);
       }
     }
     cloudMesh.count = ci; cloudMesh.instanceMatrix.needsUpdate = true;

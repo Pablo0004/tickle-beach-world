@@ -177,9 +177,10 @@
     const B = BEASTS[A.kind], F = frontOf(A.r, A.kind), alive = A.def.filter((id) => !App.isKO(id) && !App.isDead(id));
     if (won) {
       const last = A.last != null ? A.last : alive[0];
-      for (const id of alive) { App.pay(id, 30); App.giveXP(id, 40); if (App.addEthernum) App.addEthernum(id, 2); }
+      const bounty = App.lawMul ? App.lawMul("bounty") : 1;
+      for (const id of alive) { App.pay(id, Math.round(30 * bounty)); App.giveXP(id, 40); if (App.addEthernum) App.addEthernum(id, 2); }
       if (last != null) {
-        App.pay(last, 70);
+        App.pay(last, Math.round(70 * bounty));
         st.relics = st.relics || {};
         const list = (st.relics[last] = st.relics[last] || []);
         if (!list.includes(B.trophy)) { list.push(B.trophy); if (list.length > 6) { list.sort((a, b) => App.relicInfo(b).bonus - App.relicInfo(a).bonus); list.length = 6; } }

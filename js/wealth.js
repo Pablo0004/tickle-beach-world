@@ -29,27 +29,49 @@
     weapon: [null, { name: "a fine steel weapon", short: "Fine steel", price: 60 }, { name: "a masterwork weapon", short: "Masterwork", price: 180 }],
     shield: [null, null, { name: "a steel shield", short: "Steel shield", price: 45 }],
   });
-  const LABEL = { house: "House", boat: "Boat", mount: "Mount", weapon: "Weapon", shield: "Shield" };
+  // riding beasts: not every mount is a horse. Some Tickles ride the animal of their way of life (the rangers and the
+  // climbing guides a stag, the duck keepers and the coconut farmers a ram, the treasure hunters a boar), and any
+  // Tickle can buy one at the guild's paddock for less than a pony. Their size under the rider, the height of the back
+  // (SDF units, before scaling) and how much faster than walking they go.
+  const BEASTS = (CAT.beast = {
+    sheep: { name: "a riding ram", short: "Riding ram", price: 18, mul: 1.6, s: 1.25, back: 297 },
+    boar: { name: "a riding boar", short: "Riding boar", price: 30, mul: 1.9, s: 1.4, back: 250 },
+    deer: { name: "a stag to ride", short: "Stag", price: 45, mul: 2.3, s: 1.1, back: 347 },
+  });
+  const WAY = { ranger: ["deer", 0.3], climber: ["deer", 0.3], keeper: ["sheep", 0.25], farmer: ["sheep", 0.25], hunter: ["boar", 0.35] };
+  const beastOf = (id) => { const o = st.own && st.own[id]; if (o && o.rb) return o.rb; const w = WAY[App.jobOf(id)]; return w && hash2(id, 17, 663) < w[1] ? w[0] : null; };
+  App.beastOf = beastOf; App.RIDE_BEASTS = BEASTS;
+  const LABEL = { house: "House", boat: "Boat", mount: "Mount", weapon: "Weapon", shield: "Shield", beast: "Mount" };
   // what a purchase is called (the catalogue has tiers; a repair or a replacement weapon does not)
   const lostWeapon = (id) => (((st.gear && st.gear[id]) || {}).was) || "weapon";
   const nameOfBuy = (w, id) => (w.cat === "repair" ? "a repair of its arms" : w.cat === "rearm" ? (w.price === 14 ? "a second-hand " : "a new ") + lostWeapon(id) : CAT[w.cat][w.to].name);
   const shortOfBuy = (w, id) => (w.cat === "repair" ? "Repair arms" : w.cat === "rearm" ? (w.price === 14 ? "Second-hand " : "New ") + lostWeapon(id) : CAT[w.cat][w.to].short + (w.cat === "weapon" ? " " + (((App.gearOf(id) || {}).weapon) || lostWeapon(id)) : ""));
   const RESERVE = 20; // what a Tickle keeps back for daily life
-  const costOf = (cat, from, to) => CAT[cat][to].price - (from && CAT[cat][from] ? Math.round(CAT[cat][from].price * 0.5) : 0);
+  // (the Fair Market Act, when the Parliament has passed it, takes a fifth off mounts, riding beasts and boats)
+  const costOf = (cat, from, to) => Math.round((CAT[cat][to].price - (from && CAT[cat][from] ? Math.round(CAT[cat][from].price * 0.5) : 0)) * (cat === "mount" || cat === "beast" || cat === "boat" ? (App.lawMul ? App.lawMul("market") : 1) : 1));
   const today = () => Math.floor(st.T / DAY);
 
   // ---------- what each Tickle owns ----------
   App.assetsOf = (id) => (st.own && st.own[id]) || null;
+  // what it rides on long trips: a horse or a griffin it bought comes first, then the tamed monster it has at heel if
+  // that one is big enough to carry it, then a riding beast (seat: how high it sits, in blocks)
   App.mountOf = (id) => {
+    if (App.isListed && App.isListed(id)) return null; // (nothing to ride in the prison: its mount waits at home)
     const o = st.own && st.own[id];
-    if (!o || !o.m) return null;
-    const M = CAT.mount[o.m];
-    return { tier: o.m, kind: M.kind, mul: M.mul, fly: !!M.fly, scale: M.scale, coat: o.m === 1 ? 0 : o.m === 2 ? o.coat || 1 : 3, name: M.short };
+    if (o && o.m) {
+      const M = CAT.mount[o.m];
+      return { tier: o.m, kind: M.kind, mul: M.mul, fly: !!M.fly, scale: M.scale, coat: o.m === 1 ? 0 : o.m === 2 ? o.coat || 1 : 3, name: M.short, seat: M.fly ? 2.45 : 2.2 * M.scale };
+    }
+    const c = App.leadCreature && App.leadCreature(id), R = c && App.MOUNT_MONSTERS && App.MOUNT_MONSTERS[c.sp];
+    if (R) return { tier: "c:" + c.sp, kind: "monster", sp: c.sp, mul: R.mul, fly: false, scale: R.s, coat: 0, dz: R.dz, biped: !!R.biped, seat: R.back * R.s * 0.85 * S, pet: true, nick: c.nick || App.CREATURES[c.sp].name, name: (c.nick ? c.nick + " the " : "its ") + App.CREATURES[c.sp].name };
+    const b = beastOf(id);
+    if (b) { const B = BEASTS[b]; return { tier: "b:" + b, kind: "beast", sp: b, mul: B.mul, fly: false, scale: B.s, coat: 0, dz: 0, seat: B.back * B.s * 0.85 * S, name: B.short }; }
+    return null;
   };
   // what it is all worth: purse and belongings (for the richest list)
   const worthOf = (id) => {
     const o = (st.own && st.own[id]) || {}, g = st.gear && st.gear[id];
-    return App.shellsOf(id) + (o.h ? CAT.house[o.h].price : 0) + (o.b ? CAT.boat[o.b].price : 0) + (o.m ? CAT.mount[o.m].price : 0) + (g && g.q ? CAT.weapon[g.q].price : 0);
+    return App.shellsOf(id) + (o.h ? CAT.house[o.h].price : 0) + (o.b ? CAT.boat[o.b].price : 0) + (o.m ? CAT.mount[o.m].price : 0) + (o.rb && BEASTS[o.rb] ? BEASTS[o.rb].price : 0) + (g && g.q ? CAT.weapon[g.q].price : 0);
   };
   App.worthOf = worthOf;
   App.wealthText = (id) => {
@@ -57,6 +79,7 @@
     if (o.h) out.push(CAT.house[o.h].short + (App.homeRuined && App.homeRuined(id) && st.ruins && (() => { const s = homeSc(id); return s && st.ruins[s.idx] && st.ruins[s.idx].upgrade; })() ? " (being built)" : ""));
     if (o.b) out.push(CAT.boat[o.b].short + (o.dock != null && App.docks[o.dock] ? " at " + App.docks[o.dock].name : ""));
     if (o.m) out.push(App.mountOf(id).name);
+    else if (o.rb && BEASTS[o.rb]) out.push(BEASTS[o.rb].short);
     if (g && g.q) out.push(CAT.weapon[g.q].short + " " + g.weapon);
     return out.join(" \u00b7 ");
   };
@@ -212,6 +235,7 @@
       if (!o.b) { const k = freeMooring(D); if (k < 0) return false; o.dock = D.i; o.moor = k; }
       o.b = w.to; boatsDirty = true;
     } else if (w.cat === "mount") { o.m = w.to; if (w.to === 2) o.coat = hash2(id, 3, 661) < 0.5 ? 1 : 2; }
+    else if (w.cat === "beast") o.rb = w.to;
     else if (w.cat === "weapon") {
       const old = (st.gear && st.gear[id]) || {}, g = App.gearOf(id) || { weapon: old.was || ["sword", "axe", "spear"][Math.floor(hash2(id, 5, 661) * 3)], armor: old.armor || 0 };
       const c = App.armsCond(id), cs = g.armor ? (c && c.s != null ? c.s : old.cs) : null;
@@ -228,7 +252,8 @@
     }
     if (!Object.keys(o).length) delete st.own[id];
     App.pay(id, -w.price);
-    st.wealthLog[w.cat] = (st.wealthLog[w.cat] || 0) + 1; st.wealthLog.spent += w.price;
+    const lk = w.cat === "beast" ? "mount" : w.cat;
+    st.wealthLog[lk] = (st.wealthLog[lk] || 0) + 1; st.wealthLog.spent += w.price;
     return true;
   }
   App.homeUpgrading = (id) => { const s = homeSc(id); return !!(s && s.ruined && st.ruins && st.ruins[s.idx] && st.ruins[s.idx].upgrade); };
@@ -260,6 +285,8 @@
     const o = (st.own && st.own[id]) || {}, g = App.gearOf(id), out = [];
     if ((o.h || 0) < 2 && ownHouse(homeSc(id)) && roomAt(id) >= ROOM[(o.h || 0) + 1]) out.push({ cat: "house", from: o.h || 0, to: (o.h || 0) + 1 });
     if ((o.m || 0) < 4) out.push({ cat: "mount", from: o.m || 0, to: (o.m || 0) + 1 });
+    // a riding beast, for whoever has no horse yet (a new one replaces the one it had)
+    if (!o.m) for (const b in BEASTS) if (o.rb !== b) out.push({ cat: "beast", from: 0, to: b, price: costOf("beast", 0, b) });
     const D = dockOf(id);
     if (D && (o.b || 0) < 3 && (o.b || freeMooring(D) >= 0)) out.push({ cat: "boat", from: o.b || 0, to: (o.b || 0) + 1 });
     const mageOrBlessed = g && (g.mage || g.blessed || g.legendary || g.weapon === "staff");
@@ -272,7 +299,7 @@
     for (const w of out) if (w.price == null) w.price = costOf(w.cat, w.from, w.to);
     return out;
   }
-  const line = (w) => w.cat === "repair" ? pick(["Good as new!", "Sharp again.", "Not a scratch on it now."]) : w.cat === "rearm" ? pick(["Armed again!", "A blade of my own again.", "Let them come now."]) : w.cat === "mount" ? (w.to === 4 ? "My own griffin! To the skies!" : pick(["My own horse!", "Giddy up!", "Isn't it beautiful?"])) : w.cat === "boat" ? pick(["She's all mine!", "Fair winds!", "Wait till you see her sail."])
+  const line = (w) => w.cat === "repair" ? pick(["Good as new!", "Sharp again.", "Not a scratch on it now."]) : w.cat === "rearm" ? pick(["Armed again!", "A blade of my own again.", "Let them come now."]) : w.cat === "mount" ? (w.to === 4 ? "My own griffin! To the skies!" : pick(["My own horse!", "Giddy up!", "Isn't it beautiful?"])) : w.cat === "beast" ? (w.to === "deer" ? "What antlers! Let's go." : w.to === "boar" ? "Steady, piggy... steady!" : "Baa-rilliant! My own ram!") : w.cat === "boat" ? pick(["She's all mine!", "Fair winds!", "Wait till you see her sail."])
     : w.cat === "house" ? pick(["A bigger house!", "The builders start today.", "Room for everything at last."]) : pick(["Look at this blade!", "Finest work in the land.", "Now let a dragon come."]);
 
   // ---------- the families that were rich before the game began ----------
@@ -493,10 +520,10 @@
     if (!M || a.slow || App.isKO(t.id)) return null;
     if (!t.riding) {
       if (remaining < 30) return null;
-      t.riding = { fly: M.fly, seat: M.fly ? 2.45 : 2.2 * M.scale, ph: 0, bob: 0, seen: frameNo, from: { x: t.pos.x, z: t.pos.z } };
+      t.riding = { fly: M.fly, seat: M.seat, ph: 0, bob: 0, seen: frameNo, from: { x: t.pos.x, z: t.pos.z } };
       // a griffin goes straight there, over water, hills and houses
       if (M.fly && a.path && a.path.length) a.path = [a.path[a.path.length - 1]];
-      if (rnd() < 0.5) App.say(t, M.fly ? pick(["Up we go!", "Hold on tight!", "To the skies!"]) : pick(["Giddy up!", "Off we trot!", "Easy, easy..."]), 2);
+      if (rnd() < 0.5) App.say(t, M.fly ? pick(["Up we go!", "Hold on tight!", "To the skies!"]) : M.kind === "monster" ? pick(["Carry me, " + M.nick + "!", "Up on your back I go!", "Onward, my beast!"]) : M.kind === "beast" ? pick(["Hup, hup!", "Off we go!", "Don't throw me off!"]) : pick(["Giddy up!", "Off we trot!", "Easy, easy..."]), 2);
     }
     t.riding.seen = frameNo;
     return M;
@@ -505,7 +532,7 @@
   App.fpSaddle = (t, on) => {
     const M = App.mountOf(t.id);
     if (!M || !on) { if (t.riding) { t.riding.seen = -99; } return null; }
-    if (!t.riding) t.riding = { fly: M.fly, seat: M.fly ? 2.45 : 2.2 * M.scale, ph: 0, bob: 0, seen: frameNo, from: { x: t.pos.x, z: t.pos.z }, fp: true };
+    if (!t.riding) t.riding = { fly: M.fly, seat: M.seat, ph: 0, bob: 0, seen: frameNo, from: { x: t.pos.x, z: t.pos.z }, fp: true };
     t.riding.seen = frameNo;
     return M;
   };
@@ -521,8 +548,15 @@
   const mounts = new Map(); // id -> { tier, coat, obj, legs, wings, ph, park }
   const raw = (r) => { const m = new THREE.Mesh(r.geo, App.voxMaterial); m.scale.setScalar(r.md.voxel * S); m.position.set(r.md.origin[0] * S, r.md.origin[1] * S, r.md.origin[2] * S); return m; };
   const LEGS = [[55, 140], [-55, 140], [55, -140], [-55, -140]];
-  // a horse (the body and four legs that swing at the hip) or a griffin (the body and two wings)
-  function buildMount(kind, coat, scale) {
+  // a horse (the body and four legs that swing at the hip) or a griffin (the body and two wings); a riding beast or a
+  // tamed monster is one piece that bobs and sways as it goes, set so the rider sits where its seat is (M.dz)
+  function buildMount(kind, coat, scale, M) {
+    if (kind === "beast" || kind === "monster") return App.kitMesh(M.sp, 0).then((b) => {
+      const g = new THREE.Group(), body = new THREE.Group();
+      body.add(raw(b)); body.position.z = -(M.dz || 0) * S;
+      g.add(body); g.scale.setScalar(scale || 1);
+      return { obj: g, legs: [], wings: [], body, biped: !!M.biped };
+    });
     if (kind === "griffin") return Promise.all([App.kitMesh("griffinmount", 0), App.kitMesh("griffinwing", 0), App.kitMesh("griffinwing", 1)]).then(([b, wr, wl]) => {
       const g = new THREE.Group(), wings = [];
       g.add(raw(b));
@@ -548,6 +582,11 @@
       const flap = flying ? 0.2 + Math.sin(m.ph * 0.55) * 0.8 : 0;
       m.wings[0].rotation.set(0, flying ? 0 : 1.4, flying ? flap : 0.1); m.wings[1].rotation.set(0, flying ? 0 : -1.4, flying ? -flap : -0.1);
     }
+    // one piece: a beast rocks fore and aft as it lopes, a monster on two legs sways from foot to foot
+    if (m.body) {
+      if (m.biped) { m.body.rotation.set(0, 0, s * 0.07); m.body.position.y = Math.abs(s) * 0.05; }
+      else { m.body.rotation.set(Math.cos(m.ph) * (moving ? 0.06 : 0), 0, 0); m.body.position.y = moving ? Math.abs(s) * 0.06 : 0; }
+    }
   }
   function stableSpot(id) {
     const s = homeSc(id), t = App.pop.agent[id], hm = App.homeOf(id);
@@ -568,7 +607,7 @@
       if (!m) {
         m = { tier: M.tier, coat: M.coat, fly: M.fly, obj: null, legs: [], wings: [], ph: 0, park: null };
         mounts.set(t.id, m);
-        buildMount(M.kind, M.coat, M.scale).then((r) => { if (mounts.get(t.id) !== m) return; Object.assign(m, r); });
+        buildMount(M.kind, M.coat, M.scale, M).then((r) => { if (mounts.get(t.id) !== m) return; Object.assign(m, r); });
         continue;
       }
       if (!m.obj) continue;
@@ -585,22 +624,25 @@
         if (m.obj.parent !== t.group) { t.group.add(m.obj); m.obj.position.set(0, 0, 0); m.obj.rotation.set(0, 0, 0); }
         const flying = m.fly && (t.riding.alt || 0) > 1.2, moving = st.speed > 0;
         const beat = Math.floor(m.ph / Math.PI);
-        poseMount(m, moving && (!t.riding.fp || t.riding.moving), flying, dt * Math.min(3, Math.max(0.5, st.speed)), m.fly ? 9 : 11);
+        poseMount(m, moving && (!t.riding.fp || t.riding.moving), flying, dt * Math.min(3, Math.max(0.5, st.speed)), m.fly ? 9 : m.biped ? 7 : 11);
+        // a tamed monster under its tamer is drawn here, not at heel (creatures.js), and is beside it again when it gets off
+        if (M.pet) { const pb = App.petOf && App.petOf(t.id); if (pb) { pb.ridden = performance.now(); pb.x = t.pos.x; pb.z = t.pos.z; pb.h = t.heading; } }
         // hoofbeats near you
-        if (!m.fly && Math.floor(m.ph / Math.PI) !== beat && App.sfx && App.sfx.animal && !App.inside) { const d = camD(t.pos.x, t.pos.z); if (d < 26) App.sfx.animal("hoof", 0.35 * (1 - d / 26), "amb"); }
+        if ((M.kind === "horse" || M.sp === "deer") && Math.floor(m.ph / Math.PI) !== beat && App.sfx && App.sfx.animal && !App.inside) { const d = camD(t.pos.x, t.pos.z); if (d < 26) App.sfx.animal("hoof", 0.35 * (1 - d / 26), "amb"); }
         t.riding.bob = m.fly ? (flying ? Math.sin(m.ph * 0.55) * 0.12 : 0) : Math.abs(Math.sin(m.ph)) * 0.14;
         m.obj.position.y = m.fly ? 0 : Math.abs(Math.sin(m.ph)) * 0.06;
         m.obj.rotation.x = flying ? 0.08 : 0;
         continue;
       }
       // waiting: at home by the house at night (or while its rider is indoors), otherwise near its rider
+      if (M.pet) { if (m.obj.parent) m.obj.parent.remove(m.obj); continue; } // at heel, as a creature (creatures.js)
       if (m.obj.parent !== App.scene) App.scene.add(m.obj);
       if (m.held) continue; // in the hand (hand.js)
       m.obj.rotation.x = 0;
       const indoors = !t.group.visible || (t.step && (t.step.k === "sleep" || t.step.k === "morning") && Math.hypot(t.pos.x - t.home.x, t.pos.z - t.home.z) < 3);
       // where it is going: to the stable by the house, or up beside its rider when left too far behind
       if (indoors) { if (Math.hypot(t.pos.x - t.home.x, t.pos.z - t.home.z) < 6 && (!m.goal || !m.goal.stable)) m.goal = Object.assign(stableSpot(t.id), { stable: true }); }
-      else if (m.park && (!m.goal || m.goal.stable) && Math.hypot(m.park.x - t.pos.x, m.park.z - t.pos.z) > 10) { const px = Math.cos(t.heading), pz = -Math.sin(t.heading); m.goal = { x: t.pos.x + px * 2.6 - Math.sin(t.heading) * 1.5, z: t.pos.z + pz * 2.6 - Math.cos(t.heading) * 1.5, h: t.heading }; }
+      else if (m.park && (!m.goal || m.goal.stable) && Math.hypot(m.park.x - t.pos.x, m.park.z - t.pos.z) > 10 && !(App.ISLE && Math.hypot(t.pos.x - App.ISLE.x, t.pos.z - App.ISLE.z) < App.ISLE.r + 12)) { /* (no mount follows its rider over the lake to the Maker's Isle) */ const px = Math.cos(t.heading), pz = -Math.sin(t.heading); m.goal = { x: t.pos.x + px * 2.6 - Math.sin(t.heading) * 1.5, z: t.pos.z + pz * 2.6 - Math.cos(t.heading) * 1.5, h: t.heading }; }
       if (!m.park) m.park = m.goal ? { x: m.goal.x, z: m.goal.z, h: m.goal.h } : { x: t.pos.x + 2.4, z: t.pos.z, h: t.heading };
       let moving = false;
       const goal = m.goal;
@@ -845,7 +887,7 @@
     for (const id in st.gear || {}) { const q = st.gear[id].q; if (q === 1) fine++; else if (q === 2) master++; }
     const top = [];
     for (let id = 0; id < TB.SUPPLY; id++) { const w = worthOf(id); if (top.length < 8 || w > top[top.length - 1][1]) { top.push([id, w]); top.sort((a, b) => b[1] - a[1]); if (top.length > 8) top.pop(); } }
-    let h = '<div class="card"><h3>Wealth</h3><p class="note">Shells buy bigger houses (built by the village), boats for the marina by each dock, mounts that make long trips quicker (a griffin flies straight there) and better arms. They are sold at the Blacksmiths\' Guild of each region; a trade-in pays half of what the old one cost. Some families were rich before it all began.</p><div class="kv">' +
+    let h = '<div class="card"><h3>Wealth</h3><p class="note">Shells buy bigger houses (built by the village), boats for the marina by each dock, mounts that make long trips quicker (a griffin flies straight there); some ride a stag, a ram or a boar instead, and a tamer rides its tamed monster when it is big enough to carry it and better arms. They are sold at the Blacksmiths\' Guild of each region; a trade-in pays half of what the old one cost. Some families were rich before it all began.</p><div class="kv">' +
       '<span class="k">Houses</span><span>' + cnt.h2 + " manors, " + cnt.h1 + " townhouses</span>" +
       '<span class="k">Boats</span><span>' + cnt.b3 + " yachts, " + cnt.b2 + " sailing boats, " + cnt.b1 + " rowing boats</span>" +
       '<span class="k">Mounts</span><span>' + cnt.m4 + " riding griffins, " + cnt.m3 + " white chargers, " + cnt.m2 + " saddle horses, " + cnt.m1 + " ponies</span>" +
@@ -862,7 +904,7 @@
     if (!S0) return null;
     const staff = [...staffFor(today()).entries()].filter(([, j]) => j.S === S0);
     const d = today(), shoppers = st.orders && st.orders.day === d ? st.orders.list.filter((o) => !o.done && o.cat !== "house" && o.cat !== "boat" && App.smithyOf(o.id) === S0) : [];
-    const what = s.paddock ? "The guild's paddock: horses for sale (a dun pony " + CAT.mount[1].price + ", a saddle horse " + CAT.mount[2].price + ", a white charger " + CAT.mount[3].price + " shells), and a groom who looks after them."
+    const what = s.paddock ? "The guild's paddock: horses for sale (a dun pony " + CAT.mount[1].price + ", a saddle horse " + CAT.mount[2].price + ", a white charger " + CAT.mount[3].price + " shells), and for less than a pony a riding ram (" + BEASTS.sheep.price + "), a riding boar (" + BEASTS.boar.price + ") or a stag (" + BEASTS.deer.price + "); a groom looks after them all."
       : s.roost ? "The griffin roost: a riding griffin costs " + CAT.mount[4].price + " shells. It flies its rider straight over lakes and hills, four times faster than walking."
       : "Two smiths hammer at the anvils all day. Fine steel weapons " + CAT.weapon[1].price + " shells, masterwork " + CAT.weapon[2].price + ", steel shields " + CAT.shield[2].price + "; the guild also sells the mounts in its paddock and roost. Better arms hit harder: fine steel by a quarter, masterwork by half.";
     return { name: S0.name + (s.paddock ? " \u00b7 Paddock" : s.roost ? " \u00b7 Griffin Roost" : ""), text: "<p>" + esc(what) + "</p>" +

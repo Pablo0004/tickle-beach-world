@@ -17,7 +17,7 @@
   function showHud(t) {
     const el = hud();
     if (!el) return;
-    el.innerHTML = "<b>" + t.name.replace(/[<>&]/g, "") + "</b> \u00b7 " + (fp.drive ? "WASD to walk, Shift to run \u00b7 drag or Z/X to turn \u00b7 E to go in" + (App.mountOf && App.mountOf(t.id) ? " \u00b7 M to " + (App.mountOf(t.id).fly ? "mount its griffin (Space up, C down)" : "mount its horse") : "") : "riding along: drag to look round") + ' \u00b7 <button class="btn" id="fpLeave">Leave (Esc)</button>';
+    el.innerHTML = "<b>" + t.name.replace(/[<>&]/g, "") + "</b> \u00b7 " + (fp.drive ? "WASD to walk, Shift to run \u00b7 drag or Z/X to turn \u00b7 E to go in" + (App.mountOf && App.mountOf(t.id) ? " \u00b7 M to " + (App.mountOf(t.id).fly ? "mount its griffin (Space up, C down)" : App.mountOf(t.id).kind === "horse" ? "mount its horse" : "ride " + App.mountOf(t.id).name.replace(/^Riding /, "its ").replace(/^Stag$/, "its stag")) : "") : "riding along: drag to look round") + ' \u00b7 <button class="btn" id="fpLeave">Leave (Esc)</button>';
     el.hidden = false;
   }
   App.enterFP = (id) => {
@@ -135,6 +135,6 @@
     a.phase = a.water ? "doing" : null;
     App.animateTickle(t, !!moving, dtReal);
   };
-  App.fpText = (t) => (t.riding ? (t.riding.fly ? "Flying its griffin, with you at the controls" : "Riding its horse, with you at the controls") : t.action && t.action.water ? "Swimming, with you at the controls" : "Walking, with you at the controls");
+  App.fpText = (t) => (t.riding ? (t.riding.fly ? "Flying its griffin, with you at the controls" : "Riding " + (App.mountOf && App.mountOf(t.id) && App.mountOf(t.id).kind !== "horse" ? App.mountOf(t.id).name.replace(/^Riding /, "its ").replace(/^Stag$/, "its stag") : "its horse") + ", with you at the controls") : t.action && t.action.water ? "Swimming, with you at the controls" : "Walking, with you at the controls");
   document.addEventListener("click", (e) => { if (e.target.closest("#fpLeave")) App.exitFP(); });
 })();

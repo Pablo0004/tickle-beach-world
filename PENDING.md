@@ -1,5 +1,31 @@
 # Tickle Beach World — what is pending
 
+## Status, 22 October 2026 (evening)
+
+Items 11 to 16 are done and tested in this working copy (layout tag `plots-3`), not yet published as version 49:
+a preview is at https://claude.ai/artifact/TK966ZfpzsFS9aPPxwJNo6 (the published game is still version 48).
+- **11** places by holder: tested castles by size, wall guards, the "Read the owners from Ethereum now" button
+  (mocked node), interiors; fixed town households shifting when a neighbour changed size, broken floor tiles in
+  non-integer rooms (giant planes in the tower dormitories), the citadel failing the kit check, a shelf over a bed,
+  clouds hiding the view.
+- **12** riding: deer, sheep (rams) and boars (by way of life, or bought at the paddock: 18/30/45 shells), and tamed
+  monsters big enough to carry their tamer (werewolf, centaur, golem, troll, ogre, minotaur, manticore, cerberus,
+  basilisk, salamander, spider). `App.MOUNT_MONSTERS` (creatures.js), `BEASTS` (wealth.js).
+- **13/16** the prison (js/prison.js): Saltrock Penitentiary in the Waterfall; listed Tickles live there (cell,
+  canteen, rock breaking in the yard). Listings: js/listings.js, refreshed by tools/update_listings.py with the
+  owner's OpenSea key (env `OPENSEA_API_KEY`), or typed in the Holders tab. On-chain sale pools not detected.
+- **14** the Parliament (js/parliament.js) on the Maker's Isle (isle radius 16 -> 50, kept clear of other
+  buildings via `placeDist` in geo.js): 333 seats by D'Hondt, ministers vote in blocs, daily sitting 16:00, vote
+  17:30 on a law (or repeal) and up to two Director proposals (decided as in Review). Laws: prizes, bounty, watch,
+  market, restday, tax (`App.lawMul`, `App.lawOn`, `App.restDay`).
+- **15** the Underworld: 12 floors (the hardest of the old 36, `App.UNDER_OLD`), themed (warrens, catacombs, sunlit
+  grotto with water, forest maze, ice caverns, volcanic with lava, abyss, heart); a teleport gem (`warpgem` kit)
+  beside every guardian.
+- Casino leftovers checked: own Tickle through a whole tournament, 6-seat poker cards, waiters, bingo hall.
+
+Still to do: publish version 49 once the owner approves the preview; push this work to GitHub (the cloud session
+had no GitHub access); mansions editable inside and out (later, as asked); the open questions below.
+
 Updated 15 October 2026. Published build: version 48 (private claude.ai artifact). This repository is ahead
 of it with the unpublished work of item 11. Items are listed in the order agreed with the project owner;
 one item is finished before the next one starts.

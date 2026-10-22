@@ -305,6 +305,20 @@
     return st;
   }
 
+  // a teleport gem, the Underworld's save point beside every guardian: a great crystal floating over a carved plinth
+  function warpgem(v) {
+    const st = [], stone = C("#8a8a8a"), stone2 = C("#b8b8b8"), gem = C(["#3cc6d8", "#8fd3f4"][v || 0]), glow = C(["#e8f8ff", "#ffffff"][v || 0]), gold = C("#ffd23f");
+    st.push(S("cylinder", [0, 0, 40], [210, 210, 40], { color: stone, round: 0.2 }));
+    st.push(S("cylinder", [0, 0, 110], [150, 150, 40], { color: stone2, round: 0.2 }));
+    // layer 1: the gem, a cube stood on one corner (a diamond), floating over the plinth, with a ring of gold round it
+    st.push(S("cube", [0, 0, 360], [120, 120, 120], { color: gem, rot: [0.7854, 0.6155, 0], layer: 1 }));
+    st.push(S("cylinder", [0, 0, 360], [150, 150, 8], { color: gold, hole: 0.85, layer: 1 }));
+    // layer 2: its light, and small bright shards on the plinth
+    st.push(S("sphere", [0, 0, 360], [70, 70, 90], { color: glow, layer: 2 }));
+    st.push(S("cube", [130, 40, 175], [26, 26, 26], { color: gem, rot: [0.7854, 0.6155, 0], mirror: true, offsX: 130, layer: 2 }));
+    st.push(S("cube", [0, -140, 175], [22, 22, 22], { color: gem, rot: [0.7854, 0.6155, 0], layer: 2 }));
+    return st;
+  }
   const D = { group: "Dungeons" };
   Object.assign(TB.KIT, {
     minotaur: Object.assign({ name: "Minotaur", variants: [0], build: minotaur, voxel: [12] }, D),
@@ -323,6 +337,7 @@
     gate: Object.assign({ name: "Iron Gate", variants: [0], build: gate, voxel: [8] }, D),
     stalagmite: Object.assign({ name: "Stalagmites", variants: [0], build: stalagmite, voxel: [8] }, D),
     boulders: Object.assign({ name: "Boulders", variants: [0], build: boulders, voxel: [8] }, D),
+    warpgem: Object.assign({ name: "Teleport Gem", variants: [0, 1], build: warpgem, voxel: [8], variantLabel: (v) => ["violet", "blue"][v] }, D),
     rockwall: Object.assign({ name: "Rock Wall", variants: [0, 1, 2], build: rockwall, voxel: [36] }, D),
     mushrooms: Object.assign({ name: "Glowing Mushrooms", variants: [0], build: mushrooms, voxel: [6] }, D),
     crate: Object.assign({ name: "Crate", variants: [0], build: crate, voxel: [8] }, D),

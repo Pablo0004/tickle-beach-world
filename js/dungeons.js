@@ -261,7 +261,8 @@
   // must be beaten to go on. Treasure makes the village stronger: Ethernum for the adventurers,
   // precious metals for the smith (silver tips, gem collars, gold, the Orichalcum Blade), shells, food,
   // and relics that each make their bearer stronger. Deeper floors need far more strength.
-  const FLOORS = 36;
+  // twelve floors, each as hard as the floor of the old thirty-six it stands for (App.UNDER_OLD, interiors.js)
+  const FLOORS = 12, OLD = App.UNDER_OLD || [5, 11, 15, 17, 22, 23, 26, 27, 28, 29, 33, 35], oldOf = (f) => OLD[Math.max(0, Math.min(FLOORS - 1, f))];
   const RELICS = (App.RELICS = {
     charm: { name: "Lucky Goblin Charm", band: 0, bonus: 1.05 }, spearhead: { name: "Kobold Spearhead", band: 0, bonus: 1.06 },
     boneamulet: { name: "Bone Amulet", band: 1, bonus: 1.08 }, scarab: { name: "Pharaoh's Scarab", band: 1, bonus: 1.1 },
@@ -271,7 +272,7 @@
     crown: { name: "Abyssal Crown", band: 5, bonus: 1.28 }, phylactery: { name: "Lich's Phylactery", band: 5, bonus: 1.3 },
     heart: { name: "The Heart of the Chain", band: 9, bonus: 1.25 }, // only from the Golden Tickle
   });
-  const relicInfo = (k) => RELICS[k] || (k[0] === "g" ? { name: "Trophy of " + ((App.GUARDIANS && App.GUARDIANS[+k.slice(1)]) || { name: "a guardian" }).name.replace(/,.*$/, ""), bonus: 1.03 + +k.slice(1) * 0.002 } : { name: k, bonus: 1 });
+  const relicInfo = (k) => RELICS[k] || (k[0] === "g" ? { name: "Trophy of " + ((App.GUARDIANS && App.GUARDIANS[+k.slice(1)]) || { name: "a guardian" }).name.replace(/,.*$/, ""), bonus: 1.03 + oldOf(+k.slice(1)) * 0.002 } : { name: k, bonus: 1 });
   App.relicInfo = relicInfo;
   App.relicsOf = (id) => (st.relics && st.relics[id]) || [];
   const relicMult = (id) => Math.min(2, App.relicsOf(id).reduce((m, k) => m * relicInfo(k).bonus, 1));
@@ -294,13 +295,13 @@
     return (4 + App.levelOf(id) * 1.4) * arms * ether * relicMult(id) * creature * (App.heroPower ? Math.sqrt(App.heroPower(id)) : 1) * (App.guildPower ? App.guildPower(id) : 1);
   };
   // the strength a party needs: for a floor's monsters, and more for its guardian; the Golden Tickle at the bottom most of all
-  const floorNeed = (f) => 30 * Math.pow(1.13, Math.min(f, 20)) * Math.pow(1.09, Math.max(0, f - 20)), guardianNeed = (f) => floorNeed(f) * 1.35 * (f === FLOORS - 1 ? 1.25 : 1);
+  const floorNeed = (f0) => { const f = oldOf(f0); return 30 * Math.pow(1.13, Math.min(f, 20)) * Math.pow(1.09, Math.max(0, f - 20)); }, guardianNeed = (f) => floorNeed(f) * 1.35 * (f === FLOORS - 1 ? 1.25 : 1);
   App.floorNeed = floorNeed; App.guardianNeed = guardianNeed;
   // where a village's parties start: the stairs of the last guardian it has beaten (a shortcut down), one floor above the unknown
   App.conquered = (vi) => (st.conquered && st.conquered[vi]) || 0; // guardians beaten, from the top down
   App.waystone = (vi) => Math.max(0, Math.min(FLOORS - 1, App.conquered(vi) - 1));
   const BAND_LOOT = ["Ether crystals and silver", "Ether crystals, silver and gold", "Ether crystals, gold, silver and gems", "Ether crystals, gold, gems and a little orichalcum", "Ether crystals, gold, gems and orichalcum", "Ether crystals, gems and orichalcum"];
-  App.bandLoot = (f) => BAND_LOOT[Math.min(5, Math.floor(f / 6))];
+  App.bandLoot = (f) => BAND_LOOT[Math.min(5, Math.floor(oldOf(f) / 6))];
   function expedition(p, day, dry) {
     const v = App.villages[p.village], members = p.members.filter((id) => !App.isDead(id) && !(App.pop.ko[id] > st.T + 1));
     if (!members.length || !st.relics) return null;
@@ -325,7 +326,7 @@
       if (!okF) { stopped = { f, by: "the monsters of B" + (f + 1) + "F" }; break; }
       cleared++;
       // its chests and its Ether
-      const b = Math.floor(f / 6), q = (k) => R(n * 13 + k);
+      const b = Math.floor(oldOf(f) / 6), q = (k) => R(n * 13 + k);
       loot.ethernum += 1 + Math.floor(b / 2) + (q(2) < 0.5 ? 1 : 0);
       loot.silver += b <= 3 ? 1 + (q(3) < 0.5 ? 1 : 0) : 0;
       loot.gold += b >= 1 ? b : q(4) < 0.3 ? 1 : 0;
@@ -489,7 +490,7 @@
     const day = Math.floor(st.T / DAY);
     for (const v of App.villages) App.partyOf(v.residents[0], day); // settle today's parties everywhere
     const today = Object.values(st.parties).filter((p) => p && p.day === day).length;
-    let h = '<div class="card"><h3>The Great Underworld</h3><p class="note">Every cave leads down into one dungeon 36 floors deep under the whole map. Parties set off around ' + App.clock(day * DAY + A0).short + " and are back by " + App.clock(day * DAY + A1).short + ": they take the shortcut down to the floor of the last guardian their village has beaten and go down as far as their strength allows, up to three floors, beating each floor's guardian to go on. " + today + " part" + (today === 1 ? "y" : "ies") + " today.</p>" +
+    let h = '<div class="card"><h3>The Great Underworld</h3><p class="note">Every cave leads down into one dungeon 12 floors deep under the whole map: the Goblin Warrens, the Catacombs, a Sunlit Grotto, a Forest Maze, the Ice Caverns, the Burning Deep and the Abyss, down to the Heart of the Chain; a teleport gem beside every guardian. Parties set off around ' + App.clock(day * DAY + A0).short + " and are back by " + App.clock(day * DAY + A1).short + ": they take the shortcut down to the floor of the last guardian their village has beaten and go down as far as their strength allows, up to three floors, beating each floor's guardian to go on. " + today + " part" + (today === 1 ? "y" : "ies") + " today.</p>" +
       '<p class="note">Treasure makes them stronger: Ethernum (each adventurer burns a crystal to light the way, +15%), precious metals for the smith (silver tips, gem collars, gold, the Orichalcum Blade), shells, food, and relics that make their bearer stronger. Deeper floors need much more strength.</p>';
     // live now
     const live = App.liveParties();

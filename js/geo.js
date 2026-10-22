@@ -109,8 +109,8 @@
   // the great lake in the middle of the six regions: a long oval (a stadium) along the seam between
   // the north and the south row, with a ragged shore; every region has some lake shore
   const LAKE = (App.LAKE = { L: 430, R: 235 });
-  // and in its middle the Maker's Isle, just big enough for the giant statue and the pilgrims round it
-  const ISLE = (App.ISLE = { x: 0, z: 0, r: 16 });
+  // and in its middle the Maker's Isle: the giant statue, the pilgrims round it, and behind them the Parliament
+  const ISLE = (App.ISLE = { x: 0, z: 0, r: 50 });
   function lakeSd(x, z) {
     const lake = Math.hypot(Math.max(Math.abs(x) - LAKE.L, 0), z) - LAKE.R + (fbm(x * 0.006, z * 0.006, 71) - 0.5) * 60;
     return Math.max(lake, ISLE.r - Math.hypot(x - ISLE.x, z - ISLE.z));
@@ -125,6 +125,8 @@
     return Math.max(Math.min(coast, f.chan, lakeSd(x, z)), ISLE.r - Math.hypot(x - ISLE.x, z - ISLE.z));
   }
 
+  // for placing things: the Maker's Isle counts as water (only the statue and the Parliament stand on it)
+  const placeDist = (x, z, f) => Math.min(waterDist(x, z, f), Math.hypot(x - ISLE.x, z - ISLE.z) - ISLE.r - 10);
   // ---------- terrain ----------
   function genColumn(x, z) {
     const f = regionField(x, z), R = regions[f.r];
@@ -132,6 +134,7 @@
     if (dw < -16) return { h: 0, top: 0 };
     if (dw < 0) return { h: Math.max(1, SEA - 1 - Math.floor(-dw / 4)), top: B.WETSAND };
     let h = SEA + 1 + Math.floor(Math.min(1, dw / 18) * (R.amp * (0.5 + fbm(x * 0.011, z * 0.011, 9)) + (fbm(x * 0.04, z * 0.04, 11) - 0.5) * 2));
+    if (Math.hypot(x - ISLE.x, z - ISLE.z) < ISLE.r + 2) h = Math.min(h, SEA + 2); // the Maker's Isle is low and level
     let top = 0, stony = false;
     for (const hl of gget("hill", x, z)) {
       const d = Math.hypot(x - hl.x, z - hl.z);
@@ -460,7 +463,7 @@
         const x = R.cx + gx + (r() - 0.5) * 20, z = R.cz + gz + (r() - 0.5) * 20;
         const f = regionField(x, z);
         if (f.r !== R.i) continue;
-        const dw = waterDist(x, z, f);
+        const dw = placeDist(x, z, f);
         if (dw > 30) cands.push({ x, z, dw });
       }
       // the biggest first, each where it keeps furthest from those already placed
@@ -489,7 +492,7 @@
         const x = R.cx + gx + (r() - 0.5) * 36, z = R.cz + gz + (r() - 0.5) * 36;
         const f = regionField(x, z);
         if (f.r !== R.i) continue;
-        const dw = waterDist(x, z, f);
+        const dw = placeDist(x, z, f);
         if (dw < 4) continue;
         if (villages.some((v) => v.region === R.i && Math.hypot(v.x - x, v.z - z) < v.r + 24)) continue;
         if (bridges.some((b) => Math.hypot(b.mx - x, b.mz - z) < 50)) continue;
@@ -514,7 +517,7 @@
       const extra = R.floor === 14 ? 10 : R.floor === 16 ? 7 : 2;
       for (let k = 0; k < extra; k++) {
         const x = R.cx + (r() - 0.5) * 760, z = R.cz + (r() - 0.5) * 760;
-        if (regionField(x, z).r !== R.i || waterDist(x, z) < 40) continue;
+        if (regionField(x, z).r !== R.i || placeDist(x, z) < 40) continue;
         if (villages.some((v) => Math.hypot(v.x - x, v.z - z) < v.r + 40)) continue;
         const hl = { x, z, r: 30 + r() * 30, h: 6 + Math.floor(r() * (R.floor === 14 ? 10 : 6)) };
         gadd("hill", hl, x - hl.r, z - hl.r, x + hl.r, z + hl.r);
@@ -712,7 +715,7 @@
         const a = r() * 6.28, d = v.r + 9 + r() * 10;
         const x = Math.round(v.x + Math.cos(a) * d) + 0.5, z = Math.round(v.z + Math.sin(a) * d) + 0.5, w = 5 + Math.floor(r() * 2), dd = 4 + Math.floor(r() * 2);
         const col = genColumn(x, z);
-        if (col.h < SEA + 2 || waterDist(x, z) < 12) continue;
+        if (col.h < SEA + 2 || placeDist(x, z) < 12) continue;
         if ([[-w, -dd], [w, -dd], [-w, dd], [w, dd]].some(([ox, oz]) => { const c = genColumn(x + ox, z + oz); return c.h < SEA + 1 || Math.abs(c.h - col.h) > 2; })) continue;
         if (App.gridNear("road", x, z, 30).some((rd) => segDist(x, z, rd) < Math.max(w, dd) + 3)) continue;
         if (App.gridNear("field", x, z, 40).some((f) => Math.abs(f.x - x) < f.w + w + 4 && Math.abs(f.z - z) < f.d + dd + 4)) continue;
@@ -727,7 +730,7 @@
       // its hen house, and a sheepfold where the flock sleeps. Each has a gate facing the village.
       const penFits = (x, z, w, d) => {
         const col = genColumn(x, z);
-        if (col.h < SEA + 2 || waterDist(x, z) < 10) return null;
+        if (col.h < SEA + 2 || placeDist(x, z) < 10) return null;
         if ([[-w, -d], [w, -d], [-w, d], [w, d]].some(([ox, oz]) => { const c = genColumn(x + ox, z + oz); return c.h < SEA + 1 || Math.abs(c.h - col.h) > 2; })) return null;
         if (App.gridNear("road", x, z, 25).some((rd) => segDist(x, z, rd) < Math.max(w, d) + 2.5)) return null;
         if (App.gridNear("field", x, z, 30).some((f) => Math.abs(f.x - x) < f.w + w + 3 && Math.abs(f.z - z) < f.d + d + 3)) return null;
@@ -798,7 +801,7 @@
       for (let tries = 0; tries < 1200; tries++) {
         const easy = tries >= 400;
         const a = r() * 6.28, d = 40 + r() * (easy ? 420 : 320), x = Math.round(R.cx + Math.cos(a) * d), z = Math.round(R.cz + Math.sin(a) * d);
-        if (regionField(x, z).r !== R.i || waterDist(x, z) < (easy ? 18 : 25)) continue;
+        if (regionField(x, z).r !== R.i || placeDist(x, z) < (easy ? 18 : 25)) continue;
         const h = genColumn(x, z).h;
         if (h < SEA + 1) continue;
         let flat = true;
@@ -827,7 +830,7 @@
       for (let tries = 0; tries < 1800 && made < 2; tries++) {
         const easy = tries >= 600;
         const a = r() * 6.28, d = 60 + r() * (easy ? 480 : 420), x = Math.round(R.cx + Math.cos(a) * d), z = Math.round(R.cz + Math.sin(a) * d);
-        if (regionField(x, z).r !== R.i || waterDist(x, z) < (easy ? 14 : 20)) continue;
+        if (regionField(x, z).r !== R.i || placeDist(x, z) < (easy ? 14 : 20)) continue;
         const h = genColumn(x, z).h;
         if (h < SEA + 1) continue;
         let flat = true;
@@ -857,7 +860,7 @@
         // keep to the heart of the region, well away from the channels and the neighbours' dragons
         if (Math.hypot(gx, gz) > 380) continue;
         const x = R.cx + gx, z = R.cz + gz, fld = regionField(x, z);
-        if (fld.r !== R.i || fld.chan < 50 || waterDist(x, z) < 30) continue;
+        if (fld.r !== R.i || fld.chan < 50 || placeDist(x, z) < 30) continue;
         const c = genColumn(x, z);
         if (best && c.h <= best.h) continue;
         if (lairs.some((l) => Math.hypot(l.x - x, l.z - z) < 420)) continue;
@@ -876,7 +879,7 @@
     for (let x = App.WORLD.minX; x < App.WORLD.maxX; x += 48) for (let z = App.WORLD.minZ; z < App.WORLD.maxZ; z += 48) {
       const px = x + rw() * 48, pz = z + rw() * 48;
       const f = regionField(px, pz);
-      if (waterDist(px, pz, f) < 6) continue;
+      if (placeDist(px, pz, f) < 6) continue;
       if (gget("field", px, pz).some((q) => Math.abs(q.x - px) < q.w + 2 && Math.abs(q.z - pz) < q.d + 2)) continue;
       const fl = regions[f.r].floor;
       sc(fl === 14 && rw() < 0.3 ? "boulders" : ["grass4", "grass14", "grass16"][Math.floor(rw() * 3)], px, pz, rw() * 6.28);
@@ -895,7 +898,7 @@
       const fl = regions[f.r].floor, cfg = FOREST[fl];
       const dens = fbm(px * 0.011, pz * 0.011, 77) + (rf() - 0.5) * 0.12;
       if (dens < cfg.thr && rf() > 0.12) continue; // mostly in patches, plenty of loners
-      if (waterDist(px, pz, f) < 4) continue;
+      if (placeDist(px, pz, f) < 4) continue;
       const col = genColumn(px, pz);
       if (col.h < SEA + 1 || col.top === B.PATH || col.top === B.STONE) continue;
       if (gget("lot", px, pz).some((v) => Math.hypot(v.x - px, v.z - pz) < v.r + 3)) continue;
@@ -925,7 +928,7 @@
         if (tries === 900) strict = 0;
         if (tries === 1800) strict = -1; // a crowded region: closer still to the villages
         const a = r() * 6.28, d = 60 + r() * (strict < 0 ? 480 : 380), x = Math.round(R.cx + Math.cos(a) * d), z = Math.round(R.cz + Math.sin(a) * d);
-        if (regionField(x, z).r !== R.i || waterDist(x, z) < (strict > 0 ? 30 : strict === 0 ? 18 : 12)) continue;
+        if (regionField(x, z).r !== R.i || placeDist(x, z) < (strict > 0 ? 30 : strict === 0 ? 18 : 12)) continue;
         const h = genColumn(x, z).h;
         if (best && h <= best.h) continue;
         let flat = true;
@@ -961,7 +964,7 @@
       for (let tries = 0; tries < 2000 && made < 2; tries++) {
         const easy = tries >= 700;
         const a = r() * 6.28, d = 80 + r() * (easy ? 470 : 380), x = Math.round(R.cx + Math.cos(a) * d), z = Math.round(R.cz + Math.sin(a) * d);
-        if (regionField(x, z).r !== R.i || waterDist(x, z) < (easy ? 16 : 25)) continue;
+        if (regionField(x, z).r !== R.i || placeDist(x, z) < (easy ? 16 : 25)) continue;
         if (villages.some((v) => Math.hypot(v.x - x, v.z - z) < v.r + (easy ? 20 : 40))) continue;
         if (App.gridNear("road", x, z, 20).some((rd) => segDist(x, z, rd) < (easy ? 8 : 12))) continue;
         if (App.gridNear("field", x, z, 40).some((f) => Math.abs(f.x - x) < f.w + (easy ? 8 : 12) && Math.abs(f.z - z) < f.d + (easy ? 8 : 12))) continue;
@@ -1002,7 +1005,7 @@
       // first close by on flat open ground; if the region has none, further out and less fussy (the yard is levelled anyway)
       for (let tries = 0; tries < 4000 && !spot; tries++) {
         const lv = tries < 700 ? 0 : tries < 1500 ? 1 : tries < 2600 ? 2 : 3, a = r() * 6.28, d = home.r + 30 + r() * [200, 320, 480, 620][lv], x = Math.round(home.x + Math.cos(a) * d), z = Math.round(home.z + Math.sin(a) * d);
-        if (regionField(x, z).r !== R.i || waterDist(x, z) < [28, 20, 16, 12][lv]) continue;
+        if (regionField(x, z).r !== R.i || placeDist(x, z) < [28, 20, 16, 12][lv]) continue;
         const h = genColumn(x, z).h;
         if (h < SEA + 1) continue;
         let flat = true;
@@ -1038,7 +1041,7 @@
       let spot = null;
       for (let tries = 0; tries < 2400 && !spot; tries++) {
         const lv = tries < 800 ? 0 : tries < 1600 ? 1 : 2, a = r() * 6.28, d = 40 + r() * [110, 200, 360][lv], x = Math.round(c0.x + Math.cos(a) * d), z = Math.round(c0.z + Math.sin(a) * d);
-        if (regionField(x, z).r !== R.i || waterDist(x, z) < [22, 16, 12][lv]) continue;
+        if (regionField(x, z).r !== R.i || placeDist(x, z) < [22, 16, 12][lv]) continue;
         const h = genColumn(x, z).h;
         if (h < SEA + 1) continue;
         let flat = true;
@@ -1072,7 +1075,7 @@
       for (let tries = 0; tries < 7000 && !spot; tries++) {
         // first close by and fussy; then further out, turned any way, and less fussy (the yards are levelled anyway)
         const lv = tries < 900 ? 0 : tries < 2000 ? 1 : tries < 3400 ? 2 : tries < 5000 ? 3 : 4, a = r() * 6.28, d = 36 + r() * [90, 170, 320, 460, 600][lv], x = Math.round(Q.x + Math.cos(a) * d), z = Math.round(Q.z + Math.sin(a) * d);
-        if (regionField(x, z).r !== R.i || waterDist(x, z) < [30, 24, 18, 12, 10][lv]) continue;
+        if (regionField(x, z).r !== R.i || placeDist(x, z) < [30, 24, 18, 12, 10][lv]) continue;
         const h = genColumn(x, z).h;
         if (h < SEA + 1) continue;
         const rot = Math.atan2(Q.x - x, Q.z - z) + (lv >= 2 ? Math.floor(r() * 4) * Math.PI / 2 : 0), fx = Math.sin(rot), fz = Math.cos(rot), rx = Math.cos(rot), rz = -Math.sin(rot);
@@ -1103,6 +1106,12 @@
       App.smithies.push({ i: k, region: R.i, x, z, h, rot, fx, fz, rx, rz, sc: s, scale: 1.45, paddock: { x: P.x, z: P.z, sc: sp }, roost: { x: Rt.x, z: Rt.z, sc: sr }, name: R.name + " Blacksmiths' Guild",
         door: { x: x + fx * 6.5, z: z + fz * 6.5 } });
     }
+    // the prison (prison.js): one for the whole map, the last of the buildings that never move
+    App.prison = null;
+    if (App.placePrison) App.placePrison({ regions, villages, genColumn, regionField, waterDist: placeDist, segDist, gadd, sc, rng, SEA });
+    // the Parliament (parliament.js) on the Maker's Isle
+    App.parliament = null;
+    if (App.placeParliament) App.placeParliament({ genColumn, gadd, sc });
     // ---------- last of all, what follows ownership ----------
     // The houses on every plot lived on, the outer ring of logs round its fire, and the warrens dug for whoever the
     // plots cannot hold. They come after every piece that never moves, so those keep their index whoever owns what;
@@ -1149,16 +1158,30 @@
       };
       if (v.cls === "town") {
         // a house for every household (two medium ones for a household of five to nine) in a loose spiral round the
-        // square, front door towards it, kept off the roads, the fields and the farm; an empty slot keeps its spot
-        const want = Math.max(TOWN_HOUSES, v.slots.reduce((a, m) => a + (m ? housesOf(m.length) : 1), 0));
-        const jmax = Math.pow((v.r - 3) / 4.7, 2), c = 4.7 * Math.max(0.8, Math.min(1, Math.sqrt(jmax / (12 + 2 * want * 1.3))));
+        // square, front door towards it, kept off the roads, the fields and the farm. The spots of the spiral are the same
+        // whoever lives there: a household's house stands on the spot of its slot, and a second house on a spot of its
+        // own further out, so nobody moves when a neighbour grows or shrinks; an empty slot keeps its spot
+        const MAXH = TOWN_HOUSES + 3, K2 = Math.max(MAXH, v.slots.length);
+        const jmax = Math.pow((v.r - 3) / 4.7, 2), c = 4.7 * Math.max(0.8, Math.min(1, Math.sqrt(jmax / (12 + 2 * MAXH * 1.3))));
         const okHouse = (x, z) => !nearRoad(x, z, 3.6) && Math.hypot(x - v.hall.x, z - v.hall.z) > 8 && Math.hypot(x - v.granary.x, z - v.granary.z) > 6.5 &&
           Math.hypot(x - v.altar.x, z - v.altar.z) > 4 && !inField(x, z, 3.5) && flatAt(x, z, SMALL, 1) && noLake(x, z, 10);
         spiral.j = 12;
+        const P = [], spotAt = (k) => { while (P.length <= k) { P.push(spiral(c, 12, 1, okHouse)); spiral.j++; } return P[k]; };
+        spotAt(K2 - 1);
+        // the second house next to the first if there is room between the spots, or else on its own spot further out
+        const seconds = [], clear = (x, z) => P.slice(0, K2).every((q) => Math.hypot(q.x - x, q.z - z) > 5) && seconds.every((q) => Math.hypot(q.x - x, q.z - z) > 5);
+        const beside = (p, slot) => {
+          const a0 = Math.atan2(p.z - v.z, p.x - v.x);
+          for (const da of [0, 1.57, -1.57, 0.79, -0.79, 2.36, -2.36, 3.14]) {
+            const x = p.x + Math.cos(a0 + da) * 5.4, z = p.z + Math.sin(a0 + da) * 5.4;
+            if (Math.hypot(x - v.x, z - v.z) < v.r - 3 && okHouse(x, z) && clear(x, z)) return { x, z };
+          }
+          return spotAt(K2 + slot);
+        };
         v.slots.forEach((members, slot) => {
-          const nh = members ? housesOf(members.length) : 1, spots = [];
-          for (let h = 0; h < nh; h++) { spots.push(spiral(c, 12, 1, okHouse)); spiral.j++; }
           if (!members) return;
+          const nh = housesOf(members.length), spots = [spotAt(slot)];
+          if (nh === 2) { const q = beside(spots[0], slot); seconds.push(q); spots.push(q); }
           const half = Math.ceil(members.length / 2), parts = nh === 1 ? [members] : [members.slice(0, half), members.slice(half)];
           parts.forEach((mem, h) => {
             const { x, z } = spots[h];
@@ -1234,7 +1257,7 @@
         const r = rng(R.i * 6007 + 91), list = [];
         for (let gx = -540; gx <= 540; gx += 13) for (let gz = -540; gz <= 540; gz += 13) {
           const x = Math.round(R.cx + gx + (r() - 0.5) * 8), z = Math.round(R.cz + gz + (r() - 0.5) * 8);
-          if (regionField(x, z).r !== R.i || waterDist(x, z) < 16) continue;
+          if (regionField(x, z).r !== R.i || placeDist(x, z) < 16) continue;
           const h = genColumn(x, z).h;
           if (h >= SEA + 2) list.push({ x, z, h, k: hash2(x, z, 6011) });
         }
@@ -1393,7 +1416,7 @@
   // a way in or out of a fortress goes through the gate that makes it shortest (and a way across it, in by one gate
   // and out by another), so nobody walks through its walls
   App.throughGates = (pts) => {
-    const forts = (App.villages || []).filter((v) => v.walls);
+    const forts = (App.villages || []).filter((v) => v.walls).concat(App.prison && App.prison.walls ? [App.prison] : []);
     if (!forts.length) return pts;
     let out = pts;
     for (const v of forts) {

@@ -1,5 +1,5 @@
 /* Voxelization worker: turns on-chain Tickles, on-chain pieces and AI/procedural strokes into meshes. */
-importScripts("data.js?v=103", "keccak.js?v=103", "tickle-core.js?v=169", "sdf.js?v=103");
+importScripts("data.js?v=103", "keccak.js?v=103", "tickle-core.js?v=169", "sdf.js?v=104");
 
 // keep only the voxels on one side of x = 0 (SDF units), e.g. the right arm out of a mirrored pair
 function keepX(vox, pred) {

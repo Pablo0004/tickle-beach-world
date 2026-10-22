@@ -1,12 +1,14 @@
 # Tickle Beach World — lo pedido, lo hecho y lo pendiente
 
-Actualizado: 15 de octubre de 2026.
+Actualizado: 22 de octubre de 2026 (noche).
 Juego publicado (privado): https://claude.ai/artifact/DFWbM9YVoEYorTiuTKEBE4 — versión publicada 48.
 Código en GitHub (privado): https://github.com/Pablo0004/tickle-beach-world — en inglés: `README.md` (el juego completo) y `PENDING.md` (lo pendiente).
 
 ---
 
 ## 1. Pendiente, en el orden acordado
+
+**Resumen al 22 de octubre (noche)**: los puntos 11 a 16 y las comprobaciones del casino están hechos y probados en la copia de trabajo (trazado "plots-3"), en vista previa en https://claude.ai/artifact/TK966ZfpzsFS9aPPxwJNo6. Falta: que des el visto bueno para publicar la versión 49 en el juego de siempre; subir los cambios a GitHub (desde la sesión en la nube no había acceso; van en un parche); tu clave de OpenSea para leer los Tickles en venta; las mansiones editables (más adelante); y las preguntas abiertas de abajo (olas, Créditos). El detalle de cada punto está en los bloques que siguen; el bloque "PAUSA" de más abajo es el estado anterior (lo que allí dice "sin probar" ya está probado).
 
 **Pregunta abierta sobre las olas**: quité las olas que salían en la desembocadura de los ríos (canales entre regiones). Si con "olas en los ríos y el lago" te referías a otra cosa (por ejemplo, las franjas oscuras del fondo escalonado que se ven a través del agua), dímelo y lo cambio.
 
@@ -69,6 +71,43 @@ Código en GitHub (privado): https://github.com/Pablo0004/tickle-beach-world —
 
 ---
 
+**22 de octubre (tarde), punto 11 probado y cerrado, versión 49 en vista previa** (https://claude.ai/artifact/TK966ZfpzsFS9aPPxwJNo6; el juego publicado sigue en la 48 hasta que des el visto bueno; en local ?v=248):
+- Comprobado: castillos por tamaño (4 ciudadelas de 251 a 384 Tickles con el castillo enorme, 11 fortalezas de 100 a 139 con el castillo pequeño o el palacio; ninguna de 150 a 249 con los dueños de hoy), guardias que suben por la puerta y recorren el adarve a la altura del muro, el botón "Read the owners from Ethereum now" (con un nodo simulado: aguanta dos rechazos por saturación, guarda los dueños y rehace el mapa; los 188 sitios con parcela propia se quedan en la suya y el comprador nuevo recibe una finca), interiores del castillo (salón del trono, 8 dormitorios de 48 camas, tesoro), de una mansión (22 camas) y de casas de hogares de 3 y 5.
+- Arreglado: (1) al cambiar los dueños, si un hogar de un pueblo pasaba de 2 casas a 1, todos los hogares siguientes se corrían una casa; ahora cada hogar tiene su sitio fijo y la segunda casa (hogares de 5 a 9) va al lado de la primera; (2) en los dormitorios de las torres salían planos gigantes cruzando la sala (el suelo reservaba menos baldosas de las que dibujaba si la sala no medía un número entero de bloques); (3) el castillo enorme no pasaba la revisión de modelos (demasiados vóxeles) y esa revisión ocupaba un proceso varios minutos; (4) la estantería se montaba sobre la tercera cama del dormitorio; ahora va a la pared lateral; (5) las nubes tapaban lo que mirabas al alejar la cámara; ahora se apartan de la línea de visión; (6) la ayuda y el primer mensaje del día ya hablan de los sitios por poseedor.
+- Sin poder subir a GitHub desde aquí (la sesión no tiene GitHub vinculado): los cambios quedan en la copia de trabajo para que los subas tú.
+
+**Punto 12 hecho (22 de octubre, sin publicar; en local):**
+- **Ciervos, carneros y jabalíes como montura**: los montan, según su oficio, parte de los guardabosques y guías de escalada (un ciervo), de los cuidadores de patos y granjeros de cocos (un carnero) y de los buscadores de tesoros (un jabalí); cualquiera puede comprar uno en el cercado del Gremio de Herreros por menos que un poni (carnero 18, jabalí 30, ciervo 45 conchas), también tú para tus Tickles desde su ficha. Van más rápido que andando (x1,6 a x2,3), menos que un caballo; el caballo o el grifo comprados tienen preferencia.
+- **Monstruos domados como montura**: el domador monta en los viajes largos a su monstruo si es lo bastante grande para llevarlo: hombre lobo, gólem, trol, ogro y minotauro (el jinete va sobre sus hombros), centauro (sobre el lomo de caballo, detrás del torso), mantícora, cancerbero, basilisco, salamandra y araña gigante (sobre el lomo). Esos monstruos le acompañan ya al tamaño con el que lo llevan (los demás siguen a tamaño de compañero); mientras lo montan no se ve dos veces.
+- Cada montura se mueve a su manera (los de cuatro patas cabecean, los de dos se balancean de un pie a otro); los ciervos suenan a cascos. En primera persona, M sirve también para montar estos.
+- Probado en el juego con un ciervo, un carnero, un jabalí, un ogro y un centauro.
+
+**Punto 13 hecho (22 de octubre, sin publicar; en local): la cárcel de los Tickles en venta**
+- **Saltrock Penitentiary**, una sola para todo el mapa, en tierras altas de la Cascada, lejos de pueblos y caminos: una garita de piedra con almenas, puerta de barrotes, ventanas enrejadas y faroles, dentro de un patio redondo amurallado con puerta y dos torres de vigía; en el patio, montones de rocas. Por dentro, bajo tierra: sala de guardia, comedor (B1) y bloques de 12 celdas (B2, B3...), cada una con su cama, reja de hierro y pilares; se baja de un bloque al siguiente.
+- **Mientras un Tickle está en venta vive allí**: deja su casa (ya no aparece en ella), duerme en su celda hasta las 7, pasa la mañana en el patio, pica piedra de 10 a 12 y de 13 a 17, come y cena en el comedor y vuelve a su celda a las 20. No lleva su montura. Cuando se vende, al leer los dueños de nuevo se muda con su nuevo poseedor; si se retira el anuncio, vuelve a casa.
+- **La lista de Tickles en venta**: `js/listings.js` (vacía de momento) la rellena `tools/update_listings.py` con **tu clave de OpenSea** (variable de entorno `OPENSEA_API_KEY`; la clave no se guarda en ningún sitio): `python tools/update_listings.py` (o `--check` para solo contar). Desde aquí no hay red para hacerlo yo. Mientras tanto, en la pestaña Holders hay una tarjeta "Up for sale (in the prison)" donde puedes escribir números de token y usarlos como lista (se guarda en tu navegador), con botones para volver a la lista del juego y para ir a la cárcel. La cárcel tiene su tarjeta al hacer clic (presos, qué hacen ahora, de cuándo es la lista).
+- Probado: ubicación, patio, presos picando piedra y en el patio a la hora correcta, comedor y celdas por dentro, simulación sin errores.
+- **Punto 16** (en venta en la cadena): los anuncios de OpenSea/Blur no están en la cadena; los únicos en la cadena serían los Tickles en pools de venta automática (tipo Sudoswap), que no se pueden distinguir sin consultar el código de cada contrato poseedor. Queda cubierto con el script de OpenSea; si quieres lo de los pools, se añade a `tools/update_owners.py`.
+
+**Punto 14 decidido (22 de octubre)**: un único Parlamento en la Isla del Creador; 333 escaños repartidos por número de Tickles con el método D'Hondt; se votan las leyes que proponen los ministros (con efecto real en el juego) y también las propuestas del Director; los ayuntamientos de los pueblos se quedan (tablón, almacén de mineral, refugio).
+
+**Punto 14 hecho (22 de octubre, sin publicar; en local): el Parlamento**
+- **Dónde**: en la Isla del Creador, detrás de la estatua y mirándola. La isla ha crecido (de 16 a 50 bloques de radio) y es llana; no se construye nada más en ella. Edificio neoclásico enorme: podio con escalinata, pórtico de seis columnas con frontón, cúpula verde con linterna dorada, ventanales y banderas.
+- **Escaños**: 333, repartidos por número de Tickles con el método D'Hondt (con los dueños de hoy, 119 poseedores tienen escaño; hace falta tener unos 15 Tickles; el mayor tiene 25). Cada poseedor manda como ministros a sus mejores Tickles (de más nivel), nunca uno que esté en la cárcel; sus ministros votan en bloque, aunque uno de cada ocho rompe la disciplina. Se recalcula cada día.
+- **Sesiones**: cada tarde a las 16:00 se fija el orden del día y a las 17:30 se vota. Los ministros que viven cerca de un muelle ese día no hacen tareas y cruzan en la lancha de peregrinos hasta su escaño; los demás votan desde casa. Dentro, el hemiciclo con los 333 asientos alrededor de la silla del Presidente, los ministros presentes en su escaño (levantan la pata de vez en cuando) y el orden del día o el resultado.
+- **Qué se vota**: (1) una ley, o la derogación de una vigente (al menos 3 días después de aprobarla), propuesta por un ministro de uno de los bloques grandes; (2) hasta dos cosas nuevas del Director que nadie haya decidido aún (diseños, actividades, eventos, edificios): si salen quedan aprobadas como si lo hicieras tú en Review, si no se quitan. Tú sigues pudiendo decidir en Review.
+- **Las leyes, con efecto real**: Prize Act (premios de concursos dobles), Sea Bounty Act (recompensa por bestias marinas x1,5), Night Watch Act (la Guardia Nocturna atrapa el doble de forajidos), Fair Market Act (monturas, animales de monta y barcos un 20 % más baratos), Rest Day Act (cada séptimo día sin trabajo ni tareas), Shell Tax (cada noche quien tiene más de 100 conchas da el 2 %, repartido entre quien tiene menos de 20). Cada ministro las apoya más o menos según quién es (facción, riqueza, si va armado, si tiene montura...).
+- **Dónde se ve**: tarjeta al hacer clic en el edificio, tarjeta "The Parliament" en la pestaña Aventura (leyes en vigor y últimas votaciones), registro y avisos de cada votación, ayuda del menú.
+- **Los ayuntamientos se quedan** (tablón, almacén de mineral, refugio).
+- **Trazado "plots-3"**: como la isla ha crecido, una partida guardada con el trazado anterior conserva lo de cada Tickle y empieza de nuevo lo de los pueblos (lo mismo que al pasar a las parcelas).
+- Probado: reparto de escaños, nueve sesiones seguidas (leyes que salen y que no, derogaciones rechazadas), propuestas del Director votadas y aplicadas, hemiciclo por dentro, guardado; sin errores.
+
+**Punto 15 hecho (22 de octubre, sin publicar; en local): la mazmorra**
+- **12 pisos** en vez de 36, quedándonos con los más difíciles: cada piso tiene el jefe y la dificultad de uno de los pisos duros de antes (6, 12, 16, 18, 23, 24, 27, 28, 29, 30, 34 y 36). Jefes: el Rey Goblin, el Liche, Medusa, el Rey Basilisco, el Cíclope, el Gólem Titán, el Señor de la Guerra Trol de la Escarcha, la Quimera, la Sierpe de Fuego, la Hidra, el Rey Liche y el Tickle Dorado bajo la estatua.
+- **Las mismas rocas usadas de formas distintas**: B1 Madrigueras de goblins (roca), B2 Catacumbas (piedra labrada), B3-B4 **Gruta soleada** (abierta al cielo, con luz de día, suelo de hierba y charcas de agua, sin antorchas), B5-B6 **Bosque laberinto** (los muros son setos con árboles encima, cielo y luz natural), B7-B8 **Cuevas de hielo** (muros de hielo azul pálido, suelo helado, luz fría), B9-B10 **Volcánico** (roca rojiza y charcas de lava brillante), B11 Abismo, B12 Corazón de la Cadena.
+- **Puntos de guardado**: junto a cada jefe, dentro de su sala y al lado de la escalera, una **gran gema de teletransporte** (un diamante azul flotando sobre una peana, con luz propia). Es el punto donde vuelve una expedición que ya venció a ese jefe, y desde ella puedes volver a la superficie.
+- Probado: los pisos por dentro (capturas), las gemas, y seis días de expediciones con los 12 pisos.
+
 **PAUSA (22 de octubre, a petición tuya). Estado exacto para retomar:**
 - Hecho y probado en el juego: lo del punto 11 descrito arriba, más que los Tickles no atraviesen edificios (pasos comprobados en todo su tramo, para que los jinetes no se salten los muros), los caminos que entran o salen de una fortaleza pasan por sus puertas (también los Tickles lejanos), las puertas pegadas al muro (los tramos se calculan de puerta a puerta), el castillo grande nuevo (el doble que el primero) y la herramienta `tools/update_owners.py` (probada en modo `--check`).
 - **ESCRITO PERO SIN PROBAR** (el siguiente paso al volver: cargar el juego, mirar y corregir):
@@ -82,11 +121,7 @@ Código en GitHub (privado): https://github.com/Pablo0004/tickle-beach-world —
 ## 2. Cosas a medias o por confirmar
 
 - **Créditos**: en Menú → Créditos sigue "The Tickle Beach collection by Paul McKellar" (atribución real de la colección, no leyenda). Pregunté si quitarlo; sin respuesta.
-- **Casino, sin comprobar del todo**:
-  - El flujo completo de inscribir a tu Tickle en el torneo (los torneos de Tickles sí se probaron hasta el final).
-  - Las cartas en las mesas de póker de 6 (estaban vacías al medir; usan el mismo sistema que las de torneo, que sí se midieron).
-  - Ver a los camareros cruzar la sala con clientes dentro.
-  - La sala de bingo después de agrandarla.
+- **Casino, comprobado (22 de octubre)**: un Tickle tuyo inscrito en el torneo de póker de principio a fin (17 jugadores, quedó segundo y cobró 45 conchas tras pagar 10), las cartas en las mesas de póker de 6 (se reparten y se ven sobre el tapete), los camareros cruzando la sala entre la barra y los clientes, y la sala de bingo agrandada (panel de números, tres mesas largas, 15 jugadores).
 - **Revisión minuciosa de todo el juego "como un creador de videojuegos"** (petición antigua): se hace a la vez que lo demás, no está cerrada.
 - **Ideas antiguas sin cerrar**: los combates de los torneos de criaturas pueden resolverse demasiado rápido para verlos.
 

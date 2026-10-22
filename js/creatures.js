@@ -48,6 +48,22 @@
   };
   for (const k in MONSTER_SPECIES) { const [name, type, hp, atk, def, spd, move, nick, hover] = MONSTER_SPECIES[k]; SPECIES[k] = { name, type, hp, atk, def, spd, habitats: [], move, nick, monster: true, hover }; }
   App.MONSTER_TAMABLE = Object.keys(MONSTER_SPECIES);
+  // the tamed monsters big enough to carry their tamer on long trips (wealth.js): their size (at heel and under the
+  // rider alike), the height of the seat on the back or the shoulders and where along the body it is (SDF units,
+  // before scaling), and how much faster than walking they go. The rest come along at a companion's size.
+  App.MOUNT_MONSTERS = {
+    werewolf: { s: 1.1, back: 466, dz: -68, mul: 2.4, biped: true },
+    centaur: { s: 1.15, back: 317, dz: -190, mul: 2.6 },
+    golem: { s: 0.85, back: 688, dz: 0, mul: 1.7, biped: true },
+    troll: { s: 0.85, back: 678, dz: -40, mul: 1.8, biped: true },
+    ogre: { s: 0.75, back: 794, dz: -40, mul: 1.8, biped: true },
+    minotaur: { s: 0.75, back: 777, dz: -40, mul: 2.1, biped: true },
+    manticore: { s: 0.95, back: 414, dz: 0, mul: 2.5 },
+    cerberus: { s: 1.1, back: 351, dz: -40, mul: 2.5 },
+    basilisk: { s: 1.7, back: 128, dz: 0, mul: 2.0 },
+    salamander: { s: 1.8, back: 178, dz: -100, mul: 2.3 },
+    spider: { s: 1.2, back: 305, dz: -100, mul: 2.4 },
+  };
   const TYPE_COL = (App.CREATURE_TYPE_COL = { Fire: "#ff7a2f", Water: "#2f8fe0", Nature: "#3cbf6c", Earth: "#9a6b45", Spark: "#ffd23f", Air: "#d9eefc", Mystic: "#c9a6ff" });
   // what each type is strong against (x1.6); the reverse is weak (x0.65)
   const STRONG = (App.CREATURE_STRONG = { Fire: ["Nature", "Spark"], Water: ["Fire", "Earth"], Nature: ["Water", "Earth"], Earth: ["Spark", "Fire"], Spark: ["Water", "Air"], Air: ["Nature", "Mystic"], Mystic: ["Air", "Water"] });
@@ -122,8 +138,9 @@
     const g = App.makeVoxMesh(md).geometry, box = App.meshBox(md), h = box.max.y - box.min.y;
     let local = new THREE.Matrix4().compose(new THREE.Vector3(md.origin[0] * S - (box.min.x + box.max.x) / 2, md.origin[1] * S - box.min.y, md.origin[2] * S - (box.min.z + box.max.z) / 2),
       new THREE.Quaternion(), new THREE.Vector3(md.voxel * S, md.voxel * S, md.voxel * S));
-    // a tamed monster comes along at a companion's size: no taller than a Tickle's shoulder
-    const s = SPECIES[k].monster ? Math.min(1, 2.3 / Math.max(0.5, h)) : 1;
+    // a tamed monster comes along at a companion's size, no taller than a Tickle's shoulder; one big enough to ride
+    // at the size it carries its tamer
+    const s = SPECIES[k].monster ? (App.MOUNT_MONSTERS[k] ? App.MOUNT_MONSTERS[k].s : Math.min(1, 2.3 / Math.max(0.5, h))) : 1;
     if (s < 1) local = new THREE.Matrix4().makeScale(s, s, s).multiply(local);
     geo[k] = { geo: g, local, h: h * s };
     const m = new THREE.InstancedMesh(g, App.voxMaterial, CAP);
@@ -563,6 +580,7 @@
     const draw = (b) => {
       if (!meshes[b.sp]) { ensureGeo(b.sp); return; }
       if (b.gone > st.T || n[b.sp] >= CAP || Math.abs(b.x - tx) + Math.abs(b.z - tz) > 110) return;
+      if (b.ridden && performance.now() - b.ridden < 250) return; // under its tamer, drawn as its mount (wealth.js)
       if (b.sp === "lumoth" && b.wild && !App.isNight && !b.battle && !b.busy) return; // moths come out at night
       if (!b.held && !b.flying) { const gy = App.surfaceAt(b.x, b.z).y; b.y += (gy - b.y) * Math.min(1, dtReal * 8); }
       const hov = SPECIES[b.sp].hover ? SPECIES[b.sp].hover + Math.sin(time * 2.5 + b.wob) * 0.15 : 0;
@@ -593,7 +611,7 @@
     const count = {};
     for (const c of all) count[c.sp] = (count[c.sp] || 0) + 1;
     const tamers = Object.keys(st.tamed).filter((id) => st.tamed[id].length).length;
-    let h = (App.faithHTML ? App.faithHTML() : "") + (App.minesHTML ? App.minesHTML() : "") + (App.dungeonsHTML ? App.dungeonsHTML() : "") + (App.guildsHTML ? App.guildsHTML() : "") + (App.wealthHTML ? App.wealthHTML() : "") + (App.weatherHTML ? App.weatherHTML() : "") + (App.casinosHTML ? App.casinosHTML() : "") + (App.contestsHTML ? App.contestsHTML() : "") + (App.divingHTML ? App.divingHTML() : "") + (App.seaHTML ? App.seaHTML() : "") + (App.factionsHTML ? App.factionsHTML() : "") + '<div class="card"><h2>Creature Arena</h2><p class="note">Seven fantasy creatures live wild across the map. ' + tamers.toLocaleString() + " tamers have " + all.length.toLocaleString() +
+    let h = (App.faithHTML ? App.faithHTML() : "") + (App.minesHTML ? App.minesHTML() : "") + (App.dungeonsHTML ? App.dungeonsHTML() : "") + (App.guildsHTML ? App.guildsHTML() : "") + (App.wealthHTML ? App.wealthHTML() : "") + (App.weatherHTML ? App.weatherHTML() : "") + (App.parliamentHTML ? App.parliamentHTML() : "") + (App.casinosHTML ? App.casinosHTML() : "") + (App.contestsHTML ? App.contestsHTML() : "") + (App.divingHTML ? App.divingHTML() : "") + (App.seaHTML ? App.seaHTML() : "") + (App.factionsHTML ? App.factionsHTML() : "") + '<div class="card"><h2>Creature Arena</h2><p class="note">Seven fantasy creatures live wild across the map. ' + tamers.toLocaleString() + " tamers have " + all.length.toLocaleString() +
       " of them. Every evening from " + App.clock(day * DAY + T0).short + " each region's eight strongest tamers meet at its arena." + (App.tamedMonsters ? " Tamers also win over monsters in the Great Underworld, the mines and at the cave mouths (never a guardian): " + App.tamedMonsters().toLocaleString() + " tamed so far, walking about with their tamers." : "") + "</p></div>";
     h += '<div class="card"><h3>Tonight\'s tournaments</h3><div class="kv">';
     for (const ar of App.arenas || []) {

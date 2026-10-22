@@ -30,7 +30,8 @@
     for (const kind in TB.KIT) {
       const strokes = TB.KIT[kind].build(TB.KIT[kind].variants[0]);
       try {
-        const res = await App.job("compact", { strokes, voxel: 8, lip: 1.5 });
+        // the big buildings at a voxel in proportion to their size (a castle at 8 would keep a worker busy for minutes)
+        const res = await App.job("compact", { strokes, voxel: Math.max(8, Math.round(TB.KIT[kind].voxel[0] * 0.75)), lip: 1.5 });
         const ck = TB.check({ strokes }, res.vox);
         App.kitChecks[kind] = { score: ck.score, checks: ck.checks, fails: ck.fails, voxels: res.vox.count, strokes: strokes.length };
       } catch (e) { console.warn("kit check", kind, e); }
@@ -778,6 +779,10 @@
     if (step.k === "dive" && App.diveBrain && App.diveBrain(t, step)) return;
     // the Blacksmiths' Guild's smiths and groom, a shopping trip, out sailing its own boat (wealth.js)
     if (App.wealthBrain && App.wealthBrain(t, step)) return;
+    // up for sale: in the prison (prison.js)
+    if (App.prisonBrain && App.prisonBrain(t, step)) return;
+    // a minister in the Parliament (parliament.js)
+    if (App.parliamentBrain && App.parliamentBrain(t, step)) return;
     if (step.k === "raid") return raidBrain(t, step);
     if (step.k === "ritual") {
       if (Math.hypot(step.p.x - t.pos.x, step.p.z - t.pos.z) > 1.2) return startTravel(t, step.p, "to the ritual");
@@ -1808,6 +1813,7 @@
       App.mineTick && App.mineTick();
       App.guildTick && App.guildTick();
       App.casinoTick && App.casinoTick();
+      App.parliamentTick && App.parliamentTick();
       App.contestTick && App.contestTick();
       App.diveTick && App.diveTick();
       App.seaTick && App.seaTick();
@@ -2258,7 +2264,7 @@
       acts: st.acts.filter((a) => a.source !== "core" && a.source !== "onchain"), projects: st.projects, log: st.log.slice(0, 120), event: st.event, kit: st.kit,
       villages: App.saveVillages(), raidDay: st.raidDay, dragonDay: st.dragonDay, shareDay: st.shareDay,
       plots: App.plotsSave ? App.plotsSave() : null,
-      creatures: App.saveCreatures(), tourneyDay: st.tourneyDay, creatureDay: st.creatureDay, dungeons: App.saveDungeons(), settleDay: st.settleDay, fate: App.saveFate(), factions: App.saveFactions ? App.saveFactions() : null, rampage: App.saveRampage ? App.saveRampage() : null, lairs: App.saveLairs ? App.saveLairs() : null, faith: App.saveFaith ? App.saveFaith() : null, mines: App.saveMines ? App.saveMines() : null, guilds: App.saveGuilds ? App.saveGuilds() : null, casinos: App.saveCasinos ? App.saveCasinos() : null, contests: App.saveContests ? App.saveContests() : null, diving: App.saveDiving ? App.saveDiving() : null, seabeasts: App.saveSeaBeasts ? App.saveSeaBeasts() : null, wealth: App.saveWealth ? App.saveWealth() : null, weather: App.saveWeather ? App.saveWeather() : null,
+      creatures: App.saveCreatures(), tourneyDay: st.tourneyDay, creatureDay: st.creatureDay, dungeons: App.saveDungeons(), settleDay: st.settleDay, fate: App.saveFate(), factions: App.saveFactions ? App.saveFactions() : null, rampage: App.saveRampage ? App.saveRampage() : null, lairs: App.saveLairs ? App.saveLairs() : null, faith: App.saveFaith ? App.saveFaith() : null, mines: App.saveMines ? App.saveMines() : null, guilds: App.saveGuilds ? App.saveGuilds() : null, casinos: App.saveCasinos ? App.saveCasinos() : null, parliament: App.saveParliament ? App.saveParliament() : null, contests: App.saveContests ? App.saveContests() : null, diving: App.saveDiving ? App.saveDiving() : null, seabeasts: App.saveSeaBeasts ? App.saveSeaBeasts() : null, wealth: App.saveWealth ? App.saveWealth() : null, weather: App.saveWeather ? App.saveWeather() : null,
     };
   };
   App.restoreNeeds = (s) => { try { const f = unb64f(s); if (f.length === App.pop.needs.length) App.pop.needs.set(f); } catch (e) { /* ignore */ } };

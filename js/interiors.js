@@ -4,7 +4,7 @@
  * of another room, or the outside door it came from, so going in and coming back out always match up.
  *   house (cottage)  1F living room <-> 2F bedroom          house (round hut)  one room
  *   town hall        1F hall <-> 2F council room            granary            the store room
- *   dungeon          the Great Underworld, 36 floors          mine               galleries, deeper with its level
+ *   dungeon          the Great Underworld, 12 floors          mine               galleries, deeper with its level
  *   guild hall       the hall and its board
  * Inside you see the furniture and whoever is in there: the owner asleep or at breakfast, villagers
  * hiding from a dragon, the parties fighting their way down (warriors with blades, mages with spells,
@@ -35,6 +35,8 @@
     for (const dg of App.dungeons || []) { const d = Math.min(Math.hypot(dg.door.x - x, dg.door.z - z), Math.hypot(dg.x - x, dg.z - z)); if (d < bd + 3) { bd = d - 3; best = { kind: "dungeon", dg, door: dg.door }; } }
     for (const m of App.mines || []) { const d = Math.min(Math.hypot(m.door.x - x, m.door.z - z), Math.hypot(m.x - x, m.z - z)); if (d < bd + 3) { bd = d - 3; best = { kind: "mine", mine: m, door: m.door }; } }
     for (const Cs of App.casinos || []) { const d = Math.min(Math.hypot(Cs.door.x - x, Cs.door.z - z), Math.hypot(Cs.x - x, Cs.z - z) * 0.8); if (d < bd + 2) { bd = d - 2; best = { kind: "casino", casino: Cs, door: Cs.door }; } }
+    if (App.parliament && App.parliament.door) { const P = App.parliament, d = Math.min(Math.hypot(P.door.x - x, P.door.z - z), Math.hypot(P.sc.x - x, P.sc.z - z) * 0.6); if (d < bd + 2) { bd = d - 2; best = { kind: "parliament", parliament: P, door: P.door }; } }
+    if (App.prison && App.prison.door) { const P = App.prison, d = Math.min(Math.hypot(P.door.x - x, P.door.z - z), Math.hypot(P.sc.x - x, P.sc.z - z) * 0.9); if (d < bd + 1) { bd = d - 1; best = { kind: "prison", prison: P, door: P.door }; } }
     const gh = App.guildHallAt ? App.guildHallAt(x, z) : null;
     if (gh) { const d = Math.min(Math.hypot(gh.door.x - x, gh.door.z - z), Math.hypot(gh.x - x, gh.z - z) * 0.9); if (d < bd) { bd = d; best = { kind: "guild", hall: gh, door: gh.door }; } }
     if (best) best.name = nameOf(best);
@@ -47,6 +49,8 @@
     if (T.kind === "dungeon") return T.dg.name;
     if (T.kind === "guild") return App.GUILDS[T.hall.guild].name + " of " + App.regions[T.hall.region].name;
     if (T.kind === "casino") return T.casino.name;
+    if (T.kind === "prison") return T.prison.name;
+    if (T.kind === "parliament") return T.parliament.name;
     return T.mine.name;
   }
 
@@ -137,6 +141,62 @@
     A.note = v.name + ": " + App.placeKindText(v) + ". " + dorms + " tower dormitor" + (dorms === 1 ? "y" : "ies") + ", a bed for every one of them.";
     return { title: v.name, rooms, perDorm: PER_DORM, firstDorm: 1, maxEat: 24 };
   }
+  // the prison (prison.js): a guard room under the blockhouse, the canteen below it, and the cell blocks one after another
+  // further down, twelve cells to a block, a bed and an iron gate to each
+  // the Parliament (parliament.js): one great chamber, a seat for every one of the 333 ministers in rows round the
+  // Speaker's chair, the blocs side by side
+  function chamberMap(T) {
+    const P = App.parliament, R = room("The Chamber", 62, 36, { h: 9, floor: ["#e8e0d0", "#d8d0c0"], wall: "#fff8e8", trim: "#a0703a" });
+    const cz = -R.d / 2 + 4;
+    R.items.push({ k: "mat", x: 0, z: R.d / 2 - 1 }, { k: "throne", x: 0, z: back(R, 1.6) }, { k: "longtable", x: 0, z: cz - 0.2, rot: Math.PI / 2 },
+      { k: "banner", v: 0, x: -6, z: back(R, 0.2), y: 1 }, { k: "banner", v: 3, x: 6, z: back(R, 0.2), y: 1 }, { k: "picture", x: 0, z: back(R, 0.2), y: 4.6 },
+      { k: "plant", x: -R.w / 2 + 1.4, z: R.d / 2 - 2 }, { k: "plant", x: R.w / 2 - 1.4, z: R.d / 2 - 2 });
+    for (const z of [-10, 0, 10]) for (const side of [-1, 1]) R.items.push({ k: "torch", x: side * (R.w / 2 - 0.3), z, y: 3, rot: -side * Math.PI / 2 });
+    R.seats = App.chamberSeats(R);
+    for (const s of R.seats) R.items.push({ k: "chair", x: s.x, z: s.z, rot: s.rot });
+    R.warps.push({ id: 0, x: 0, z: R.d / 2 - 1, kind: "mat", label: "Outside", to: { outside: true } });
+    R.note = App.parliamentNote ? App.parliamentNote() : "";
+    return { title: P.name, rooms: [R] };
+  }
+  const PER_BLOCK = 12;
+  function prisonMap(T) {
+    const P = App.prison, n = Math.max(1, App.prisoners().length), blocks = Math.max(1, Math.ceil(n / PER_BLOCK));
+    const look = { floor: ["#7a766e", "#6e6a62"], wall: "#9a948a", trim: "#4a4a4a" };
+    const A = room("Guard room", 18, 12, Object.assign({ h: 6 }, look));
+    A.items.push({ k: "mat", x: 0, z: A.d / 2 - 1 }, { k: "table", v: 1, x: -4, z: -1.5 }, { k: "chair", x: -4, z: 0.2, rot: Math.PI }, { k: "chair", x: -5.6, z: -1.5, rot: Math.PI / 2 },
+      { k: "barrel", x: A.w / 2 - 1.3, z: A.d / 2 - 1.6 }, { k: "crate", x: A.w / 2 - 1.5, z: A.d / 2 - 3.6, rot: 0.3 }, { k: "cage", x: 3, z: back(A, 1.4) },
+      { k: "torch", x: -A.w / 2 + 0.3, z: 0, y: 2.4, rot: Math.PI / 2 }, { k: "torch", x: A.w / 2 - 0.3, z: 0, y: 2.4, rot: -Math.PI / 2 },
+      { k: "stairs", x: -A.w / 2 + 2, z: back(A, 1.8) }, { k: "stairs", x: A.w / 2 - 2, z: back(A, 1.8) });
+    A.warps.push({ id: 0, x: 0, z: A.d / 2 - 1, kind: "mat", label: "Outside", to: { outside: true } },
+      { id: 1, x: -A.w / 2 + 2, z: back(A, 1.8), kind: "stairs", label: "Down to the canteen (B1)", to: { room: 1, warp: 0 } },
+      { id: 2, x: A.w / 2 - 2, z: back(A, 1.8), kind: "stairs", label: "Down to the cells (B2)", to: { room: 2, warp: 0 } });
+    A.note = P.name + ": " + App.prisoners().length + " Tickles up for sale live here until somebody buys them.";
+    const B = room("Canteen (B1)", 22, 14, Object.assign({ h: 5, dark: true }, look));
+    B.items.push({ k: "longtable", x: -4, z: 0, rot: 0, tag: "table" }, { k: "longtable", x: 4, z: 0, rot: 0 }, { k: "stove", x: -B.w / 2 + 1.6, z: back(B, 1.6) }, { k: "barrel", x: B.w / 2 - 1.3, z: back(B, 1.4) },
+      { k: "sacks", x: B.w / 2 - 1.5, z: back(B, 3.2) }, { k: "stairs", x: B.w / 2 - 2, z: B.d / 2 - 2 },
+      { k: "torch", x: -B.w / 2 + 0.3, z: 0, y: 2.4, rot: Math.PI / 2 }, { k: "torch", x: B.w / 2 - 0.3, z: 0, y: 2.4, rot: -Math.PI / 2 });
+    B.seats = [];
+    for (let k = 0; k < 6; k++) for (const side of [-1, 1]) for (const tx of [-4, 4]) B.seats.push({ x: tx + side * 1.6, z: -2.8 + k * 1.1, rot: side > 0 ? -Math.PI / 2 : Math.PI / 2 }); // both tables fill up together
+    B.warps.push({ id: 0, x: B.w / 2 - 2, z: B.d / 2 - 2, kind: "stairs", label: "Up to the guard room", to: { room: 0, warp: 1 } });
+    const rooms = [A, B];
+    for (let k = 0; k < blocks; k++) {
+      const nb = Math.min(PER_BLOCK, n - k * PER_BLOCK), w = Math.ceil(PER_BLOCK * 3.4 + 3), R = room("Cell block " + (k + 1) + " (B" + (k + 2) + ")", w, 13, Object.assign({ h: 5, dark: true }, look));
+      const x0 = -((PER_BLOCK - 1) * 3.4) / 2, front = back(R, 4.9);
+      R.items.push({ k: "bed", v: 0, x: x0, z: back(R, 2.2) });
+      bedsFor(R, nb, 0, x0, PER_BLOCK, 3.4);
+      // an iron gate across the front of every cell, a stone pillar between one cell and the next
+      for (let c = 0; c < PER_BLOCK; c++) R.items.push({ k: "gate", x: x0 + c * 3.4, z: front, s: [0.62, 0.8, 1] });
+      for (let c = 0; c <= PER_BLOCK; c++) R.items.push({ k: "pillar", x: x0 - 1.7 + c * 3.4, z: front, s: [0.55, 0.62, 0.55] });
+      for (let c = 0; c < 4; c++) R.items.push({ k: "torch", x: x0 + 1.7 + c * 3.4 * 3, z: back(R, 0.3), y: 2.6 });
+      const sx = R.w / 2 - 2, sz = R.d / 2 - 1.8, nx = -R.w / 2 + 2;
+      R.items.push({ k: "stairs", x: sx, z: sz });
+      R.warps.push({ id: 0, x: sx, z: sz, kind: "stairs", label: k ? "Up to cell block " + k : "Up to the guard room", to: k ? { room: k + 1, warp: 1 } : { room: 0, warp: 2 } });
+      if (k + 1 < blocks) { R.items.push({ k: "stairs", x: nx, z: sz }); R.warps.push({ id: 1, x: nx, z: sz, kind: "stairs", label: "Down to cell block " + (k + 2), to: { room: k + 3, warp: 0 } }); }
+      R.note = nb + " cells in this block, a bed in each.";
+      rooms.push(R);
+    }
+    return { title: P.name, rooms, perDorm: PER_BLOCK, firstDorm: 2 };
+  }
   function richMap(T, tier) {
     const s = T.sc, v = App.villages[s.village], c = v.style, id = App.residentsOf(s)[0];
     const A = room(tier === 2 ? "Great hall (1F)" : "Parlour (1F)", tier === 2 ? 24 : 18, tier === 2 ? 16 : 13, { h: tier === 2 ? 7 : 6, floor: tier === 2 ? ["#d8c8a8", "#c8b898"] : ["#c79a62", "#b58850"], wall: tier === 2 ? "#fff8e8" : "#fff4d6" });
@@ -159,7 +219,9 @@
     if (tier === 2) B.items.push({ k: "bed", v: c, x: -0.2, z: back(B, 2.2) }, { k: "window", x: -6, z: back(B, 0.15) });
     B.warps.push({ id: 0, x: B.w / 2 - 2, z: back(B, 1.8), kind: "stairs", label: "Down to the " + (tier === 2 ? "great hall" : "parlour") + " (1F)", to: { room: 0, warp: 1 } });
     B.spots.bed = { x: -3.8, z: back(B, 2.0) };
-    { const n = App.residentsOf(s).length; if (n > 1 && !s.mansion && !s.type.startsWith("palace")) bedsFor(B, Math.min(6, n), c, -3.8, 3); }
+    { const n = App.residentsOf(s).length; if (n > 1 && !s.mansion && !s.type.startsWith("palace")) bedsFor(B, Math.min(6, n), c, -3.8, 3);
+      // with a third bed in the row the bookshelf goes against the side wall, out of its way
+      if (n > 2 && !s.mansion) { const sh = B.items.find((it) => it.k === "shelf"); if (sh) { sh.x = -B.w / 2 + 0.45; sh.z = 0.6; sh.rot = Math.PI / 2; } } }
     const rooms = [A, B];
     // a manor's strong room: the family's shells in open chests, its Ethernum, its arms on the wall
     if (tier === 2) {
@@ -431,9 +493,9 @@
     R.hall = hall ? { x0: cx(hall.x0) - CS / 2 + 1.5, z0: cz(hall.y0) - CS / 2 + 1.5, size: hall.k * CS - 3, door: { x: cx(hall.door[0]), z: cz(hall.door[1]) } } : null;
     const put = (it) => { R.items.push(it); return it; };
     const against = (x, y, side, inset) => ({ x: cx(x) + side[0] * (CS / 2 - (inset || 0.9)), z: cz(y) + side[1] * (CS / 2 - (inset || 0.9)), rot: Math.atan2(-side[0], -side[1]) });
-    // torches along the walls (a few of them cast real light near the camera)
+    // torches along the walls (a few of them cast real light near the camera); none where the sky is open above
     for (const [x, y] of cells) {
-      if ((x * 7 + y * 3) % (o.big ? 5 : 4)) continue;
+      if ((x * 7 + y * 3) % (o.big ? 5 : 4) || look.sun) continue;
       const sd = wallSide(m, x, y, r);
       if (!sd) continue;
       const a = against(x, y, sd, 0.7);
@@ -521,35 +583,50 @@
     else if (o.first) { put({ k: "mat", x: cx(entry[0]), z: R.d / 2 - 1 }); R.warps.push({ id: 0, x: cx(entry[0]), z: R.d / 2 - 1, kind: "mat", label: o.outLabel, to: { outside: true } }); }
     else { put({ k: "ladder", x: cx(entry[0]), z: cz(entry[1]) - CS / 2 + 0.4 }); R.warps.push({ id: 0, x: cx(entry[0]), z: cz(entry[1]), kind: "ladder", label: o.upLabel, to: { room: o.index - 1, warp: "down" } }); }
     if (!last) { put({ k: "stairs", x: cx(far[0]), z: cz(far[1]) }); R.warps.push({ id: R.warps.length, x: cx(far[0]), z: cz(far[1]), kind: "stairs", label: o.downLabel, to: { room: o.index + 1, warp: 0 }, down: true }); }
+    // the teleport gem, the save point beside the guardian: in its hall, next to the stairs down
+    if (o.gem && hall) {
+      const nb = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1]].map(([dx, dy]) => [far[0] + dx, far[1] + dy]).find((q) => hall.has(q) && q + "" !== hall.door + "") || far;
+      const gx = cx(nb[0]) + (nb === far ? CS * 0.3 : 0), gz = cz(nb[1]);
+      put({ k: "warpgem", v: o.index % 2, x: gx, z: gz, s: 1.6, light: true });
+      R.gem = { x: gx, z: gz };
+      R.warps.push({ id: R.warps.length, x: gx, z: gz, kind: "gem", label: "Teleport gem: back up to the surface", to: { outside: true } });
+    }
+    // pools of water (or of lava) in some of the cells
+    R.pools = [];
+    if (look.pools) for (const [x, y] of cells) if (!used.has(x + "," + y) && hash2(x, y, 941 + o.index) < 0.12) R.pools.push([cx(x) + (hash2(x, y, 943) - 0.5) * 1.5, cz(y) + (hash2(x, y, 947) - 0.5) * 1.5, 2.2 + hash2(x, y, 949) * 1.6]);
     return R;
   }
-  // ---------- the Great Underworld: one dungeon under the whole map, 36 floors deep ----------
+  // ---------- the Great Underworld: one dungeon under the whole map, 12 floors deep ----------
   // Every dungeon cave on the map leads down into it. Each floor has the shape of all the land above
-  // (one cell for every 32 steps), with tunnels under the channels so every region is joined to the
-  // rest. Six bands of six floors, each with its own look and its own monsters, and on every floor a
-  // guardian at the stairs down. Floors are dug out when someone first goes down to them.
-  const FLOORS = 36;
+  // (one cell for every 45 steps), with tunnels under the channels so every region is joined to the
+  // rest. Twelve floors, the hardest of the old thirty-six, each with its guardian at the stairs down and a teleport
+  // gem beside it; the same rock dug out in different ways: the goblins' warrens, the catacombs, a sunlit grotto open
+  // to the sky with pools of water, a great forest grown into a maze, caverns of ice, the volcanic deep with its lava,
+  // the abyss, and at the bottom the Heart of the Chain. Floors are dug out when someone first goes down to them.
+  const FLOORS = 12;
   // the look of the last floor, under the Maker's Isle
   const HEART = { smooth: 0.45, label: "the Heart of the Chain", wall: "#6a5420", wall2: "#4a3a16", floor: ["#2a2414", "#221d10"], mons: [["wraith", 0], ["cerberus", 0]], deco: ["crystal", "brazier", "gargoyle", "crystal"] };
-  // the monsters that roam a floor of the Great Underworld (for taming: dungeons.js)
-  App.BAND_MONSTERS = (f) => { const L = f >= 35 ? HEART : UNDER[Math.min(UNDER.length - 1, Math.floor(f / 6))]; return L.mons.map((m) => m[0]).filter((k) => App.MONSTER_TAMABLE && App.MONSTER_TAMABLE.includes(k)); };
+  // the look of each kind of floor: sun = open to the sky (daylight, a sky above); pools = water (or lava) in some
+  // cells; forest = walls of trees and hedges instead of rock
   const UNDER = [
     { smooth: 0.25, label: "the Goblin Warrens", wall: "#6e5a44", wall2: "#56463a", floor: ["#3a3027", "#322a22"], mons: [["goblin", 0], ["kobold", 0], ["gloomslime", 0], ["shadebat", 0]], deco: ["bones", "crate", "boulders", "brazier"] },
     { smooth: 0.55, label: "the Catacombs", wall: "#7a7a72", wall2: "#5e5e58", floor: ["#34332f", "#2c2b28"], mons: [["skeleton", 0], ["mummy", 0], ["shadebat", 0], ["spider", 0]], deco: ["tomb", "bones", "cobweb", "cage"] },
-    { smooth: 0.2, label: "the Serpent Halls", wall: "#4e6a46", wall2: "#3c5236", floor: ["#283426", "#222c20"], mons: [["basilisk", 0], ["harpy", 0], ["spider", 0], ["brutecap", 0]], deco: ["stalagmite", "mushrooms", "boulders", "puddle"] },
-    { smooth: 0.55, label: "the Labyrinth", wall: "#8a7a5c", wall2: "#6e6048", floor: ["#3e352b", "#352d25"], mons: [["werewolf", 0], ["centaur", 0], ["golem", 0], ["skeleton", 0]], deco: ["gargoyle", "brazier", "tomb", "bones"] },
-    { smooth: 0.2, label: "the Burning Deep", wall: "#6a3a2e", wall2: "#4e2a22", floor: ["#2e1e18", "#261814"], mons: [["salamander", 0], ["troll", 0], ["ogre", 0], ["manticore", 0]], deco: ["brazier", "stalagmite", "boulders", "bones"] },
+    { smooth: 0.15, label: "the Sunlit Grotto", sun: "#8fd3f4", pools: "water", wall: "#7a8a6a", wall2: "#5e6e52", floor: ["#6e8a4a", "#5e7a40"], mons: [["basilisk", 0], ["harpy", 0], ["brutecap", 0], ["gloomslime", 0]], deco: ["cattail", "boulders", "mushrooms", "stalagmite"] },
+    { smooth: 0, label: "the Forest Maze", sun: "#a8dcf0", forest: true, wall: "#3c7a34", wall2: "#2e6228", floor: ["#4e7a36", "#466e30"], mons: [["werewolf", 0], ["centaur", 0], ["harpy", 0], ["spider", 0]], deco: ["mushrooms", "boulders", "bones", "mushrooms"] },
+    { smooth: 1, label: "the Ice Caverns", cold: true, wall: "#cfe6f2", wall2: "#a8cde4", floor: ["#e4f2f8", "#d4e8f2"], mons: [["wraith", 0], ["golem", 0], ["troll", 0], ["werewolf", 0]], deco: ["crystal", "stalagmite", "boulders", "bones"] },
+    { smooth: 0.2, label: "the Burning Deep", pools: "lava", wall: "#6a3a2e", wall2: "#4e2a22", floor: ["#2e1e18", "#261814"], mons: [["salamander", 0], ["troll", 0], ["ogre", 0], ["manticore", 0]], deco: ["brazier", "stalagmite", "boulders", "bones"] },
     { smooth: 0.35, label: "the Abyss", wall: "#3a3050", wall2: "#2a2240", floor: ["#1e1a2a", "#191524"], mons: [["wraith", 0], ["cerberus", 0], ["minotaur", 0], ["troll", 0]], deco: ["crystal", "cage", "gargoyle", "cobweb"] },
   ];
-  // the 36 guardians, one per floor, from B1F down to the last
+  // which kind of floor each one is, and which of the old thirty-six floors it stands for (how hard it is: dungeons.js)
+  const BAND = [0, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6], OLD = (App.UNDER_OLD = [5, 11, 15, 17, 22, 23, 26, 27, 28, 29, 33, 35]);
+  // the monsters that roam a floor of the Great Underworld (for taming: dungeons.js)
+  App.BAND_MONSTERS = (f) => { const L = f >= FLOORS - 1 ? HEART : UNDER[BAND[Math.min(FLOORS - 1, f)]]; return L.mons.map((m) => m[0]).filter((k) => App.MONSTER_TAMABLE && App.MONSTER_TAMABLE.includes(k)); };
+  // the 12 guardians, one per floor, from B1F down to the last
   const B = (k, scale, name, crown) => ({ k, scale, name, crown: !!crown });
   const GUARDIANS = [
-    B("goblin", 1.8, "Grubnose, the goblin boss", 1), B("kobold", 2.2, "the Kobold Chieftain", 1), B("gloomslime", 2.6, "the Gloom King", 1), B("shadebat", 2.4, "the Bat Lord"), B("spider", 2, "the Spider Queen", 1), B("goblin", 2.6, "the Goblin King", 1),
-    B("skeleton", 2, "the Bone Knight", 1), B("mummy", 1.9, "the Mummy Pharaoh", 1), B("spider", 2.3, "the Crypt Weaver"), B("wraith", 1.7, "the Grave Wraith"), B("skeleton", 2.5, "the Skeleton King", 1), B("lich", 1.6, "the Lich"),
-    B("harpy", 2, "the Harpy Queen", 1), B("basilisk", 2, "the Basilisk"), B("brutecap", 2.3, "the Brute Lord", 1), B("medusa", 1.8, "Medusa the Gorgon"), B("werewolf", 1.8, "the Werewolf Alpha"), B("basilisk", 2.7, "the Basilisk King", 1),
-    B("centaur", 1.6, "the Centaur Warlord", 1), B("golem", 1.5, "the Stone Golem"), B("minotaur", 1.35, "the Minotaur"), B("ogre", 1.35, "the Ogre Chief", 1), B("cyclops", 1.5, "the Cyclops"), B("golem", 1.95, "the Titan Golem"),
-    B("salamander", 2.2, "the Fire Salamander"), B("manticore", 1.8, "the Manticore"), B("troll", 1.45, "the Troll Warlord", 1), B("chimera", 1.9, "the Chimera"), B("salamander", 2.9, "the Fire Wyrm", 1), B("hydra", 1.7, "the Hydra"),
-    B("wraith", 2.3, "the Wraith Lord", 1), B("cerberus", 2, "Cerberus, Hound of the Abyss"), B("minotaur", 1.65, "the Minotaur Lord", 1), B("lich", 2.2, "the Lich King", 1), B("hydra", 2.4, "the Primordial Hydra", 1), B("goldtickle", 2.6, "the Golden Tickle"),
+    B("goblin", 2.6, "the Goblin King", 1), B("lich", 1.6, "the Lich"), B("medusa", 1.8, "Medusa the Gorgon"), B("basilisk", 2.7, "the Basilisk King", 1),
+    B("cyclops", 1.5, "the Cyclops"), B("golem", 1.95, "the Titan Golem"), B("troll", 1.45, "the Frost Troll Warlord", 1), B("chimera", 1.9, "the Chimera"),
+    B("salamander", 2.9, "the Fire Wyrm", 1), B("hydra", 1.7, "the Hydra"), B("lich", 2.2, "the Lich King", 1), B("goldtickle", 2.6, "the Golden Tickle"),
   ];
   App.UNDER = UNDER; App.GUARDIANS = GUARDIANS; App.UNDER_FLOORS = FLOORS;
   const G = 45; // steps of land above for one cell of the maze below (about half the cells of a finer grid, so it runs smoothly)
@@ -597,7 +674,7 @@
       return map.rooms[f];
     };
     function makeFloor(f) {
-      const L = UNDER[Math.min(UNDER.length - 1, Math.floor(f / 6))], next = UNDER[Math.min(UNDER.length - 1, Math.floor(f / 6) + 1)], last = f === FLOORS - 1, boss = GUARDIANS[f];
+      const L = UNDER[BAND[f]], next = UNDER[Math.min(UNDER.length - 1, BAND[f] + 1)], last = f === FLOORS - 1, boss = GUARDIANS[f];
       const entry = nearestActive(U, f === 0 ? U.toCell(caves[0].x, caves[0].z) : map.rooms[f - 1].exit);
       let active = U.active, bossCell = null;
       if (last && App.ISLE) {
@@ -611,8 +688,8 @@
         while (y !== near[1]) { y += Math.sign(near[1] - y); active.add(x + "," + y); }
       }
       // deeper in a band, the next band's monsters start to come up
-      const mix = f % 6 >= 4 ? L.mons.concat(next.mons.slice(0, 2)) : L.mons;
-      const R = mazeFloor({ r: rngOf(9001 + f * 131), W: U.W, H: U.H, loops: 0.08, entry, active, bossCell, bossSize: last ? 7 : 5, big: true, kind: "dungeon", look: last ? HEART : L, last, first: f === 0, index: f, band: Math.floor(f / 6),
+      const mix = f > 0 && BAND[f - 1] === BAND[f] ? L.mons.concat(next.mons.slice(0, 2)) : L.mons;
+      const R = mazeFloor({ r: rngOf(9001 + f * 131), W: U.W, H: U.H, loops: 0.08, entry, active, bossCell, bossSize: last ? 7 : 5, big: true, kind: "dungeon", look: last ? HEART : L, last, first: f === 0, index: f, band: Math.floor(OLD[f] / 6), gem: true,
         exits: f === 0 ? caves.map((d) => ({ cell: U.toCell(d.x, d.z), label: "Up and out by " + d.name + " (" + App.regions[d.region].name + ")", door: d.door, dg: d.i })) : null,
         name: "B" + (f + 1) + "F \u00b7 " + (last ? "The Heart of the Chain" : L.label.charAt(0).toUpperCase() + L.label.slice(1)), upLabel: "Up to B" + f + "F", downLabel: "Down to B" + (f + 2) + "F, past " + boss.name,
         pick: (k) => mix[k % mix.length], boss: Object.assign({ v: 0 }, boss) });
@@ -621,7 +698,7 @@
       R.items.filter((it) => it.chest).forEach((it, i) => { if (f < 3 && i < opened - f * 4) it.v = 1; });
       const kinds = [...new Set(R.mons.filter((m) => !m.boss).map((m) => m.k))].map((k) => MON_NAME[k] || k);
       R.note = last ? "The bottom of the world, right beneath the Maker's Isle, where every way through the Great Underworld meets. In the great hall under the statue waits the Golden Tickle, the strongest guardian of all, and behind it the Maker's hoard. " + kinds.join(", ").replace(/, ([^,]*)$/, " and $1") + " roam the ways in."
-        : kinds.join(", ").replace(/, ([^,]*)$/, " and $1") + " roam " + L.label + ". " + boss.name.charAt(0).toUpperCase() + boss.name.slice(1) + " guards the stairs down: nobody goes further until it is beaten.";
+        : kinds.join(", ").replace(/, ([^,]*)$/, " and $1") + " roam " + L.label + ". " + boss.name.charAt(0).toUpperCase() + boss.name.slice(1) + " guards the stairs down: nobody goes further until it is beaten. Beside it stands a teleport gem: a party that beats the guardian comes back to the gem next time.";
       if (last) {
         // the hall: braziers and Ether all round, the hoard behind the Golden Tickle
         const bx = R.cx(bossCell[0]), bz = R.cz(bossCell[1]);
@@ -659,8 +736,8 @@
     return { title: M.name, rooms, maze: true };
   }
   App.mapOf = (T) => {
-    const key = T.kind + ":" + (T.sc ? T.sc.idx : T.dg ? "great" : T.hall ? T.hall.guild + ":" + T.hall.region : T.casino ? T.casino.i : T.mine.i + ":" + (App.mineLevel ? App.mineLevel(T.mine) : 1));
-    if (T.kind === "granary" || T.kind === "hall" || T.kind === "house" || T.kind === "guild" || T.kind === "casino" || !maps.has(key)) maps.set(key, T.kind === "house" ? houseMap(T) : T.kind === "hall" && T.sc && T.sc.warren ? warrenMap(T) : T.kind === "hall" && T.sc && T.sc.mansion ? mansionMap(T) : T.kind === "hall" ? hallMap(T) : T.kind === "granary" ? granaryMap(T) : T.kind === "guild" ? guildMap(T) : T.kind === "casino" ? casinoMap(T) : T.kind === "dungeon" ? greatUnderworld() : mineMap(T));
+    const key = T.kind + ":" + (T.sc ? T.sc.idx : T.dg ? "great" : T.hall ? T.hall.guild + ":" + T.hall.region : T.casino ? T.casino.i : T.prison ? "prison" : T.parliament ? "parliament" : T.mine.i + ":" + (App.mineLevel ? App.mineLevel(T.mine) : 1));
+    if (T.kind === "granary" || T.kind === "hall" || T.kind === "house" || T.kind === "guild" || T.kind === "casino" || T.kind === "prison" || T.kind === "parliament" || !maps.has(key)) maps.set(key, T.kind === "parliament" ? chamberMap(T) : T.kind === "prison" ? prisonMap(T) : T.kind === "house" ? houseMap(T) : T.kind === "hall" && T.sc && T.sc.warren ? warrenMap(T) : T.kind === "hall" && T.sc && T.sc.mansion ? mansionMap(T) : T.kind === "hall" ? hallMap(T) : T.kind === "granary" ? granaryMap(T) : T.kind === "guild" ? guildMap(T) : T.kind === "casino" ? casinoMap(T) : T.kind === "dungeon" ? greatUnderworld() : mineMap(T));
     const m = maps.get(key);
     m.key = key; m.target = T;
     return m;
@@ -676,12 +753,26 @@
   function occupants(map, ri) {
     const T = map.target, out = [], day = Math.floor(st.T / DAY), m = st.T - day * DAY;
     if (T.kind === "casino") return App.casinoOccupants ? App.casinoOccupants(T.casino, ri).slice(0, 40) : [];
+    if (T.kind === "parliament") return App.chamberOccupants ? App.chamberOccupants(map.rooms[ri]) : [];
+    if (T.kind === "prison") {
+      // the inmates: asleep in the cell of their block, or round the canteen tables (as many as there are seats)
+      const R = map.rooms[ri];
+      let eating = 0;
+      App.prisoners().forEach((id, k) => {
+        const ag = App.pop.agent[id], step = App.planStep(id, st.T).step;
+        const inNow = ag ? !!(ag.action && ag.action.kind === "rounds" && ag.action.prison) : (step.k === "cell" || step.k === "canteen") && App.planPos(id, st.T).inside;
+        if (!inNow || App.isDead(id)) return;
+        if (step.k === "cell" && ri === map.firstDorm + Math.floor(k / map.perDorm)) out.push({ id, pose: "sleep" });
+        else if (step.k === "canteen" && ri === 1 && R.seats && eating < R.seats.length) out.push({ id, pose: "eat", at: R.seats[eating++] });
+      });
+      return out;
+    }
     if (T.kind === "house" || (T.kind === "hall" && T.sc && T.sc.mansion)) {
       // (in a castle each Tickle sleeps in the dormitory of its tower; only so many fit round the tables at once)
       const bedRoom = Math.max(0, map.rooms.findIndex((R) => R.spots.beds || R.spots.bed));
       let awake = 0;
       App.residentsOf(T.sc).forEach((id, k) => {
-        if (!insideNow(id)) return;
+        if (!insideNow(id) || (App.isListed && App.isListed(id))) return;
         const step = App.planStep(id, st.T).step, asleep = step.k === "sleep" || App.isKO(id);
         const where = asleep ? (map.perDorm ? map.firstDorm + Math.floor(k / map.perDorm) : bedRoom) : 0;
         if (ri !== where || (!asleep && map.maxEat && ++awake > map.maxEat)) return;
@@ -762,9 +853,13 @@
       g.add(im);
     }
     for (let k = 0; k < 2 && !R.maze; k++) {
-      const n = Math.ceil((R.w * R.d) / 2) + 2, im = new THREE.InstancedMesh(tile, new THREE.MeshLambertMaterial({ color: R.floor[k] }), n), M = new THREE.Matrix4();
+      // (a room need not be a whole number of tiles across: the last row is a part tile, and there is room for all of them)
+      const nw = Math.ceil(R.w), nd = Math.ceil(R.d), n = Math.ceil((nw * nd) / 2) + 2, im = new THREE.InstancedMesh(tile, new THREE.MeshLambertMaterial({ color: R.floor[k] }), n), M = new THREE.Matrix4();
       let c = 0;
-      for (let x = 0; x < R.w; x++) for (let z = 0; z < R.d; z++) if ((x + z) % 2 === k) im.setMatrixAt(c++, M.makeTranslation(x + 0.5 - R.w / 2, -0.125, z + 0.5 - R.d / 2));
+      for (let x = 0; x < nw; x++) for (let z = 0; z < nd; z++) if ((x + z) % 2 === k) {
+        const sx = Math.min(1, R.w - x), sz = Math.min(1, R.d - z);
+        im.setMatrixAt(c++, M.makeScale(sx, 1, sz).setPosition(x + sx / 2 - R.w / 2, -0.125, z + sz / 2 - R.d / 2));
+      }
       im.count = c;
       g.add(im);
     }
@@ -780,8 +875,11 @@
       const rm = new THREE.MeshLambertMaterial({ color: R.wall });
       for (let k = 0; k < 14; k++) { const b = new THREE.Mesh(new THREE.DodecahedronGeometry(0.8 + hash2(k, ri, 7) * 1.2), rm); const side = k % 3; b.position.set(side === 0 ? -R.w / 2 + 0.4 : side === 1 ? R.w / 2 - 0.4 : -R.w / 2 + hash2(k, ri, 9) * R.w, 0.4 + hash2(k, ri, 11) * 3, side === 2 ? -R.d / 2 + 0.3 : -R.d / 2 + hash2(k, ri, 13) * R.d); g.add(b); }
       hemi.intensity = 0.45; sun.intensity = 0.25;
-    } else if (R.maze) { hemi.intensity = 0.34; sun.intensity = 0.22; }
+    } else if (R.maze && R.look && R.look.sun) { hemi.intensity = 0.95; sun.intensity = 0.7; } // open to the sky: daylight
+    else if (R.maze && R.look && R.look.cold) { hemi.intensity = 0.55; sun.intensity = 0.3; }
+    else if (R.maze) { hemi.intensity = 0.34; sun.intensity = 0.22; }
     else { hemi.intensity = 0.95; sun.intensity = 0.65; }
+    scene.background = new THREE.Color(R.maze && R.look && R.look.sun ? R.look.sun : 0x000000);
     // the furniture, from the kit; on a maze floor, each kind of thing in one batch, and a few lights that follow the view
     if (R.maze) {
       // each kind of thing in one batch per patch of the floor (three cells by three), so that only the patches
@@ -802,7 +900,7 @@
           pg.boundingSphere = new THREE.Sphere(new THREE.Vector3(cx, 2, cz), AREA + 4);
           const im = new THREE.InstancedMesh(pg, App.voxMaterial, list.length), M = new THREE.Matrix4(), Q = new THREE.Quaternion(), Y = new THREE.Vector3(0, 1, 0), P = new THREE.Vector3(), O = new THREE.Vector3(1, 1, 1);
           im.userData.shared = true;
-          list.forEach((it, i) => { M.compose(P.set(it.x, it.y || 0, it.z), Q.setFromAxisAngle(Y, it.rot || 0), O).multiply(base.matrix); im.setMatrixAt(i, M); });
+          list.forEach((it, i) => { M.compose(P.set(it.x, it.y || 0, it.z), Q.setFromAxisAngle(Y, it.rot || 0), O.setScalar(typeof it.s === "number" ? it.s : 1)).multiply(base.matrix); im.setMatrixAt(i, M); });
           g.add(im);
           cur.itemAreas.push({ cx, cz, m: im });
           cur.rockLodT = 0;
@@ -976,7 +1074,7 @@
   // smooth worked stone), and the monsters on patrol
   let ROCK_MAT = null;
   function buildMaze(R, g, token) {
-    const m = R.maze, H = 3.4, boxes = [], In = (x, y) => m.seen.has(x + "," + y);
+    const m = R.maze, H = 3.4, boxes = [], In = (x, y) => m.seen.has(x + "," + y), forest = !!(R.look && R.look.forest), cold = !!(R.look && R.look.cold);
     for (const [x, y] of R.cells) {
       // east and south sides always; west and north only where nothing of the maze is beyond
       if (!openTo(m, x, y, 1, 0)) boxes.push([(x + 1) * CS - R.w / 2, R.cz(y), 1, CS + 1]);
@@ -990,8 +1088,7 @@
     const im = new THREE.InstancedMesh(geo, mat, Math.max(1, flat.length)), M = new THREE.Matrix4(), c1 = new THREE.Color(R.look.wall), c2 = new THREE.Color(R.look.wall2), c = new THREE.Color();
     flat.forEach(([x, z, w, d, h], i) => { const hh = h || H; M.makeScale(w, hh, d).setPosition(x, hh / 2, z); im.setMatrixAt(i, M); im.setColorAt(i, c.copy(c1).lerp(c2, hash2(i, 3, 17))); });
     im.count = flat.length;
-    if (flat.length) im.instanceColor.needsUpdate = true;
-    g.add(im);
+    if (flat.length) { im.instanceColor.needsUpdate = true; g.add(im); } // (not drawn empty: its colourless shader would be reused by the blocks below)
     // the rough rock: stretches of the rock-wall kit, grey, darker grey or brown, tinted a little by the band's colour;
     // batched by patch of the maze so that only the patches in view are drawn
     const lt = new THREE.Color(R.look.wall), mx = Math.max(lt.r, lt.g, lt.b, 0.01);
@@ -1010,13 +1107,15 @@
     for (const A of areas.values()) {
       for (const s of A.segs) { A.cx += s.b[0] / A.segs.length; A.cz += s.b[1] / A.segs.length; }
       const bm = new THREE.InstancedMesh(geo, mat, A.segs.length);
-      A.segs.forEach(({ b: [x, z, w, d, h], tint }, i) => { const hh = (h || H) * 0.95; M.makeScale(w * 1.15, hh, d * 1.15).setPosition(x, hh / 2, z); bm.setMatrixAt(i, M); bm.setColorAt(i, c.copy(grey).multiply(TINTS[tint]).lerp(lt, 0.2)); });
+      // (in the forest: a hedge, always there, the trees standing over it near the view)
+      A.segs.forEach(({ b: [x, z, w, d, h], tint }, i) => { const hh = (h || H) * (forest ? 0.62 : 0.95); M.makeScale(w * 1.15, hh, d * 1.15).setPosition(x, hh / 2, z); bm.setMatrixAt(i, M); bm.setColorAt(i, forest ? c.copy(c1).lerp(c2, hash2(i, 9, 19)) : c.copy(grey).multiply(TINTS[tint]).lerp(lt, cold ? 0.85 : 0.2)); });
+      A.keepBox = forest;
       bm.instanceColor.needsUpdate = true;
       g.add(bm);
       A.box = bm;
       cur.rockAreas.push(A);
     }
-    for (let v = 0; v < 3; v++) App.kitMesh("rockwall", v).then((mk) => {
+    for (let v = 0; v < 3; v++) (forest ? App.kitMesh(["tree_leafy", "tree_pine", "tree_leafy"][v], 0) : App.kitMesh("rockwall", v)).then((mk) => {
       if (cur.token !== token) return;
       const base = App.centeredMesh(mk.md, mk.geo, true); base.updateMatrix();
       for (const A of cur.rockAreas) {
@@ -1034,9 +1133,10 @@
         list.forEach(({ b: [x, z, w, d, h], tint }, i) => {
           const along = w > d, flip = hash2(Math.round(x * 3), Math.round(z * 3), 29) < 0.5;
           const sy = h ? 0.32 : 0.82 + hash2(Math.round(x), Math.round(z), 31) * 0.18;
-          M.compose(P.set(x, 0, z), Q.setFromAxisAngle(Y, (along ? 0 : Math.PI / 2) + (flip ? Math.PI : 0)), O.set(1, sy, 1)).multiply(base.matrix);
+          if (forest) { const k = 1.0 + hash2(Math.round(x), Math.round(z), 33) * 0.45; M.compose(P.set(x, 0, z), Q.setFromAxisAngle(Y, hash2(Math.round(x), Math.round(z), 35) * 6.28), O.set(k, k, k)).multiply(base.matrix); }
+          else M.compose(P.set(x, 0, z), Q.setFromAxisAngle(Y, (along ? 0 : Math.PI / 2) + (flip ? Math.PI : 0)), O.set(1, sy, 1)).multiply(base.matrix);
           rm.setMatrixAt(i, M);
-          rm.setColorAt(i, c.copy(TINTS[tint]).lerp(lt, 0.3));
+          rm.setColorAt(i, forest ? c.setRGB(1, 1, 1) : cold ? c.copy(TINTS[0]).lerp(c1, 0.75) : c.copy(TINTS[tint]).lerp(lt, 0.3)); // (ice: pale and blue)
         });
         rm.instanceColor.needsUpdate = true;
         g.add(rm);
@@ -1044,11 +1144,11 @@
       }
       cur.rockLodT = 0;
     });
-    // pebbles on the floor of the rocky stretches
+    // pebbles on the floor of the rocky stretches (fallen leaves would do in the forest: none there)
     const peb = [];
     for (const [x, y] of R.cells) {
       const px = R.cx(x), pz = R.cz(y);
-      if (smoothAt(px, pz)) continue;
+      if (smoothAt(px, pz) || forest) continue;
       for (let k = 0; k < 3; k++) { const a = hash2(x * 7 + k, y, 51) * 6.28, d = 1.6 + hash2(x, y * 7 + k, 53) * 1.2; peb.push([px + Math.cos(a) * d, pz + Math.sin(a) * d, 0.12 + hash2(x + k, y, 55) * 0.22]); }
     }
     if (peb.length) {
@@ -1063,6 +1163,13 @@
     tall.forEach(([x, z, w, d], i) => { M.makeScale(w * 0.9, 0.5 + hash2(i, 5, 7) * 0.5, d * 0.9).setPosition(x, H, z); top.setMatrixAt(i, M); });
     top.count = tall.length;
     g.add(top);
+    // pools of water in the grotto, of glowing lava in the volcanic deep
+    if (R.pools && R.pools.length) {
+      const lava = R.look.pools === "lava", pm = new THREE.InstancedMesh(new THREE.CylinderGeometry(1, 1, 0.08, 16), lava ? new THREE.MeshBasicMaterial({ color: 0xff6a1a }) : new THREE.MeshLambertMaterial({ color: 0x2f8fe0, transparent: true, opacity: 0.8 }), R.pools.length);
+      R.pools.forEach(([x, z, r0], i) => { M.compose(P.set(x, 0.05, z), Q.identity(), O.set(r0, 1, r0 * 0.8)); pm.setMatrixAt(i, M); });
+      g.add(pm);
+      if (lava) { const rim = new THREE.InstancedMesh(new THREE.CylinderGeometry(1, 1, 0.06, 16), new THREE.MeshBasicMaterial({ color: 0xffd23f }), R.pools.length); R.pools.forEach(([x, z, r0], i) => { M.compose(P.set(x, 0.09, z), Q.identity(), O.set(r0 * 0.45, 1, r0 * 0.36)); rim.setMatrixAt(i, M); }); g.add(rim); }
+    }
     // the monsters, each with a health bar
     cur.mons = [];
     for (const mo of R.mons) if (App.kitOn(mo.k)) addMonster(mo, g, token);
@@ -1513,6 +1620,7 @@
       f.F.pivot.position.y = k * 0.15;
     } else if (f.pose === "guard") { A.R.rotation.x = -0.6; A.L.rotation.x = f.shield ? -0.8 : -0.1; }
     else if (f.pose === "cower") { A.R.rotation.x = A.L.rotation.x = -2.7; f.F.pivot.position.y = -0.2; }
+    else if (f.pose === "seat") { const c = (now / 3000 + f.id * 0.137) % 1; A.R.rotation.x = c < 0.08 ? -2.7 : -0.25; A.L.rotation.x = -0.25; f.F.pivot.position.y = -0.15; } // a minister in its seat, a paw up now and then
     else if (f.pose === "cards") { const c = (now / 2400 + f.id * 0.17) % 1; A.R.rotation.x = c < 0.15 ? -1.6 : -1.05; A.L.rotation.x = -1.05; }
     else if (f.pose === "deal") { A.R.rotation.x = -1.2 + Math.sin(now / 260 + f.id) * 0.35; A.L.rotation.x = -1.0; }
     else if (f.pose === "slots") { const c = (now / 3200 + f.id * 0.21) % 1; A.R.rotation.x = c < 0.12 ? -2.4 + (c / 0.12) * 1.8 : -0.9; A.L.rotation.x = -0.9; }
@@ -1545,7 +1653,7 @@
         const slots = ri === 0 ? '<div class="rh-note"><b>Slot machines:</b> ' + Math.min((Cs.spectators || []).length, 51) + ' guests playing <button class="btn primary" style="font-size:11.5px;padding:2px 10px" data-cslot="1">Play a machine</button></div>' : "";
         return slots + tour + (tabs.length ? '<div class="rh-note"><b>The tables</b> (click one to watch it, or to play):</div><div class="rh-warps">' + tabs.map((t) => '<button class="btn" style="font-size:11.5px;padding:3px 9px" data-ctable="' + t.key + '">' + esc(t.def.tour ? "Tournament " + (t.n + 1) : App.CASINO_GAMES[t.kind] + (t.kind !== "bingo" ? " " + (t.n + 1) : "")) + " \u00b7 " + t.seats.filter(Boolean).length + "/" + t.seats.length + "</button>").join("") + "</div>" : "");
       })() : "") +
-      '<div class="rh-note">' + (map.target.kind === "casino" ? (who.length ? (() => { const g = who.filter((o) => !o.staff).length, d = who.filter((o) => o.staff).length; return g + (g === 1 ? " guest" : " guests") + (d ? " and " + d + (d === 1 ? " dealer" : " dealers") : "") + " in here."; })() : (() => { const m = st.T % 1440; return m >= 19 * 60 && m < 23 * 60 + 30 ? "Nobody in this room right now." : "Nobody in here right now: the casino opens at 19:00."; })()) : who.length ? esc(who.slice(0, 10).map((o) => App.nameOf(o.id) + " (" + (o.pose === "fight" ? roleWord(o.id) : { sleep: "asleep", eat: "having a meal", dig: "mining", cower: "hiding", guard: "on guard, Warriors' Guild", stand: App.guildRankName ? App.guildRankName(o.id) : "member" }[o.pose]) + ")").join(", ") + (who.length > 10 ? " and " + (who.length - 10) + " more" : "")) : "Nobody in here right now.") + "</div>" +
+      '<div class="rh-note">' + (map.target.kind === "casino" ? (who.length ? (() => { const g = who.filter((o) => !o.staff).length, d = who.filter((o) => o.staff).length; return g + (g === 1 ? " guest" : " guests") + (d ? " and " + d + (d === 1 ? " dealer" : " dealers") : "") + " in here."; })() : (() => { const m = st.T % 1440; return m >= 19 * 60 && m < 23 * 60 + 30 ? "Nobody in this room right now." : "Nobody in here right now: the casino opens at 19:00."; })()) : who.length ? esc(who.slice(0, 10).map((o) => App.nameOf(o.id) + " (" + (o.pose === "fight" ? roleWord(o.id) : { sleep: "asleep", eat: "having a meal", dig: "mining", cower: "hiding", seat: "minister", guard: "on guard, Warriors' Guild", stand: App.guildRankName ? App.guildRankName(o.id) : "member" }[o.pose]) + ")").join(", ") + (who.length > 10 ? " and " + (who.length - 10) + " more" : "")) : "Nobody in here right now.") + "</div>" +
       (map.floors && App.liveParties ? (() => { const L = App.liveParties(); return L.length ? '<div class="rh-note"><b>Fighting down here now</b> (click to watch):</div><div class="rh-warps">' + L.slice(0, 5).map((x) => '<button class="btn" style="font-size:11.5px;padding:3px 9px" data-watch="' + esc(x.key) + '">' + esc(App.partyName(x.p)) + " \u00b7 B" + (x.S.f + 1) + "F" + (x.S.kind === "guardian" ? " \u2694 " + esc(GUARDIANS[x.S.f].name) : "") + "</button>").join("") + (L.length > 5 ? '<span class="note" style="align-self:center">and ' + (L.length - 5) + " more parties</span>" : "") + "</div>" : ""; })() : "") +
       (map.floors ? '<div class="rh-warps"><button class="btn" data-floor="up" ' + (ri === 0 ? "disabled" : "") + ' title="One floor up">&#9650;</button><select id="floorSel" aria-label="Go to floor">' +
         Array.from({ length: map.floors }, (_, f) => { const n = App.villages.filter((v) => ((st.depth && st.depth[v.i]) || 0) >= f).length; return '<option value="' + f + '"' + (f === ri ? " selected" : "") + ">B" + (f + 1) + "F \u00b7 " + esc(GUARDIANS[f].name) + (f === 0 ? "" : n ? " \u00b7 reached by " + n + " village" + (n === 1 ? "" : "s") : " \u00b7 nobody has been here") + "</option>"; }).join("") +
@@ -1653,7 +1761,7 @@
     fade(() => {
       cur = { map, ri: 0, worldCam: { x: C.target.x, z: C.target.z, r: C.radius, theta: C.theta, phi: C.phi }, focus: { x: 0, z: 0 }, watch: opt && opt.watch, followed: opt && opt.floor };
       C.follow = null; C.fly = null;
-      C.radius = map.maze ? (opt ? 26 : 30) : T.kind === "casino" ? 52 : 20; C.phi = map.maze ? (opt ? 0.8 : 0.75) : 0.95; C.theta = 0;
+      C.radius = map.maze ? (opt ? 26 : 30) : T.kind === "casino" ? 52 : T.kind === "parliament" ? 50 : 20; C.phi = map.maze ? (opt ? 0.8 : 0.75) : 0.95; C.theta = 0;
       App.inside = cur;
       build(map, (opt && opt.floor) || 0);
       // in an Underworld you arrive at the foot of the cave you came down (or, watching a party, right where it is)
@@ -1720,7 +1828,7 @@
       for (const A of cur.rockAreas || []) {
         const near = close && Math.abs(A.cx - px) < 34 && Math.abs(A.cz - pz) < 34 && A.rock.length === new Set(A.segs.map((s) => s.v)).size;
         for (const m of A.rock) m.visible = near;
-        A.box.visible = !near;
+        A.box.visible = !near || A.keepBox;
       }
     }
     if (cur.group && !R.maze) for (const o of cur.group.children) if (o.userData.mon) o.position.y = Math.abs(Math.sin(now / 300 + o.position.x)) * 0.2;
