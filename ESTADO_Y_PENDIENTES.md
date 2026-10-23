@@ -12,7 +12,8 @@ Código en GitHub: https://github.com/Pablo0004/tickle-beach-world — la versi�
 - **Ventana de inspección** (ver más abajo): clic en cualquier cosa.
 - **Notificaciones**: en Menú > Settings se pueden apagar los avisos de actividades (siguen saliendo las respuestas a lo que haces tú y todo queda en el registro); un clic sobre un aviso lo quita (en los de "Watch", fuera del botón).
 - **Alejarse hasta el cielo**: la rueda del ratón (o pellizcar) llega ahora hasta 2.600 bloques de distancia, con todo el mapa a la vista. A lo lejos, el terreno es una versión ligera de todo el mapa y los edificios y árboles se dibujan más simples (a media distancia, copias en cubos gruesos; más lejos, siluetas de dos bloques con sus colores; castillos, palacios, mansiones y la estatua siempre con su forma). Se ven las nubes desde arriba. Unos 2,4-2,8 millones de triángulos a cualquier altura (1,6 a la distancia normal). Archivo nuevo `js/farview.js`.
-- **GitHub**: vinculado; la rama subida y README, PENDING y este documento puestos al día.
+- **GitHub**: vinculado; la versión 49 fusionada en `main`; README, PENDING y este documento puestos al día.
+- **Scripts de prueba** en `tests/` (abren el juego en un navegador automático y comprueban cada cosa): qué hace cada uno y cómo se ejecutan, en `tests/README.md`. Y `CLAUDE.md` en la raíz, con lo esencial para retomar el trabajo en una sesión nueva sin más contexto (dónde está cada documento, tus reglas, cómo publicar).
 
 **PENDIENTE (pedido el 22-23 de octubre), por este orden; el detalle de cada punto está en `PENDING.md`:**
 1. **Primera persona al controlar un Tickle**: ratón capturado para mirar (como en cualquier juego en primera persona), punto de mira con el nombre de lo que tienes delante (y clic para su ventana), HUD con vida y necesidades y brújula, saltar con Espacio, balanceo al andar, la rueda para pasar a vista en tercera persona detrás del Tickle, mando táctil en pantallas táctiles.

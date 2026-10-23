@@ -554,7 +554,8 @@ sea beasts, wealth and weather. A layout tag (`App.LAYOUT`) lets an old save mig
 | `hand.js`, `firstperson.js` | the hand; first-person view and control |
 | `places.js`, `directory.js`, `procgen.js`, `approved.js`, `ui.js` | place cards; the Directory; procedural designs and fidelity checks; baked designs; UI, boot and main loop |
 
-Other files: `onchain-tickle.html` (the original on-chain viewer, used to open kit models in it),
+Other files: `tests/` (browser test scripts with Playwright, and what each checks: [tests/README.md](tests/README.md)),
+`CLAUDE.md` (notes for Claude sessions), `onchain-tickle.html` (the original on-chain viewer, used to open kit models in it),
 `dev-*.html` (developer test pages), `reference/` (the decoded on-chain repository and one on-chain token
 page), `v1/` (the first single-island version), `music/` (the CC0 tracks), `ESTADO_Y_PENDIENTES.md`
 (the project log in Spanish) and [PENDING.md](PENDING.md) (what is left, in English).

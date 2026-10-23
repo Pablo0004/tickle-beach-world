@@ -3,7 +3,8 @@
 Updated 23 October 2026. Published build: version 48 (private claude.ai artifact). This repository holds
 version 49, finished and tested, with a preview at https://claude.ai/artifact/TK966ZfpzsFS9aPPxwJNo6; it is
 published as the game once the owner approves it. Items are worked in the order agreed with the project owner;
-one item is finished before the next one starts.
+one item is finished before the next one starts. The browser test scripts and what each one checks are in
+[tests/README.md](tests/README.md).
 
 ---
 
