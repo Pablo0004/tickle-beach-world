@@ -17,7 +17,7 @@
     10: { name: "Yellow", hex: "#ffd23f" }, 11: { name: "Leaves", hex: "#00751f" }, 12: { name: "Wet sand", hex: "#d1b88a" },
     13: { name: "Pink", hex: "#ff8fc0" }, 14: { name: "Path", hex: "#f1a85f" }, 15: { name: "Farmland", hex: "#6b4a2a" },
   });
-  const blockLin = {};
+  const blockLin = (App.blockLin = {});
   App.initBlockColors = () => {
     const pal = TB.paletteList();
     for (const k in BLOCK_INFO) {
@@ -316,8 +316,22 @@
 
   // ---------- camera ----------
   const cam = (App.cam = { target: new THREE.Vector3(0, SEA + 1, 0), theta: 0.75, phi: 0.92, radius: 46, follow: null, fly: null });
+  // the view can pull back into the sky, the whole map in sight (the far view, farview.js, fills in what the
+  // streamed chunks and scenery do not reach); the depth range and the water follow it out
+  App.MAX_ZOOM = 2600;
+  let depthR = 0;
+  function depthFor(r) {
+    if (Math.abs(r - depthR) < depthR * 0.05) return;
+    depthR = r;
+    camera.near = r > 150 ? r / 1500 : 0.1;
+    camera.far = Math.max(700, r * 3.2 + 900);
+    camera.updateProjectionMatrix();
+    const k = Math.max(1, (r * 4.5 + 700) / 900);
+    water.scale.set(k, 1, k); seabed.scale.set(k, 1, k);
+  }
   function applyCamera() {
-    if (App.fpCamera && App.fpCamera(camera)) return; // first person (firstperson.js)
+    if (App.fpCamera && App.fpCamera(camera)) { depthFor(46); return; } // first person (firstperson.js)
+    depthFor(cam.radius);
     const { target, theta, phi, radius } = cam;
     camera.position.set(target.x + radius * Math.sin(phi) * Math.sin(theta), target.y + radius * Math.cos(phi), target.z + radius * Math.sin(phi) * Math.cos(theta));
     camera.lookAt(target);
@@ -409,7 +423,7 @@
         const [a, b] = [...pts.values()];
         const d = Math.hypot(a.x - b.x, a.y - b.y), mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
         const ang = Math.atan2(b.y - a.y, b.x - a.x);
-        if (lastPinch) cam.radius = Math.max(8, Math.min(130, cam.radius * (lastPinch / d)));
+        if (lastPinch) cam.radius = Math.max(8, Math.min(App.MAX_ZOOM, cam.radius * (lastPinch / d)));
         if (lastMid) pan(mid.x - lastMid.x, mid.y - lastMid.y);
         if (lastAng != null) { let da = ang - lastAng; if (da > Math.PI) da -= 2 * Math.PI; if (da < -Math.PI) da += 2 * Math.PI; cam.theta -= da; }
         lastPinch = d; lastMid = mid; lastAng = ang;
@@ -440,7 +454,7 @@
       }
     });
     el.addEventListener("pointercancel", (e) => { pts.delete(e.pointerId); if (!pts.size) { grab = null; el.style.cursor = ""; } });
-    el.addEventListener("wheel", (e) => { e.preventDefault(); if (App.fpOn && App.fpOn()) return; cam.radius = Math.max(8, Math.min(130, cam.radius * Math.exp(e.deltaY * 0.0012))); }, { passive: false });
+    el.addEventListener("wheel", (e) => { e.preventDefault(); if (App.fpOn && App.fpOn()) return; cam.radius = Math.max(8, Math.min(App.MAX_ZOOM, cam.radius * Math.exp(e.deltaY * 0.0012))); }, { passive: false });
     function pan(dx, dy) {
       cam.follow = null; cam.fly = null;
       const k = cam.radius * 0.0016;

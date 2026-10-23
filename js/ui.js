@@ -44,18 +44,31 @@
     for (const slot of TB.SLOTS) if (p.sel[slot] !== undefined) App.MODEL_NAMES[slot + ":" + p.sel[slot]] = traits[TB.SLOT_LABEL[slot]];
   }
 
+  // notifications: what is going on in the world can be switched off in Menu > Settings (what answers something you
+  // just did still shows), and a click on one takes it away
+  const pref = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } };
+  const setPref = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* storage blocked */ } };
+  let lastInput = -1e9;
+  for (const ev of ["pointerdown", "keydown"]) window.addEventListener(ev, () => { lastInput = performance.now(); }, true);
+  App.notifyOn = (on) => { if (on != null) setPref("tbw-notify", on ? "1" : "0"); return pref("tbw-notify", "1") === "1"; };
+  const quiet = () => !App.notifyOn() && performance.now() - lastInput > 1500;
+  const dismissable = (el) => { el.title = "Click to dismiss"; el.addEventListener("click", () => el.remove()); };
   App.toast = (msg) => {
+    if (quiet()) return;
     const box = $("toasts");
     const el = document.createElement("div");
     el.className = "toast"; el.textContent = msg;
+    dismissable(el);
     box.appendChild(el);
     while (box.children.length > 3) box.firstChild.remove();
     setTimeout(() => el.remove(), 4200);
   };
   // a toast with a button (e.g. "Watch" when a fight worth seeing starts down below)
   App.toastAction = (msg, label, fn) => {
+    if (!App.notifyOn()) return;
     const box = $("toasts"), el = document.createElement("div"), b = document.createElement("button");
     el.className = "toast act"; el.textContent = msg + " ";
+    dismissable(el);
     b.className = "btn primary"; b.textContent = label;
     b.onclick = (e) => { e.stopPropagation(); el.remove(); fn(); };
     el.appendChild(b); box.appendChild(el);
@@ -117,6 +130,13 @@
     for (const el of document.querySelectorAll(".menusec")) el.hidden = el.id !== "menu-" + sec;
     if (sec === "music") renderMusicMenu();
     if (sec === "credits") renderCredits();
+    if (sec === "settings") renderSettings();
+  }
+  // the Settings section
+  function renderSettings() {
+    $("menu-settings").innerHTML = '<h3>Notifications</h3><div class="soundrow"><b>Activity</b><label class="row" style="gap:6px"><input type="checkbox" id="set-notify"' + (App.notifyOn() ? " checked" : "") + '> on</label>' +
+      '<span class="note">the messages at the bottom of the screen about what is going on (a dragon attacking, a party going down, a sea beast rising...). Off, you still get the answers to what you do yourself, and everything stays in the log. A click on a message takes it away.</span></div>';
+    $("set-notify").onchange = (e) => { App.notifyOn(e.target.checked); if (!e.target.checked) $("toasts").innerHTML = ""; };
   }
   App.showMenu = showMenu;
   document.querySelector(".menutabs").addEventListener("click", (e) => { const b = e.target.closest("[data-menu]"); if (b) showMenu(b.dataset.menu); });
@@ -1413,6 +1433,7 @@
     App.updateWealth && App.updateWealth(dt); // mounts, private boats, the Blacksmiths' Guild near you
     App.updateBirds && App.updateBirds(dt); // songbirds in the trees near you
     App.updateWeather && App.updateWeather(dt); // rain, clouds, lightning, a tornado or a tsunami near you
+    App.updateFarView && App.updateFarView(); // the land, buildings and trees beyond the streamed ones, when pulled back
     App.render();
     updateOverlay();
     preview.frame();

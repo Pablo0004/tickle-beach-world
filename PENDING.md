@@ -1,152 +1,123 @@
 # Tickle Beach World — what is pending
 
-## Status, 22 October 2026 (evening)
-
-Items 11 to 16 are done and tested in this working copy (layout tag `plots-3`), not yet published as version 49:
-a preview is at https://claude.ai/artifact/TK966ZfpzsFS9aPPxwJNo6 (the published game is still version 48).
-- **11** places by holder: tested castles by size, wall guards, the "Read the owners from Ethereum now" button
-  (mocked node), interiors; fixed town households shifting when a neighbour changed size, broken floor tiles in
-  non-integer rooms (giant planes in the tower dormitories), the citadel failing the kit check, a shelf over a bed,
-  clouds hiding the view.
-- **12** riding: deer, sheep (rams) and boars (by way of life, or bought at the paddock: 18/30/45 shells), and tamed
-  monsters big enough to carry their tamer (werewolf, centaur, golem, troll, ogre, minotaur, manticore, cerberus,
-  basilisk, salamander, spider). `App.MOUNT_MONSTERS` (creatures.js), `BEASTS` (wealth.js).
-- **13/16** the prison (js/prison.js): Saltrock Penitentiary in the Waterfall; listed Tickles live there (cell,
-  canteen, rock breaking in the yard). Listings: js/listings.js, refreshed by tools/update_listings.py with the
-  owner's OpenSea key (env `OPENSEA_API_KEY`), or typed in the Holders tab. On-chain sale pools not detected.
-- **14** the Parliament (js/parliament.js) on the Maker's Isle (isle radius 16 -> 50, kept clear of other
-  buildings via `placeDist` in geo.js): 333 seats by D'Hondt, ministers vote in blocs, daily sitting 16:00, vote
-  17:30 on a law (or repeal) and up to two Director proposals (decided as in Review). Laws: prizes, bounty, watch,
-  market, restday, tax (`App.lawMul`, `App.lawOn`, `App.restDay`).
-- **15** the Underworld: 12 floors (the hardest of the old 36, `App.UNDER_OLD`), themed (warrens, catacombs, sunlit
-  grotto with water, forest maze, ice caverns, volcanic with lava, abyss, heart); a teleport gem (`warpgem` kit)
-  beside every guardian.
-- Casino leftovers checked: own Tickle through a whole tournament, 6-seat poker cards, waiters, bingo hall.
-
-- **Inspect window** (asked 22 October, evening; js/inspect.js): click anything to see what it is in a small window that
-  keeps itself up to date. Tickles (health, needs, action and day, job, holder, guild, faction, role and spell, arms and
-  their wear, creatures, relics, mount, on-chain items, shells, belongings; Full card / Follow / First person), creatures,
-  cave monsters, dragons, sea beasts, animals, lake and pond life, birds, boats, mounts, ferries, scenery, placed objects,
-  the ground and the water; inside, Tickles, monsters and guardians, chests, gems, furniture and the room itself.
-  Buildings keep their card. Clicking a Tickle no longer switches to the Tickles tab (Full card button instead).
-
-Still to do: publish version 49 once the owner approves the preview; push this work to GitHub (the cloud session
-had no GitHub access); mansions editable inside and out (later, as asked); the open questions below.
-
-Updated 15 October 2026. Published build: version 48 (private claude.ai artifact). This repository is ahead
-of it with the unpublished work of item 11. Items are listed in the order agreed with the project owner;
+Updated 23 October 2026. Published build: version 48 (private claude.ai artifact). This repository holds
+version 49, finished and tested, with a preview at https://claude.ai/artifact/TK966ZfpzsFS9aPPxwJNo6; it is
+published as the game once the owner approves it. Items are worked in the order agreed with the project owner;
 one item is finished before the next one starts.
 
 ---
 
-## 1. In progress — item 11: every holder has its own place (version 49)
+## 1. Next, in order
 
-**Asked for**: instead of villages by species, every holder gets a place where all of its Tickles live; the
-more Tickles, the bigger the place (a mansion that grows with each Tickle and, past a certain number, an
-estate or village of its own); it must **update when ownership changes**; it needs a generator of houses and
-mansions.
+### 1.0 Publish version 49
 
-**Decided with the owner (15 October 2026)**:
-- Clans are now the holders: alliances, rivalries and raids happen between holders' places; the species is
-  only a trait.
-- Places are spread evenly over the six regions.
-- Small holders (1 to 4 Tickles) each get a house for their household in towns shared with other small
-  holders.
-- Sizes (replaced on 16 and 22 October 2026): 1–4 a house in a town; 5–9 two medium houses in a town; 10–19 four
-  medium houses on a small plot of their own; 20+ one mansion for every 20 Tickles, bigger than four medium houses
-  together, in the style of its region; more than eight mansions' worth (180+) a fortress with walls round the plot
-  and one great castle or palace for all of them. Mansions to be editable inside and out later.
-- Ownership changes often: the layout must update smoothly, and there must always be room for everyone (underground
-  or under water if the surface is full).
+When the owner approves the preview: publish it to the game's artifact (version 48 today) and merge the branch.
 
-**Done and tested locally (22 October 2026), not yet published** (layout tag `plots-2`):
-- Fixed plots and an assignment remembered in the save; a simulated ownership change kept 248 of 249 places on
-  their plots, moved the holder who changed size with its granary, and gave the newcomer a free plot.
-- The owner's sizes: 1–4 a house in a town; 5–9 two medium houses in a town; 10–19 four medium houses on a small
-  plot; 20+ an estate with a mansion for every 20; 180+ a fortress with walls, towers and gates and a great castle
-  or palace for all (throne hall, a 48-bed dormitory per tower, treasury).
-- Mansions in one style per region (log lodge, country house, stone keep, captain's house, white villa, tropical
-  villa). Castles and first mansions are placed away from the roads.
-- Warrens for overflow (not needed with today's snapshot), the "for sale" sign, place cards and interiors.
-- All 12 dungeon caves and 12 Ether fields fit again; two days simulated without errors.
-- A newer ownership snapshot can be stored in the browser (`App.setOwners` / `App.ownersInfo` / `App.clearOwners`).
+### 1.1 First person when controlling a Tickle (asked 22 October)
 
-**Still to do for item 11**:
-1. The in-game "Update owners" button (reading `ownerOf()` from a public RPC where the page may reach the network)
-   and `tools/update_owners.py` to rebuild `js/owners.js`.
-2. Mansions editable inside and out (later, as the owner asked).
-3. Push to GitHub and publish version 49.
+"Work on first person mode while I control a Tickle." What there is today (`js/firstperson.js`): V or the card's
+button; with one of your own Tickles in "I'm in control": WASD to walk, Shift to run, drag or Z/X to turn, E to go
+in, M into the saddle, Space/C to climb/descend on a griffin, Esc to leave; the body is hidden, the arms and what
+they hold are shown, blue haze under water. Plan:
+- mouse look with pointer lock (click to capture the mouse, Esc to release), as in any first-person game;
+- a crosshair, and the name of what is in front of it (from the inspect picker, `App.inspectPick` at the centre);
+  a click opens the inspect window on it;
+- a HUD: health bar and the four needs of the Tickle you control, a compass with N/E/S/W;
+- jump with Space when on foot, head bob when walking, smooth camera;
+- the mouse wheel pulls the camera back behind the Tickle (third person) and in again;
+- touch screens: a virtual stick on the left, drag to look on the right;
+- (to decide later) acting from first person: hitting a monster, talking to the Tickle in front.
 
-Fixed on 22 October: **Tickles no longer walk through buildings**. Houses, halls, granaries, mansions, castles,
-the fortress walls, guild halls, casinos and the like are obstacles they walk round (a footprint from each model's
-box, turned with it; a gatehouse leaves its arch open; fences, pens, docks, piers, arenas, caves and mines are
-walked into as before); the path-finder goes round them and finds a fortress's gate. In a test, about 0.2% of
-thousands of positions fell inside a building, all of them passing moments. Distant figures still walk straight.
+### 1.2 More detail in every model and texture (asked 22 October)
 
-## 2. Next — item 12: ride more animals
+"Go through every texture of the game and give all of them a higher level of detail; the cubes may need to be
+smaller, if possible; I want the details of a professional game." Notes for the work:
+- Kit models (`TB.KIT[kind].voxel = [near, far]`, SDF units, `App.S` = 1/160 world unit) are meshed at load in
+  two levels (`App.frag`, `App.fragLo`, `loadFragments` in population.js); the far view (farview.js) adds coarse
+  copies and stand-ins. Smaller cubes means smaller `voxel` values: about 8 times the voxels when halved, more
+  meshing time at load and more triangles. Measure first (the scene is about 1.6 million triangles at the usual
+  distance, 2.4 to 2.8 million pulled back).
+- A **graphics quality** setting in Menu > Settings (Normal / High / Ultra) choosing the cube size of the near
+  models, the shadows and the textures, so slower machines keep the game fluid.
+- **Terrain textures**: today every block face is a flat colour with ambient occlusion and a little jitter
+  (world.js `meshChunk`). Add a small procedural texture per block (grass, sand grains, stone, path, farmland
+  furrows, planks, logs, leaves), multiplied with the block colour (UVs in the chunk mesh, a texture atlas).
+- **Shadows** from the sun (a shadow map round the middle of the view), a sky with a gradient, maybe ambient
+  occlusion on the models.
+- The Tickles themselves are the on-chain models at their own resolution and stay as they are.
 
-Besides horses and griffins, Tickles should be able to ride **deer, sheep, boars and the dungeon monsters
-they have tamed** (asked 15 October 2026).
+### 1.3 An encyclopedia (asked 22-23 October)
 
-## 3. Then — item 13: a prison for the Tickles put up for sale
+"An encyclopedia where weapons, monsters, animals... are recorded; every entry numbered, with all kinds of
+specifications of each animal, monster or weapon." Inside the game menu (1.4). Entries, each numbered:
+animals (farm, wild, lake, pond, birds), creatures and their types, monsters of the caves and the Underworld,
+the 12 guardians, dragons, sea beasts, weapons, shields and their wear, spells, relics, mounts and riding beasts,
+boats, ores and Ethernum, places, jobs, guilds, factions, laws, and the units of war (1.5). Each entry: its
+model, number, what it is, where it lives or is found, health, attack, defence, speed, type and what it is
+strong against, abilities, who can tame or ride or use it, price, what it drops or gives. Possibly "seen /
+not seen yet" entries, unlocked as the player meets them.
 
-Asked for on 16 October 2026; decided with the owner:
-- **One prison, underground**: a penitentiary with its entrance on the surface and the cells below.
-- **While a Tickle is listed for sale it lives in the prison**: it leaves its holder's place, sleeps in a cell, goes
-  out to the yard and does prison work. If it is sold it walks free and moves in with its new holder; if the
-  listing is withdrawn it goes home.
-- Listings live on the marketplaces (OpenSea and the like), not on the chain, so a script has to take a snapshot
-  of them the way `owners.js` does for ownership. OpenSea's API needs a (free) API key that the owner gets and
-  keeps on their own machine.
+### 1.4 A professional game menu (asked 23 October)
 
-## 3b. Then — item 14: a great Parliament instead of the town halls
+"Everything must go inside a menu that can be hidden or opened; include in the menu the panel on the right that
+cannot be closed; leave it all like the menu of a professional game." The right-hand panel (tabs Tickles,
+Holders, Director, Review, Adventure, Library) cannot be closed today; the Menu modal has How it works, Controls,
+Sound, Settings and Credits. Plan: one menu that opens and closes (a button and a key), holding the panel's tabs,
+the menu's sections, the Directory, the big map and the encyclopedia, with the look of a game menu; the world
+full-screen when it is closed. The inspect window, the place cards and the notifications stay over the world.
 
-Asked for on 16 October 2026:
-- The town halls are replaced by one **huge parliament**.
-- **Tickle ministers are elected according to how many Tickles each holder has** (more Tickles, more seats).
-- The parliament **approves or rejects changes of every kind to the game**: the game's way of showing democracy
-  when everything is put to the vote.
-- To decide with the owner when it starts: one parliament for the whole map or more, and where; how many seats
-  and which of a holder's Tickles sit; who proposes changes and how what is approved is applied; what happens to
-  what the town halls did (notice board, ore treasury, shelter for those who lost their house).
+### 1.5 Wars between holders, inspired by Imperium (asked 23 October)
 
-## 3c. Then — item 15: the dungeon's save points and floors of their own kind
+"I want wars to be organised between the holders (addresses), which is also why the fortresses and the patrols
+on the walls make sense. Inspired by the game Imperium." Ideas to agree on with the owner before building:
+- who declares war: rivalries between places (they exist: raids, alliances), the Director, the Parliament, or
+  the player for its own holder;
+- the armies: the armed Tickles of a holder as units (swords, spears, mages, healers, tamers with their
+  creatures, cavalry on horses and riding beasts, griffin riders), marching in formation along the roads;
+- sieges: the fortresses' walls, towers and gates defended by the wall guards, gates to break, the castle to
+  take; open battles for places without walls;
+- the outcome: tribute in shells and food, prestige, a truce; knocked-out Tickles recover (no permanent deaths
+  unless decided otherwise);
+- a war panel (who is at war, armies, sieges, with Watch), and the war in the inspect window and the
+  encyclopedia.
 
-Dictated on 16 October 2026:
-- **Save points** shown as **great teleport gems**, placed **beside each floor's boss**.
-- The **same dungeon rocks used in different ways**: floors that look like **ice**, **volcanic** floors, floors that
-  seem **part of the surface, with natural light and water**, and **a floor that is a great labyrinthine forest**.
-- **Cut the Underworld to 12 floors**, keeping the hardest.
+### 1.6 Later
 
-## 3d. Item 16: checking on the chain who owns each Tickle and which are for sale
+- Mansions editable inside and out (asked 16 October, for later).
 
-- Ownership is read from the chain with `ownerOf()` (a script that rebuilds `js/owners.js`, and an in-game button).
-- Listings: most (OpenSea, Blur...) live on the marketplaces, not on the chain; only Tickles placed in automatic
-  sale contracts (Sudoswap-style pools) show on the chain, because that contract becomes their owner. The rest need
-  the marketplace's API (with the owner's own key).
-
-## 4. Open question
+## 2. Open questions
 
 - **Waves in the rivers and the lake** (item 8b): the waves at the mouths of the channels were removed (the
   "open sea" no longer includes the channels between regions), and the lake and ponds are calm. If the owner
   meant something else — for example the dark stripes of the stepped riverbed seen through the water — it is
   still to be changed.
+- **Credits**: Menu → Credits still names the author of the Tickle Beach collection (a real-world credit, not
+  lore). Asked whether to remove it; no answer yet.
+- **Listings**: the owner's OpenSea API key stays on the owner's machine; `tools/update_listings.py` reads it from
+  `OPENSEA_API_KEY`. Sales from on-chain pools are not detected yet.
 
-## 5. Half-done or to confirm
+## 3. To keep an eye on
 
-- **Credits**: Menu → Credits still names the author of the Tickle Beach collection (a real-world credit,
-  not lore). Asked whether to remove it; no answer yet.
-- **Casinos, not fully checked**: entering one of your own Tickles in the poker tournament from start to
-  finish (the Tickles' own tournaments were tested to the end); the cards on the six-seat cash poker tables
-  (empty when measured; they use the same system as the tournament tables, which were measured); seeing the
-  waiters cross the room with guests inside; the bingo hall after it was enlarged.
-- **A meticulous review of the whole game "as a game designer"** (standing request): done alongside
-  everything else, never closed.
+- **A meticulous review of the whole game "as a game designer"** (standing request): done alongside everything
+  else, never closed.
 - **Creature tournament fights** may resolve too fast to be watched comfortably.
 
-## 6. After this list
+## 4. Done in version 49 (not yet published)
 
-The owner has a separate list of new requests to hand over once this one is finished.
+- **Every holder has its own place** (item 11): towns, plots, estates and fortresses by the number of Tickles, fixed
+  plots that survive ownership changes, mansions by region, castles and palaces, warrens for overflow, Tickles
+  walk round buildings, the "Read the owners from Ethereum now" button and `tools/update_owners.py`.
+- **Riding** (item 12): stags, rams and boars, and tamed monsters big enough to carry their tamer.
+- **The prison** (items 13 and 16) for Tickles up for sale, with `js/listings.js` and `tools/update_listings.py`.
+- **The Parliament** (item 14) on the Maker's Isle: 333 seats by D'Hondt, daily votes on laws and the Director's
+  proposals.
+- **The Underworld** (item 15): 12 themed floors, a teleport gem beside every guardian.
+- **The inspect window** (22 October): click anything for a small window about it, kept up to date.
+- **Notifications** (23 October): Menu > Settings switches the activity notifications off (the answers to what you
+  do still show); a click on a notification takes it away.
+- **The view pulls back into the sky** (23 October): zoom out to 2,600 blocks with the whole map in sight
+  (`js/farview.js`: a heightfield of the whole map, coarse copies and stand-ins of the buildings and trees; the
+  depth range and the water follow the camera).
 
 ---
 

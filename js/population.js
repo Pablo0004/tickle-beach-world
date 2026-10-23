@@ -681,15 +681,17 @@
   let scnSig = "";
   App.sceneryVisible = [];
   const FRAG_SCALE = { waterfall: 2.3, boulders: 1.7, pier: 1.25, arena_0: 4.2, arena_1: 4.2, arena_2: 4.2, dungeon_0: 2.6, dungeon_1: 2.6, dungeon_2: 2.6, dungeon_3: 2.6, maker_0: 6, mine_0: 1.6, mine_1: 1.6, mine_2: 1.6, mine_3: 1.6 };
+  App.FRAG_SCALE = FRAG_SCALE; // (the far view, farview.js)
   const SC = new THREE.Vector3();
   const NEAR_LOD = 70;
   function updateScenery(tx, tz) {
     // rebuild when the view moves on, and also when more models finish loading (trees arrive after the first frame)
-    const sig = Math.floor(tx / 24) + "," + Math.floor(tz / 24) + "," + Object.keys(App.frag).length + "," + Object.keys(App.fragLo).length;
+    const sig = Math.floor(tx / 24) + "," + Math.floor(tz / 24) + "," + Object.keys(App.frag).length + "," + Object.keys(App.fragLo).length + (App.sceneryFar ? "f" : "");
     if (sig === scnSig && !App.sceneryDirty) return;
     App.sceneryDirty = false;
     scnSig = sig;
-    const all = App.gridNear("scenery", tx, tz, App.RANGE.scenery);
+    // (high up, the far view's coarse copies stand in for all of it, farview.js)
+    const all = App.sceneryFar ? [] : App.gridNear("scenery", tx, tz, App.RANGE.scenery);
     const byType = {};
     App.sceneryVisible = [];
     for (const s of all) {
@@ -739,7 +741,7 @@
     }
   }
 
-  App.updateScenery = (force) => { if (force) App.sceneryDirty = true; updateScenery(App.cam.target.x, App.cam.target.z); };
+  App.updateScenery = (force) => { if (force) App.sceneryDirty = App.sceneryDirtyFar = true; updateScenery(App.cam.target.x, App.cam.target.z); };
   // ---------- the streaming step ----------
   App.updatePopulation = () => {
     const tx = App.cam.target.x, tz = App.cam.target.z;

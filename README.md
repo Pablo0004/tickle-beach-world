@@ -9,9 +9,12 @@ whether or not you are watching.
 The project is meant as the base of a future online game in which every holder plays with their own
 Tickles.
 
-> **Status (15 October 2026).** Working prototype. The last published build (version 48) runs as a private
-> claude.ai artifact. This repository holds that build plus newer, unpublished work: "every holder has its
-> own place" (version 49 in progress, see [PENDING.md](PENDING.md)).
+> **Status (23 October 2026).** Working prototype. The last published build (version 48) runs as a private
+> claude.ai artifact. This repository holds version 49, finished and tested, waiting for the owner's approval
+> to be published: every holder has its own place (towns, plots, estates, fortresses), riding beasts and tamed
+> monsters, the prison for Tickles up for sale, the Parliament, a 12-floor Underworld, a window that describes
+> anything you click, activity notifications you can switch off, and a view that pulls back into the sky. What
+> is left to do is in [PENDING.md](PENDING.md).
 >
 > Unofficial fan project made from the collection's public on-chain data. Not affiliated with the Tickle
 > Beach team.
@@ -101,8 +104,7 @@ Tickles.
 
 ## 3. Every holder has its own place
 
-*(Version 49, in this repository, not yet published.)* All of a holder's Tickles live together, on a place
-that depends on how many it owns:
+*(Version 49.)* All of a holder's Tickles live together, on a place that depends on how many it owns:
 
 | Tickles | Where they live |
 | --- | --- |
@@ -133,9 +135,22 @@ that depends on how many it owns:
   1,600 Tickles in each region; no warren is needed.
 - **Every place is its own clan**, with its colour on the roofs (the species is just a trait). The Holders tab
   shows "Your place" and the place of every big holder, with a button that flies you there.
-- A newer ownership snapshot can be kept in the browser (`App.setOwners`), the basis of the planned "Update
-  owners" button. Saved games from before the plots keep everything each Tickle owns and has done and reset what
-  belonged to the old villages.
+- **Reading the owners again**: the Holders tab has a button that reads `ownerOf()` for every Tickle from a public
+  Ethereum node and keeps the result in the browser (`App.setOwners`); `tools/update_owners.py` rebuilds
+  `js/owners.js` the same way. Saved games from before the plots keep everything each Tickle owns and has done and
+  reset what belonged to the old villages.
+- **The prison** (`js/prison.js`): Saltrock Penitentiary, in the Waterfall, mostly underground (a stone blockhouse
+  over the stairs, in a walled yard with two watchtowers). While a Tickle is up for sale on a marketplace it lives
+  there: a cell, the canteen, the yard, breaking rocks. Sold, it walks free and moves in with its new holder;
+  withdrawn, it goes home. Listings come from `js/listings.js`, made by `tools/update_listings.py` with the owner's
+  own OpenSea API key (kept on the owner's machine, environment variable `OPENSEA_API_KEY`), or from a list of token
+  numbers typed in the Holders tab. Sales from on-chain pools (Sudoswap-style) are not detected yet.
+- **The Parliament** (`js/parliament.js`), on the Maker's Isle (the isle is kept clear of other buildings): 333
+  seats shared out among the holders by the D'Hondt method, each holder's ministers chosen from its Tickles. It sits
+  every day at 16:00 and votes at 17:30 on one law (or the repeal of one in force) and on up to two of the
+  Director's proposals, decided as in Review. The laws change the game: the Prize Act (contest prizes doubled), the
+  Sea Bounty Act, the Night Watch Act, the Fair Market Act (mounts, beasts and boats a fifth cheaper), the Rest Day
+  Act (every seventh day free) and the Shell Tax. The town halls stay as they were.
 
 ## 4. A day in the life
 
@@ -219,19 +234,18 @@ that depends on how many it owns:
 
 ## 8. The Great Underworld
 
-- Every dungeon cave leads down into **one great dungeon under the whole map, 36 floors deep**. Each floor
-  is a labyrinth as wide as the land above (tunnels under the channels join the regions), in six bands of six
-  floors with their own look: the **Goblin Warrens**, the **Catacombs**, the **Serpent Halls**, the
-  **Labyrinth**, the **Burning Deep** and the **Abyss**. Walls are made of rounded rocks like the on-chain
-  boulder; only what can be seen is drawn.
-- **A guardian on every floor**, with the stairs down sealed behind an iron gate until it is beaten:
-  Grubnose the goblin boss, the Kobold Chieftain, the Gloom King, the Bat Lord, the Spider Queen, the Goblin
-  King, the Bone Knight, the Mummy Pharaoh, the Crypt Weaver, the Grave Wraith, the Skeleton King, the Lich,
-  the Harpy Queen, the Basilisk, the Brute Lord, Medusa the Gorgon, the Werewolf Alpha, the Basilisk King,
-  the Centaur Warlord, the Stone Golem, the Minotaur, the Ogre Chief, the Cyclops, the Titan Golem, the Fire
-  Salamander, the Manticore, the Troll Warlord, the Chimera, the Fire Wyrm, the Hydra, the Wraith Lord,
-  Cerberus, the Hound of the Abyss, the Minotaur Lord, the Lich King and the Primordial Hydra. At the very
-  bottom, right beneath the Maker's Isle, waits **the Golden Tickle**, the strongest of all.
+- Every dungeon cave leads down into **one great dungeon under the whole map, 12 floors deep** (version 49 kept
+  the hardest 12 of the old 36). Each floor is a labyrinth as wide as the land above (tunnels under the channels
+  join the regions), each kind with its own look: the **Goblin Warrens** (B1F), the **Catacombs** (B2F), the
+  **Sunlit Grotto** (B3F-B4F, open to the sky, with daylight and pools of water), the **Forest Maze** (B5F-B6F,
+  walls of trees and hedges), the **Ice Caverns** (B7F-B8F), the **Burning Deep** (B9F-B10F, with pools of lava),
+  the **Abyss** (B11F) and, at the bottom, **the Heart of the Chain**. Walls are made of rounded rocks like the
+  on-chain boulder; only what can be seen is drawn.
+- **A guardian on every floor**, with the stairs down sealed behind an iron gate until it is beaten: the Goblin
+  King, the Lich, Medusa the Gorgon, the Basilisk King, the Cyclops, the Titan Golem, the Frost Troll Warlord, the
+  Chimera, the Fire Wyrm, the Hydra, the Lich King and, right beneath the Maker's Isle, **the Golden Tickle**, the
+  strongest of all. Beside every guardian stands a **teleport gem**, the Underworld's save point: a party that has
+  beaten that guardian comes back to the gem next time, and from it can go back up.
 - **Guardians fight back** with special attacks (Ground Slam, Fire Breath, Venom Spray, Charge, Petrifying
   Gaze, Eye Beam, Lightning Storm, Screech, summoning their kind): the name shows over the guardian and the
   ground glows red where it will land; below a third of its health a guardian is enraged. Every monster
@@ -244,7 +258,7 @@ that depends on how many it owns:
   button appears when a party faces a guardian, and the result on screen is the result.
 - **Treasure makes them stronger**: Ethernum (an adventurer can burn a crystal for +15 %), silver, gold,
   gems and orichalcum for the smith, shells, food and relics that each make their bearer stronger (at most six per Tickle). There are 18 relics in all: twelve from the Underworld (from the Lucky Goblin Charm to the Lich's Phylactery), the Heart of the Chain for the first to beat the Golden Tickle, three from the sea and two from the sea beasts. The game is
-  **completable**: without relics and orichalcum a party gets stuck around floor 29. The Golden Tickle can
+  **completable**: without relics and orichalcum a party gets stuck around B10F. The Golden Tickle can
   only be beaten by **at least two blessed Tickles** together: some afternoons the strongest blessed of any
   place go down as **the Maker's Chosen**.
 - **Levels**: every Tickle has a level; monsters, raids and dragons give experience; a higher level hits
@@ -366,6 +380,9 @@ shells:
 - **Mounts**: a pony, a saddle horse, a white charger or a riding griffin. On long trips the owner rides at a
   trot (2 to 3 times walking speed) or flies its griffin straight over everything (4.5 times). The mount
   waits beside its rider and sleeps by its house.
+- **Riding beasts** (version 49): a stag, a ram or a boar, by way of life (hunters, shepherds...) or bought at the
+  paddock (18, 30 and 45 shells); and a tamer rides the tamed monster at its heel if it is big enough (werewolf,
+  centaur, golem, troll, ogre, minotaur, manticore, cerberus, basilisk, salamander, cave spider).
 - **Boats** moored in a marina beside every dock: a rowing boat, a sailing boat or a yacht; some afternoons
   the owner takes it out on the lake.
 - **Better houses**: the builders rebuild a Tickle's own house as a two-storey **townhouse** (timbered upper
@@ -472,7 +489,9 @@ casino, mine and dungeon leads into its own small maps (rooms) drawn apart on bl
 | --- | --- |
 | Move the view | drag the ground, or WASD / arrow keys (Shift for faster) |
 | Turn the view | Z / X, the ⟲ ⟳ buttons under the minimap, right-drag or Ctrl-drag, two-finger twist |
-| Zoom | mouse wheel or pinch |
+| Zoom | mouse wheel or pinch, from a few steps away up into the sky with the whole map in sight |
+| Inspect | click anything: a small window about it (health, needs, abilities, arms...) |
+| Dismiss a notification | click it; Menu > Settings switches the activity notifications off |
 | Travel | click the minimap; M opens the big map |
 | Pick up / throw | press on something and drag; release while moving to throw |
 | Building or landmark card | click it |
@@ -512,6 +531,10 @@ sea beasts, wealth and weather. A layout tag (`App.LAYOUT`) lets an old save mig
 | `worker.js` | voxelization worker: Tickles, on-chain pieces, kit and AI strokes to meshes |
 | `owners.js` | `ownerOf()` snapshot (block 26,125,466) |
 | `kit.js`, `kit-interior.js`, `kit-monsters.js`, `kit-myth.js`, `kit-wealth.js` | the game's model kit in the on-chain stroke format |
+| `farview.js` | the far view: a light heightfield of the whole map, coarse copies and stand-ins of the buildings and trees beyond the streamed ones |
+| `inspect.js` | the inspect window: what anything clicked is, its health, needs, abilities and arms |
+| `prison.js`, `listings.js` | the prison for Tickles up for sale; the snapshot of marketplace listings |
+| `parliament.js` | the Parliament: seats, ministers, sittings, laws and votes |
 | `geo.js` | world layout: regions, lake, bridges, places, holders' places, roads, fields, farms, arenas, caves, lairs, mines, Ether fields, guild quarters, casinos, smithies; terrain heights; routes |
 | `world.js` | open-world engine: chunked block terrain, meshes, camera, picking, daylight |
 | `population.js` | all 9,629 Tickles: traits, jobs, daily plans, pawns, owners |
@@ -550,7 +573,7 @@ python -m http.server 8765 --directory tickle-world
 
 Then open <http://localhost:8765>. The first load derives all 9,629 seeds and cuts the on-chain pieces,
 which takes a little while. A dedicated GPU helps: near a busy village the scene can reach about two million
-triangles.
+triangles, and pulled back into the sky about two and a half to three million.
 
 ## 23. Credits and data
 

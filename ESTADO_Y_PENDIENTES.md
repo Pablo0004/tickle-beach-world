@@ -1,12 +1,26 @@
 # Tickle Beach World — lo pedido, lo hecho y lo pendiente
 
-Actualizado: 22 de octubre de 2026 (noche).
+Actualizado: 23 de octubre de 2026.
 Juego publicado (privado): https://claude.ai/artifact/DFWbM9YVoEYorTiuTKEBE4 — versión publicada 48.
-Código en GitHub (privado): https://github.com/Pablo0004/tickle-beach-world — en inglés: `README.md` (el juego completo) y `PENDING.md` (lo pendiente).
+Código en GitHub: https://github.com/Pablo0004/tickle-beach-world — rama `claude/v49-items-11-16` con la versión 49; en inglés: `README.md` (el juego completo) y `PENDING.md` (lo pendiente).
 
 ---
 
 ## 1. Pendiente, en el orden acordado
+
+**Resumen al 23 de octubre**: la versión 49 está terminada y probada, en vista previa en https://claude.ai/artifact/TK966ZfpzsFS9aPPxwJNo6, y ya está en GitHub (rama `claude/v49-items-11-16`). Se publica en el juego de siempre cuando des el visto bueno. Hecho además el 22-23 de octubre:
+- **Ventana de inspección** (ver más abajo): clic en cualquier cosa.
+- **Notificaciones**: en Menú > Settings se pueden apagar los avisos de actividades (siguen saliendo las respuestas a lo que haces tú y todo queda en el registro); un clic sobre un aviso lo quita (en los de "Watch", fuera del botón).
+- **Alejarse hasta el cielo**: la rueda del ratón (o pellizcar) llega ahora hasta 2.600 bloques de distancia, con todo el mapa a la vista. A lo lejos, el terreno es una versión ligera de todo el mapa y los edificios y árboles se dibujan más simples (a media distancia, copias en cubos gruesos; más lejos, siluetas de dos bloques con sus colores; castillos, palacios, mansiones y la estatua siempre con su forma). Se ven las nubes desde arriba. Unos 2,4-2,8 millones de triángulos a cualquier altura (1,6 a la distancia normal). Archivo nuevo `js/farview.js`.
+- **GitHub**: vinculado; la rama subida y README, PENDING y este documento puestos al día.
+
+**PENDIENTE (pedido el 22-23 de octubre), por este orden; el detalle de cada punto está en `PENDING.md`:**
+1. **Primera persona al controlar un Tickle**: ratón capturado para mirar (como en cualquier juego en primera persona), punto de mira con el nombre de lo que tienes delante (y clic para su ventana), HUD con vida y necesidades y brújula, saltar con Espacio, balanceo al andar, la rueda para pasar a vista en tercera persona detrás del Tickle, mando táctil en pantallas táctiles.
+2. **Más detalle en todos los modelos y texturas**, "como un juego profesional": cubos más pequeños donde se pueda (con un ajuste de calidad gráfica Normal / Alta / Ultra en Settings para que vaya fluido en cualquier ordenador), texturas en el terreno (hierba, arena, piedra, caminos, sembrados, tablones...), sombras del sol y un cielo con degradado. Los Tickles son los modelos on-chain y se quedan como están.
+3. **Enciclopedia** con cada entrada numerada y todas sus especificaciones: animales, criaturas, monstruos, guardianes, dragones, bestias marinas, armas, escudos, hechizos, reliquias, monturas, barcos, minerales, lugares, oficios, gremios, facciones, leyes y unidades de guerra (modelo, dónde vive, vida, ataque, defensa, velocidad, tipo, habilidades, quién la usa o la doma, precio, qué da).
+4. **Menú de juego profesional** que se pueda ocultar y desplegar, con dentro el panel de la derecha (que hoy no se puede cerrar), las secciones del menú, el directorio, el mapa grande y la enciclopedia; con el menú cerrado, el mundo a pantalla completa.
+5. **Guerras entre poseedores (direcciones)**, inspiradas en Imperium, para que tengan sentido las fortalezas y la patrulla de la muralla: ejércitos de los Tickles armados (espadas, lanzas, magos, sanadores, domadores con sus criaturas, caballería, jinetes de grifo), marchas, asedios con murallas, torres y puertas defendidas por los guardias, batallas en campo abierto, y un resultado (tributo, prestigio, tregua). Antes de construirlo hay que acordar contigo quién declara la guerra, qué se gana y si puede haber muertes permanentes.
+6. Más adelante: las mansiones editables por dentro y por fuera.
 
 **Resumen al 22 de octubre (noche)**: los puntos 11 a 16 y las comprobaciones del casino están hechos y probados en la copia de trabajo (trazado "plots-3"), en vista previa en https://claude.ai/artifact/TK966ZfpzsFS9aPPxwJNo6. Falta: que des el visto bueno para publicar la versión 49 en el juego de siempre; subir los cambios a GitHub (desde la sesión en la nube no había acceso; van en un parche); tu clave de OpenSea para leer los Tickles en venta; las mansiones editables (más adelante); y las preguntas abiertas de abajo (olas, Créditos). El detalle de cada punto está en los bloques que siguen; el bloque "PAUSA" de más abajo es el estado anterior (lo que allí dice "sin probar" ya está probado).
 

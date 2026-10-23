@@ -229,7 +229,7 @@ input[type="text"] { background: rgba(0,0,0,0.3); border: 1px solid var(--line);
 .bubble::after { content: ""; position: absolute; left: 50%; bottom: -6px; margin-left: -6px; border: 6px solid transparent; border-top-color: #fffdf3; border-bottom: 0; }
 
 #toasts { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); display: flex; flex-direction: column; gap: 6px; align-items: center; pointer-events: none; max-width: 90%; }
-.toast { background: var(--panel-solid); border: 1px solid var(--line); color: var(--text); font-weight: 800; padding: 8px 14px; border-radius: 999px; font-size: 13px; animation: pop 0.25s ease-out; }
+.toast { background: var(--panel-solid); border: 1px solid var(--line); color: var(--text); font-weight: 800; padding: 8px 14px; border-radius: 999px; font-size: 13px; animation: pop 0.25s ease-out; pointer-events: auto; cursor: pointer; }
 #casinoWin { position: absolute; right: 16px; top: 96px; width: min(580px, calc(100% - 32px)); max-height: calc(100% - 120px); overflow: auto; background: rgba(9, 29, 41, 0.96); color: #fff; border-radius: 12px; padding: 12px; z-index: 40; font-size: 13px; }
 #casinoWin[hidden] { display: none; }
 #contestHud { position: absolute; left: 16px; top: 96px; width: 250px; background: rgba(9, 29, 41, 0.9); color: #fff; border-radius: 12px; padding: 9px 12px 10px; z-index: 29; font-size: 12.5px; pointer-events: none; border: 1px solid rgba(255, 210, 63, 0.35); }
@@ -499,13 +499,13 @@ input[type="text"] { background: rgba(0,0,0,0.3); border: 1px solid var(--line);
   <div class="modal" id="helpModal" hidden>
     <div class="box glass help">
       <div class="row" style="justify-content: space-between"><h2>Menu</h2><button class="btn primary" id="helpClose">Close</button></div>
-      <div class="seg menutabs" role="group" aria-label="Menu sections"><button data-menu="help" aria-pressed="true">How it works</button><button data-menu="controls" aria-pressed="false">Controls</button><button data-menu="music" aria-pressed="false">Sound</button><button data-menu="credits" aria-pressed="false">Credits</button></div>
+      <div class="seg menutabs" role="group" aria-label="Menu sections"><button data-menu="help" aria-pressed="true">How it works</button><button data-menu="controls" aria-pressed="false">Controls</button><button data-menu="music" aria-pressed="false">Sound</button><button data-menu="settings" aria-pressed="false">Settings</button><button data-menu="credits" aria-pressed="false">Credits</button></div>
       <div class="menusec" id="menu-controls" hidden>
         <ul>
           <li><b>Move:</b> drag the ground, or WASD / the arrow keys (hold Shift to go faster). Click the small map to travel; M opens the big map.</li>
           <li><b>First person (V):</b> pick a Tickle and press V (or "First person" on its card) to see the world through its eyes. A Tickle of yours, while you are in control, you walk yourself: WASD to walk, Shift to run, drag or Z/X to turn, E to go into a building, and it swims if you take it into the water; if it owns a horse or a griffin, M puts it in the saddle (on a griffin, Space climbs and C comes down). Any other Tickle you ride along with through its day (races, regattas, dives...), dragging to look round. Esc leaves.</li>
           <li><b>Turn the view:</b> Z and X, or the &#x27f2; &#x27f3; buttons under the small map, or right-drag (Ctrl-drag); twist two fingers on a touch screen.</li>
-          <li><b>Zoom:</b> the mouse wheel, or pinch.</li>
+          <li><b>Zoom:</b> the mouse wheel, or pinch: from a few steps away up into the sky, with the whole map in sight (far away the buildings and trees are drawn simpler).</li>
           <li><b>Pick up and throw:</b> press on a Tickle, an animal, a creature, a dragon, a horse or a griffin, a sea beast, a boat, an object, a tree or a building and drag to lift it; let go to set it down, or let go while moving to throw it. Buildings and trees break when thrown; a sea beast thrown hard is hurt, then slides back into the water; a boat set down on land is carried back to its mooring (holders can only pick up their own Tickles).</li>
           <li><b>Look and go in:</b> click anything (a Tickle, a creature, a monster, an animal, a dragon, a boat, a tree, the ground or the water, and inside every piece of furniture) for a small window about it, with its health, what it can do and what it fights with; click a building or landmark for its card; E goes inside the nearest door, cave or mine; Esc comes back out (and closes cards).</li>
           <li><b>Follow:</b> select a Tickle and press F, and the camera follows it.</li>
@@ -513,6 +513,7 @@ input[type="text"] { background: rgba(0,0,0,0.3); border: 1px solid var(--line);
         </ul>
       </div>
       <div class="menusec" id="menu-music" hidden></div>
+      <div class="menusec" id="menu-settings" hidden></div>
       <div class="menusec" id="menu-credits" hidden></div>
       <ul class="menusec" id="menu-help">
         <li>All 9,629 Tickles live here. Each one's seed is derived in your browser with the contract's own formula and its body is rebuilt from the models stored on Ethereum. Nothing is redrawn by hand or by AI.</li>
@@ -572,10 +573,10 @@ input[type="text"] { background: rgba(0,0,0,0.3); border: 1px solid var(--line);
 <script src="js/kit-myth.js?v=225"></script>
 <script src="js/kit-wealth.js?v=246"></script>
 <script src="js/approved.js?v=225"></script>
-<script src="js/world.js?v=247"></script>
+<script src="js/world.js?v=253"></script>
 <script src="js/sim.js?v=250"></script>
 <script src="js/geo.js?v=250"></script>
-<script src="js/population.js?v=250"></script>
+<script src="js/population.js?v=253"></script>
 <script src="js/critters.js?v=225"></script>
 <script src="js/village.js?v=250"></script>
 <script src="js/wildlife.js?v=225"></script>
@@ -606,8 +607,9 @@ input[type="text"] { background: rgba(0,0,0,0.3); border: 1px solid var(--line);
 <script src="js/interiors.js?v=252"></script>
 <script src="js/places.js?v=251"></script>
 <script src="js/inspect.js?v=252"></script>
+<script src="js/farview.js?v=253"></script>
 <script src="js/sfx.js?v=225"></script>
 <script src="js/music.js?v=225"></script>
 <script src="js/hand.js?v=225"></script>
-<script src="js/ui.js?v=252"></script>
+<script src="js/ui.js?v=253"></script>
 <script src="js/directory.js?v=225"></script>
