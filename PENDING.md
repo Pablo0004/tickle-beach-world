@@ -11,7 +11,7 @@ one item is finished before the next one starts.
 
 ### 1.0 Publish version 49
 
-When the owner approves the preview: publish it to the game's artifact (version 48 today) and merge the branch.
+When the owner approves the preview: publish it to the game's artifact (version 48 today). The code is already in `main`.
 
 ### 1.1 First person when controlling a Tickle (asked 22 October)
 

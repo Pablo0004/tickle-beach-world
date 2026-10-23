@@ -2,13 +2,13 @@
 
 Actualizado: 23 de octubre de 2026.
 Juego publicado (privado): https://claude.ai/artifact/DFWbM9YVoEYorTiuTKEBE4 — versión publicada 48.
-Código en GitHub: https://github.com/Pablo0004/tickle-beach-world — rama `claude/v49-items-11-16` con la versión 49; en inglés: `README.md` (el juego completo) y `PENDING.md` (lo pendiente).
+Código en GitHub: https://github.com/Pablo0004/tickle-beach-world — la versión 49 está en `main` (fusionada el 23 de octubre); en inglés: `README.md` (el juego completo) y `PENDING.md` (lo pendiente).
 
 ---
 
 ## 1. Pendiente, en el orden acordado
 
-**Resumen al 23 de octubre**: la versión 49 está terminada y probada, en vista previa en https://claude.ai/artifact/TK966ZfpzsFS9aPPxwJNo6, y ya está en GitHub (rama `claude/v49-items-11-16`). Se publica en el juego de siempre cuando des el visto bueno. Hecho además el 22-23 de octubre:
+**Resumen al 23 de octubre**: la versión 49 está terminada y probada, en vista previa en https://claude.ai/artifact/TK966ZfpzsFS9aPPxwJNo6, y ya está en GitHub, en `main`. Se publica en el juego de siempre cuando des el visto bueno. Hecho además el 22-23 de octubre:
 - **Ventana de inspección** (ver más abajo): clic en cualquier cosa.
 - **Notificaciones**: en Menú > Settings se pueden apagar los avisos de actividades (siguen saliendo las respuestas a lo que haces tú y todo queda en el registro); un clic sobre un aviso lo quita (en los de "Watch", fuera del botón).
 - **Alejarse hasta el cielo**: la rueda del ratón (o pellizcar) llega ahora hasta 2.600 bloques de distancia, con todo el mapa a la vista. A lo lejos, el terreno es una versión ligera de todo el mapa y los edificios y árboles se dibujan más simples (a media distancia, copias en cubos gruesos; más lejos, siluetas de dos bloques con sus colores; castillos, palacios, mansiones y la estatua siempre con su forma). Se ven las nubes desde arriba. Unos 2,4-2,8 millones de triángulos a cualquier altura (1,6 a la distancia normal). Archivo nuevo `js/farview.js`.
