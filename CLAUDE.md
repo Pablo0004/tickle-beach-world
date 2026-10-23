@@ -25,7 +25,7 @@ JavaScript, no build step). The owner talks in Spanish: answer in Spanish. Code,
 
 ## Conventions
 
-- JavaScript files are pure ASCII: escape anything else (`·`). The file-writing tool may turn escapes into
+- JavaScript files are pure ASCII: escape anything else (write `\u00b7`, not the character itself). The file-writing tool may turn escapes into
   raw characters; check with `grep -P '[^\x00-\x7F]' js/*.js`.
 - Every changed script gets its `?v=N` cache-buster bumped in `index.html`.
 - Some files use CRLF line endings (`index.html`, `ESTADO_Y_PENDIENTES.md`, several `js/` files): keep them as
@@ -33,11 +33,13 @@ JavaScript, no build step). The owner talks in Spanish: answer in Spanish. Code,
 
 ## Publishing
 
-The game is published as a private claude.ai artifact: the page `index.html` with the `js/` files beside it
-(publish with `root` = the repository and `files` = the changed scripts).
-- Live game, version 48: https://claude.ai/artifact/DFWbM9YVoEYorTiuTKEBE4 — only update it when the owner
-  approves.
-- Preview of version 49: https://claude.ai/artifact/TK966ZfpzsFS9aPPxwJNo6 — update it freely for the owner to
-  test.
-- GitHub: https://github.com/Pablo0004/tickle-beach-world (`main` has version 49). Repository settings (the
-  description) cannot be changed from a Claude session; give the owner the text instead.
+The game is published as a private claude.ai artifact: the page `index.html` with every file of `js/`, every file
+of `music/` and `onchain-tickle.html` beside it (publish with `root` = the repository and those files in `files`,
+about 75; on an update, only the changed ones). The owner
+deleted the old artifacts on 23 October 2026 (the live game, version 48, and the version 49 preview): the next
+time the owner wants to play or test, publish a new artifact from `main` and give the owner its link. Keep a
+preview separate from the game the owner plays, and only update the game when the owner approves. Saved games
+live in the browser per artifact, so a new artifact starts a new world.
+
+GitHub: https://github.com/Pablo0004/tickle-beach-world (`main` has version 49). Repository settings (the
+description) cannot be changed from a Claude session; give the owner the text instead.

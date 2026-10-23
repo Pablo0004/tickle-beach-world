@@ -1,7 +1,7 @@
 # Tickle Beach World — lo pedido, lo hecho y lo pendiente
 
 Actualizado: 23 de octubre de 2026.
-Juego publicado (privado): https://claude.ai/artifact/DFWbM9YVoEYorTiuTKEBE4 — versión publicada 48.
+Juego publicado: los artifacts antiguos (la versión 48 publicada y la vista previa de la 49) los borraste el 23 de octubre; la próxima vez se publica uno nuevo desde `main` (ver `CLAUDE.md`).
 Código en GitHub: https://github.com/Pablo0004/tickle-beach-world — la versión 49 está en `main` (fusionada el 23 de octubre); en inglés: `README.md` (el juego completo) y `PENDING.md` (lo pendiente).
 
 ---

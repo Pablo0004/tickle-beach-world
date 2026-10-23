@@ -1,8 +1,8 @@
 # Tickle Beach World — what is pending
 
-Updated 23 October 2026. Published build: version 48 (private claude.ai artifact). This repository holds
-version 49, finished and tested, with a preview at https://claude.ai/artifact/TK966ZfpzsFS9aPPxwJNo6; it is
-published as the game once the owner approves it. Items are worked in the order agreed with the project owner;
+Updated 23 October 2026. This repository (`main`) holds version 49, finished and tested. The old claude.ai
+artifacts (the published version 48 and the version 49 preview) were deleted by the owner on 23 October 2026:
+the game is to be published again as a new artifact from `main` (see `CLAUDE.md`). Items are worked in the order agreed with the project owner;
 one item is finished before the next one starts. The browser test scripts and what each one checks are in
 [tests/README.md](tests/README.md).
 
@@ -12,7 +12,8 @@ one item is finished before the next one starts. The browser test scripts and wh
 
 ### 1.0 Publish version 49
 
-When the owner approves the preview: publish it to the game's artifact (version 48 today). The code is already in `main`.
+Publish `main` as a new claude.ai artifact for the owner to try (the old ones were deleted); it becomes the game
+once the owner approves it.
 
 ### 1.1 First person when controlling a Tickle (asked 22 October)
 
