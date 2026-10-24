@@ -105,6 +105,11 @@ loaded in Node without a browser: `require('./tests/node_kit').KIT`).
 - `t_clip.js` — an independent check: visible Tickles inside the full box of a house, mansion or castle model,
   away from its door.
 - `t_arena.js` — an arena from above and the side, its four gates (`arena_top.png`, `arena_side.png`).
+- `t_sea.js` — the sea floor near a cool and a warm coast: how much lies and swims there, triangles; `sea_N.png`.
+- `t_dive.js` — the sea caves; your own Tickle diving in first person (breath), a cave refused from the surface and
+  entered from its mouth; the view following a diver from above; `dive_fp.png`, `dive_cave.png`, `dive_follow.png`.
+- `t_uw.js` — first person three blocks down in a kelp forest and a coral garden, with the nearest sea life;
+  `uw_0.png`, `uw_1.png`.
 - `t_sky.js` — the view at several heights (`RADII=46,130,400,1000,2600`): frame time, triangles, far-view
   instances, screenshots `sky_N.png`.
 - `t_big.js` — lists the biggest scenery models (diagnostic for the far view).

@@ -353,7 +353,7 @@
     else if (e.key === "f" || e.key === "F") { if (ui.sel != null) App.cam.follow = ui.sel; }
     else if (e.key === "Escape" && !$("placeCard").hidden) { $("placeCard").hidden = true; }
     else if (e.key === "Escape" && App.inside) { App.leaveInterior(); }
-    else if ((e.key === "e" || e.key === "E") && !App.inside) { const T = App.enterableAt(App.cam.target.x, App.cam.target.z); if (T) { if (App.fpOn && App.fpOn()) App.exitFP(); App.enter(T); } else App.toast("Nothing to go into here: move close to a door, a cave or a mine."); }
+    else if ((e.key === "e" || e.key === "E") && !App.inside) { const T = App.enterableAt(App.cam.target.x, App.cam.target.z); if (T && T.shut) App.toast(T.shut); else if (T) { if (App.fpOn && App.fpOn()) App.exitFP(); App.enter(T); } else App.toast("Nothing to go into here: move close to a door, a cave or a mine."); }
     else if (e.key === "Escape") { ui.sel = null; App.cam.follow = null; App.pinned = null; $("onchainModal").hidden = true; $("helpModal").hidden = true; $("mapModal").hidden = true; $("mapTip").hidden = true; refresh(true); }
     else if ((e.key === "m" || e.key === "M") && !(e.target && e.target.closest && e.target.closest("input, textarea"))) { if ($("mapModal").hidden) App.openMap(); else $("mapModal").hidden = true; }
   });
@@ -1347,12 +1347,14 @@
       await App.loadWildlife();
       await App.loadBoats();
       await App.loadLakeLife();
+      App.loadSeaLife && (await App.loadSeaLife());
       await App.loadCreatures();
       await App.loadMonsters();
       setLoad(0.7, "Laying out the circuits, the regatta courses and the stages for the contests\u2026");
       await nextFrame();
       App.prepareContests && App.prepareContests();
       App.prepareDiving && App.prepareDiving();
+      App.prepareSeaCaves && App.prepareSeaCaves();
       App.prepareWealth && App.prepareWealth();
       // designs approved for good and baked into the game
       for (const a of (TB.APPROVED && TB.APPROVED.assets) || []) {
@@ -1431,6 +1433,7 @@
     App.updateBoats(dt);
     App.stepRingBeasts && App.stepRingBeasts(dt);
     App.updateLakeLife && App.updateLakeLife(dt);
+    App.updateSeaLife && App.updateSeaLife(dt); // the sea floor and what swims over it, near you
     if (mapTimer > 0.5) { mapTimer = 0; drawMinimap(); }
     App.FX && App.FX.step(dt); // spells, blows and sparks, in the world and down below
     App.stepSurf && App.stepSurf(); // waves go when nobody rides them

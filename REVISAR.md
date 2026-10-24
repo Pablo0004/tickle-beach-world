@@ -44,3 +44,14 @@ mando, ni tarjeta gráfica). Ve tachando lo que veas bien y apunta lo que no.
 - [ ] Nadie atraviesa los edificios: Tickles, animales, criaturas y monstruos rodean las casas, castillos,
       establos, altares, la estatua... y entran y salen por la puerta.
 - [ ] Las arenas (coliseos) con 4 puertas y sus torres; las murallas con al menos 4 puertas.
+
+## Bajo el mar (punto 1.2c)
+
+- [ ] Con un Tickle tuyo en primera persona, en el mar abierto: C para bajar, Espacio para subir. ¿Se ve bien el
+      fondo (algas que se mecen, corales en Beach Sand y la Palma, peces, tortugas, mantas, medusas, cangrejos)?
+- [ ] La barra de aire: ¿45 segundos bajo el agua te parece bien?
+- [ ] Sigue (botón Follow) a un Tickle que esté buceando en un sitio de buceo: la vista desde arriba bajo el agua,
+      al estilo de Pokémon Esmeralda.
+- [ ] Busca una cueva submarina (hay 2 por región, mar adentro): baja hasta su boca y pulsa E. Desde la superficie
+      no debe dejarte entrar.
+- [ ] Dentro de la gruta: cristales, coral, tesoros y la cámara de las perlas.

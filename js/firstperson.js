@@ -10,14 +10,20 @@
  * what it is (warrior, mage of its school, healer, tamer, or a plain brawler). The cave monsters fight back.
  * T talks to the Tickle in front. On a touch screen the bar's buttons are tapped. A game controller works too
  * (standard layout): left stick to walk (pressed in to run), right stick to look, A jump (and up on a griffin, LT
- * down), X or RT the basic blow, Y Q, LB G, RB R, B talk, Back to mount, Start to leave. Its own body is hidden so it does not fill the view,
- * but its arms and whatever they hold are there; under the water the view turns blue and hazy. */
+ * down), X or RT the basic blow, Y Q, LB G, RB R, B talk, Back to mount, Start to leave.
+ * In the water your own Tickle dives: C (or LT) to go down, Space (or A) to come up, swimming along the bottom with
+ * the breaststroke; its breath runs out under the water (a bar in the HUD) and comes back at the surface; with no
+ * breath left it loses health. Down at the mouth of a sea cave, E goes in (sea.js, interiors.js). Its own body is
+ * hidden so it does not fill the view, but its arms and whatever they hold are there; under the water the view
+ * turns blue-green and hazy (sea.js). */
 (function () {
   "use strict";
   const App = window.App, st = App.st;
   const FOV = 72, FOV0 = 40, BACK_MAX = 14;
   let fp = null; // { id, look, pitch, drive, back, backT, stick, bobPh, bobAmp, eyeY, aimAt }
   App.fpOn = () => !!fp;
+  // how high your own Tickle in first person is (a sea cave can only be gone into from down at its mouth)
+  App.diverY = () => { const t = fp && fp.drive && agentOf(fp.id); return t ? t.pos.y : 99; };
   App.fpId = () => (fp ? fp.id : null);
   App.fpDriving = () => !!(fp && fp.drive);
   const agentOf = (id) => App.pop.agent[id] || null;
@@ -33,7 +39,7 @@
     const M = App.mountOf && App.mountOf(t.id);
     const mouse = coarse ? "" : locked() ? "Esc frees the mouse \u00b7 click to inspect" : "click to capture the mouse";
     const parts = fp.drive
-      ? [coarse ? "stick to walk, drag to look" : "WASD to walk, Shift to run, Space to jump", mouse, coarse ? "" : "F, Q, G, R to fight, T to talk", "wheel: camera back", "E to go in"]
+      ? [coarse ? "stick to walk, drag to look" : "WASD to walk, Shift to run, Space to jump", mouse, coarse ? "" : "F, Q, G, R to fight, T to talk", coarse ? "" : "in the water C dives, Space comes up", "wheel: camera back", "E to go in"]
       : ["riding along", coarse ? "drag to look round" : mouse, "wheel: camera back"];
     if (fp.drive && M) parts.push("M to " + (M.fly ? "mount its griffin (Space up, C down)" : M.kind === "horse" ? "mount its horse" : "ride " + M.name.replace(/^Riding /, "its ").replace(/^Stag$/, "its stag")));
     el.innerHTML = "<span><b>" + esc(t.name) + '</b><span class="fh-keys"> \u00b7 ' + parts.filter(Boolean).join(" \u00b7 ") + '</span></span><button class="btn" id="fpLeave">Leave (Esc)</button>';
@@ -195,6 +201,8 @@
     const COL = { hunger: "#ffb24a", energy: "#7be08f", social: "#ff8fc0", fun: "#3cc6d8" };
     const bar = (label, v, col, txt) => '<div class="fs-row"><span>' + label + '</span><i><b style="width:' + Math.round(Math.max(0, Math.min(1, v)) * 100) + "%;background:" + col + '"></b></i><em>' + txt + "</em></div>";
     let h = '<div class="fs-name">' + esc(t.name) + "</div>" + bar("Health", now / top, now / top < 0.3 ? "#e8443a" : "#e86a5a", Math.round(now) + "/" + Math.round(top));
+    const a = t.action;
+    if (a && a.kind === "fp" && (a.water || (a.air != null && a.air < 1))) h += bar("Breath", a.air == null ? 1 : a.air, a.air < 0.25 ? "#ff6b5e" : "#8fd3f4", Math.round((a.air == null ? 1 : a.air) * 100) + "%");
     for (const k of App.NEEDS || []) h += bar((App.NEED_LABEL && App.NEED_LABEL[k]) || k, t.needs[k] / 100, COL[k] || "#9fb", Math.round(t.needs[k]));
     el.innerHTML = h;
   }
@@ -489,13 +497,7 @@
       camera.lookAt(EYE.x + DIR.x, EYE.y + DIR.y, EYE.z + DIR.z);
     }
     compass(yaw);
-    // under the water: blue and hazy
-    const wet = camera.position.y < App.WATER_Y, fog = App.scene.fog;
-    if (fog) {
-      if (wet) { fog.color.setHex(0x1b6f8a).convertSRGBToLinear(); App.scene.background = fog.color; fog.near = 0.5; fog.far = 16; }
-      else { fog.near = App.NO_FOG.near; fog.far = App.NO_FOG.far; }
-    }
-    tint(wet);
+    // (under the water the view turns blue-green and hazy: sea.js, for every view)
     return true;
   };
   // the water between the eyes and everything else
@@ -534,6 +536,22 @@
     if (fp.act === "talk") talk(t, a); else if (fp.act) cast(t, a, fp.act);
     fp.act = null;
     if (foeBack(t, a)) return;
+    // in the water: down with C, up with Space; its breath runs out down there
+    if (a.water && !M) {
+      const floor = (App.seaFloorY ? App.seaFloorY(t.pos.x, t.pos.z) : App.columnHeight(Math.floor(t.pos.x), Math.floor(t.pos.z))) + 0.55, surf = App.WATER_Y - 0.95;
+      const room = Math.max(0, surf - floor);
+      if (keys.has("KeyC") || (P && P.down)) a.dive = Math.min(room, (a.dive || 0) + dtReal * 2.2);
+      if (keys.has("Space") || (P && P.up)) a.dive = Math.max(0, (a.dive || 0) - dtReal * 2.6);
+      a.dive = Math.min(a.dive || 0, room);
+      t.flyY = a.dive > 0.05 ? surf - a.dive : null;
+      const under = a.dive > 0.6;
+      a.air = Math.max(0, Math.min(1, (a.air == null ? 1 : a.air) + (under ? -dtReal / 45 : dtReal / 3)));
+      if (under && a.air <= 0 && performance.now() - (a.drownAt || 0) > 1500) {
+        a.drownAt = performance.now();
+        if (App.hurt && App.hurt(t, 6, "out of breath under the sea", "Out of breath\u2026 KO!", 0)) return;
+        App.say(t, "Air!", 1);
+      }
+    } else if (!M) { a.dive = 0; a.air = Math.min(1, (a.air == null ? 1 : a.air) + dtReal / 3); if (t.flyY != null && !(t.riding && t.riding.fly)) t.flyY = null; }
     if (M && M.fly) {
       // the griffin: up and down with Space and C, and over everything once it is off the ground
       if (keys.has("Space") || (P && P.up)) a.alt = Math.min(30, (a.alt || 0) + dtReal * 8);
@@ -546,7 +564,7 @@
         App.animateTickle(t, true, dtReal);
         return;
       }
-    } else if (t.flyY != null && !M) t.flyY = null;
+    }
     if (moving) {
       const h = t.heading, len = Math.hypot(f, s);
       FWD.set((Math.sin(h) * f - Math.cos(h) * s) / len, 0, (Math.cos(h) * f + Math.sin(h) * s) / len);
@@ -560,6 +578,12 @@
     a.water = !App.isLand(t.pos.x, t.pos.z);
     a.phase = a.water ? "doing" : null;
     App.animateTickle(t, !!moving && !(a.jy > 0), dtReal);
+    // under the water: lying along it, the breaststroke with both paws
+    if (a.water && (a.dive || 0) > 0.6) {
+      const w = performance.now() / 1000 * (moving ? 3.4 : 1.2) + t.id;
+      t.pivot.rotation.set(1.2, 0, 0); t.pivot.position.set(0, 0.45, -1.0);
+      if (t.arms) { const A = t.arms; A.R.rotation.x = A.L.rotation.x = -1.7 + Math.sin(w) * 0.9; A.R.rotation.z = 0.55 + Math.cos(w) * 0.35; A.L.rotation.z = -0.55 - Math.cos(w) * 0.35; }
+    }
     // up in the air: the jump rides on top of where the body stands
     if (a.jy > 0) {
       a.vy -= 22 * Math.min(dtReal, 0.05);

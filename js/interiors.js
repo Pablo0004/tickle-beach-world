@@ -37,6 +37,9 @@
     for (const Cs of App.casinos || []) { const d = Math.min(Math.hypot(Cs.door.x - x, Cs.door.z - z), Math.hypot(Cs.x - x, Cs.z - z) * 0.8); if (d < bd + 2) { bd = d - 2; best = { kind: "casino", casino: Cs, door: Cs.door }; } }
     if (App.parliament && App.parliament.door) { const P = App.parliament, d = Math.min(Math.hypot(P.door.x - x, P.door.z - z), Math.hypot(P.sc.x - x, P.sc.z - z) * 0.6); if (d < bd + 2) { bd = d - 2; best = { kind: "parliament", parliament: P, door: P.door }; } }
     if (App.prison && App.prison.door) { const P = App.prison, d = Math.min(Math.hypot(P.door.x - x, P.door.z - z), Math.hypot(P.sc.x - x, P.sc.z - z) * 0.9); if (d < bd + 1) { bd = d - 1; best = { kind: "prison", prison: P, door: P.door }; } }
+    // a sea cave: only from down at its mouth, under the water (sea.js)
+    const sc0 = App.seaCaveAt ? App.seaCaveAt(x, z, App.diverY ? App.diverY() : 99) : null;
+    if (sc0) return sc0.under ? { kind: "seacave", cave: sc0.cave, door: sc0.cave.door, name: sc0.cave.name } : { kind: "seacave", cave: sc0.cave, door: sc0.cave.door, name: sc0.cave.name, shut: "The way into " + sc0.cave.name + " is down on the sea floor: dive down to it." };
     const gh = App.guildHallAt ? App.guildHallAt(x, z) : null;
     if (gh) { const d = Math.min(Math.hypot(gh.door.x - x, gh.door.z - z), Math.hypot(gh.x - x, gh.z - z) * 0.9); if (d < bd) { bd = d; best = { kind: "guild", hall: gh, door: gh.door }; } }
     if (best) best.name = nameOf(best);
@@ -51,6 +54,7 @@
     if (T.kind === "casino") return T.casino.name;
     if (T.kind === "prison") return T.prison.name;
     if (T.kind === "parliament") return T.parliament.name;
+    if (T.kind === "seacave") return T.cave.name;
     return T.mine.name;
   }
 
@@ -499,7 +503,7 @@
       const sd = wallSide(m, x, y, r);
       if (!sd) continue;
       const a = against(x, y, sd, 0.7);
-      put({ k: kind === "mine" ? "lantern" : "torch", x: a.x, z: a.z, rot: a.rot, light: true });
+      put({ k: kind === "mine" ? "lantern" : kind === "seacave" ? "crystal" : "torch", x: a.x, z: a.z, rot: a.rot, light: true });
     }
     // dead ends: treasure, bones, cages; ore veins in a mine
     const ends = cells.filter(([x, y]) => exits(m, x, y) === 1 && !used.has(x + "," + y));
@@ -545,7 +549,7 @@
     if (bossRoom) {
       const bx = cx(bossRoom[0]), bz = cz(bossRoom[1]), X0 = cx(hall.x0) - CS / 2, Z0 = cz(hall.y0) - CS / 2, SZ = hall.k * CS;
       R.bossAt = { x: bx, z: bz };
-      const lamp = kind === "mine" ? "lantern" : "brazier";
+      const lamp = kind === "mine" ? "lantern" : kind === "seacave" ? "crystal" : "brazier";
       for (const [u, v] of [[0, 0], [1, 0], [0, 1], [1, 1]]) put({ k: lamp, x: X0 + 1.6 + u * (SZ - 3.2), z: Z0 + 1.6 + v * (SZ - 3.2), light: true });
       for (const [u, v] of [[0.5, 0], [0, 0.5], [1, 0.5], [0.5, 1]]) { const x = X0 + 1.2 + u * (SZ - 2.4), z = Z0 + 1.2 + v * (SZ - 2.4); if (Math.hypot(x - cx(far[0]), z - cz(far[1])) > CS && Math.hypot(x - cx(hall.door[0]), z - cz(hall.door[1])) > CS) put({ k: "crystal", x, z, ether: true }); }
       if (kind === "mine") { put({ k: "orevein", v: o.ore(0), x: cx(far[0]), z: cz(far[1]) - CS / 2 + 1.1, tag: "face" }); put({ k: "orepile", v: o.ore(0), x: cx(far[0]) - 2.4, z: cz(far[1]) }); }
@@ -735,9 +739,26 @@
     }
     return { title: M.name, rooms, maze: true };
   }
+  // a sea cave, only reached by diving (sea.js): two floors of grotto, lit by glowing crystals, coral, sponges, weed and
+  // shells everywhere, treasure in the dead ends and, at the bottom, the pearl chamber; nothing hostile lives there
+  const SEA_LOOK = { smooth: 0.2, wall: "#2e5864", wall2: "#22464f", floor: ["#c8b894", "#b4a684"], deco: ["coral", "sponge", "anemone", "seagrass", "seashell", "searock"], sun: 0x082a34, pools: false };
+  function seaCaveMap(T) {
+    const c = T.cave, r = rngOf(c.i * 977 + 13), rooms = [], names = ["The grotto", "The pearl chamber"];
+    let entry = null;
+    for (let f = 0; f < 2; f++) {
+      const W = 6 + f * 2, H = 5 + f, last = f === 1;
+      entry = f === 0 ? [Math.floor(W / 2), H - 1] : [Math.min(W - 1, rooms[0].exit[0]), Math.min(H - 1, rooms[0].exit[1])];
+      const R = mazeFloor({ r, W, H, loops: 0.35, entry, kind: "seacave", look: SEA_LOOK, last, first: f === 0, index: f, monsters: 0, name: names[f],
+        outLabel: "Swim out of the cave", upLabel: "Up to the grotto", downLabel: "Down to the pearl chamber", pick: () => ["goblin", 1], boss: null });
+      R.note = f === 0 ? "A cave in the sea floor that only divers ever find: the water is still and blue-green, crystals glow on the walls, and coral and sponges grow over everything. Treasure lies in the dead ends." : "The deepest chamber, where the oysters grow big and the oldest chests lie half buried in the sand.";
+      if (last) for (let k = 0; k < 6; k++) R.items.push({ k: "oyster", x: R.cx(R.exit[0]) + Math.cos(k) * 2.6, z: R.cz(R.exit[1]) + Math.sin(k) * 2.6, rot: k });
+      rooms.push(R);
+    }
+    return { title: c.name, rooms, maze: true };
+  }
   App.mapOf = (T) => {
-    const key = T.kind + ":" + (T.sc ? T.sc.idx : T.dg ? "great" : T.hall ? T.hall.guild + ":" + T.hall.region : T.casino ? T.casino.i : T.prison ? "prison" : T.parliament ? "parliament" : T.mine.i + ":" + (App.mineLevel ? App.mineLevel(T.mine) : 1));
-    if (T.kind === "granary" || T.kind === "hall" || T.kind === "house" || T.kind === "guild" || T.kind === "casino" || T.kind === "prison" || T.kind === "parliament" || !maps.has(key)) maps.set(key, T.kind === "parliament" ? chamberMap(T) : T.kind === "prison" ? prisonMap(T) : T.kind === "house" ? houseMap(T) : T.kind === "hall" && T.sc && T.sc.warren ? warrenMap(T) : T.kind === "hall" && T.sc && T.sc.mansion ? mansionMap(T) : T.kind === "hall" ? hallMap(T) : T.kind === "granary" ? granaryMap(T) : T.kind === "guild" ? guildMap(T) : T.kind === "casino" ? casinoMap(T) : T.kind === "dungeon" ? greatUnderworld() : mineMap(T));
+    const key = T.kind + ":" + (T.sc ? T.sc.idx : T.dg ? "great" : T.hall ? T.hall.guild + ":" + T.hall.region : T.casino ? T.casino.i : T.prison ? "prison" : T.parliament ? "parliament" : T.cave ? "cave" + T.cave.i : T.mine.i + ":" + (App.mineLevel ? App.mineLevel(T.mine) : 1));
+    if (T.kind === "granary" || T.kind === "hall" || T.kind === "house" || T.kind === "guild" || T.kind === "casino" || T.kind === "prison" || T.kind === "parliament" || !maps.has(key)) maps.set(key, T.kind === "parliament" ? chamberMap(T) : T.kind === "prison" ? prisonMap(T) : T.kind === "house" ? houseMap(T) : T.kind === "hall" && T.sc && T.sc.warren ? warrenMap(T) : T.kind === "hall" && T.sc && T.sc.mansion ? mansionMap(T) : T.kind === "hall" ? hallMap(T) : T.kind === "granary" ? granaryMap(T) : T.kind === "guild" ? guildMap(T) : T.kind === "casino" ? casinoMap(T) : T.kind === "dungeon" ? greatUnderworld() : T.kind === "seacave" ? seaCaveMap(T) : mineMap(T));
     const m = maps.get(key);
     m.key = key; m.target = T;
     return m;

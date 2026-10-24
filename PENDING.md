@@ -1,6 +1,6 @@
 # Tickle Beach World — what is pending
 
-Updated 24 October 2026 (evening). This repository (`main`) holds version 50: version 49 (published as the game on 24
+Updated 24 October 2026 (night). This repository (`main`) holds version 50: version 49 (published as the game on 24
 October, https://claude.ai/artifact/Y2NNeAnZA2GCzhpAS2qC6b) plus first person while controlling a Tickle (item
 1.1, done and tested, in a separate preview until the owner approves it,
 https://claude.ai/artifact/Q5L8KVvvTrdNaJfVrHzSA2; see section 4). Items are worked in the order agreed with the project owner;
@@ -31,16 +31,6 @@ to about their cube size. Notes for the work:
 - **Shadows** from the sun (a shadow map round the middle of the view), a sky with a gradient, maybe ambient
   occlusion on the models.
 - The Tickles themselves are the on-chain models at their own resolution and stay as they are.
-
-### 1.2c Diving: first person, the seabed, caves only reached by diving (asked 24 October)
-
-"Make it possible to dive in first person; work the seabed with a variety of details, fish, seaweed...; I want
-caves that can only be reached by diving; it should look like diving in Pokemon Emerald (when it is not in first
-person)." Plan, to agree on as it goes: first person under water with your own Tickle (swim down and up, its
-breath); a seabed of sand, rocks, coral, kelp and seaweed beds, shells, wrecks, fish shoals and other sea life,
-in cubes; underwater caves in the sea floor (entrances only under water) with their own inside (interiors.js), loot
-and creatures; the third-person view under water like Pokemon Emerald's diving: the view from above, a dark
-blue-green tint, light rays and bubbles, the seabed and its plants swaying.
 
 ### 1.3 An encyclopedia (asked 22-23 October)
 
@@ -99,6 +89,17 @@ on the walls make sense. Inspired by the game Imperium." Ideas to agree on with 
 - **Creature tournament fights** may resolve too fast to be watched comfortably.
 
 ## 4. Done in version 50 (preview, not yet in the game)
+
+- **Diving, the sea floor and the sea caves** (item 1.2c, asked 24 October; `js/sea.js`, firstperson.js,
+  interiors.js `seaCaveMap`, world.js): the open sea's floor with kelp, seagrass, coral, anemones, sponges, sea
+  stars, urchins, rocks and shells, and fish schools, turtles, mantas, jellyfish and crabs (14 new models in the
+  kit, group "Sea"; streamed in cells of 24 blocks within 40 of the view; plants sway in a vertex shader); the
+  underwater look whenever the view is under the surface (blue-green haze by depth, shafts of light, bubbles, the
+  sea bed sand-coloured) or following a diver from above with the surface hidden, as in Pokemon Emerald's diving
+  (`App.diveView`); diving in first person (C down, Space up, the breaststroke, breath with a HUD bar); twelve
+  sea caves (two per region, `App.seaCaves`) entered only from down at the mouth, each a two-floor grotto with
+  treasure. Tests: `t_sea.js`, `t_dive.js`, `t_uw.js`. To consider later: things to find or catch down there for
+  your own Tickle (pearls, shells), sea creatures in the caves, the sea floor seen from above through the water.
 
 - **Nothing walks through buildings; doors and gates** (item 1.2b, asked 24 October): a building's footprint is
   now the base of its model (its cubes in the first two blocks up, sim.js `groundBox`), no longer the whole box

@@ -324,6 +324,20 @@ Tickles.
   blow wins a relic (the Lake Serpent's Scale or the Kraken's Beak) and 70 shells more); otherwise it goes back
   down and the dock's boats lie on the bottom until morning.
 
+**Under the sea** (sea.js, version 50): near the view the open sea fills with life on its bottom, all in cubes:
+kelp forests swaying with the swell in the cool seas, seagrass meadows in the shallows, coral gardens in the warm
+seas of Beach Sand and the Palm, anemones, sponges, sea stars, urchins, barnacled rocks and shells; schools of five
+kinds of fish (clownfish, blue tangs, yellow tangs, big schools of sardines, parrotfish), sea turtles, manta rays,
+jellyfish drifting up and down and crabs scuttling over the sand. Under the water (in first person, or following
+a diver from above, which keeps the view over the diver with the surface hidden, as diving in the old handheld
+games) the water closes in blue-green, darker the deeper, shafts of light come down from the surface and bubbles
+rise. Your own Tickle dives in first person: C to go down, Space to come up, the breaststroke along the bottom, its
+breath running out under the water (a bar in the HUD; with none left it loses health). **Sea caves**: two in every
+region, in deep water off its coast, a mound of rock with a black arch on the sea floor; only reached by diving:
+down at its mouth, E goes in (a grotto of two floors lit by glowing crystals, coral and sponges everywhere,
+treasure in the dead ends, the pearl chamber at the bottom; nothing hostile lives there). From the surface the way
+in is shut.
+
 ## 12. Contests
 
 Every region holds a contest every day, a different one each day, so in eight days it has had them all:
@@ -510,7 +524,7 @@ casino, mine and dungeon leads into its own small maps (rooms) drawn apart on bl
 | Building or landmark card | click it |
 | Go inside / leave | E near a door, cave or mine / Esc |
 | Follow a Tickle | select it and press F |
-| First person | V (click to capture the mouse and look round, click again to inspect what is under the crosshair; WASD to walk, Shift to run, Space to jump, Z/X or drag to turn, wheel for the camera behind it, E to enter, M to mount, Space/C to climb/descend on a griffin; F/Q/G/R abilities, T talk; Esc frees the mouse, Esc again leaves; touch: stick on the left, drag on the right; a game controller works too) |
+| First person | V (click to capture the mouse and look round, click again to inspect what is under the crosshair; WASD to walk, Shift to run, Space to jump, Z/X or drag to turn, wheel for the camera behind it, E to enter, M to mount, Space/C to climb/descend on a griffin; F/Q/G/R abilities, T talk; in the water C dives and Space comes up, E at a sea cave's mouth goes in; Esc frees the mouse, Esc again leaves; touch: stick on the left, drag on the right; a game controller works too) |
 | Time | Space pauses; 1, 2, 3 set the speed (1x, 4x, 12x) |
 
 ## 21. Technical overview
@@ -567,7 +581,8 @@ sea beasts, wealth and weather. A layout tag (`App.LAYOUT`) lets an old save mig
 | `mines.js`, `guilds.js`, `factions.js` | ores and forging; the six guilds; shells and factions |
 | `lairs.js`, `rampage.js`, `fate.js` | dragon lairs and patrols; dragon fights; death, revival and rebuilding |
 | `faith.js` | the Maker, pilgrimages, Ethernum, the blessed |
-| `boats.js`, `surf.js`, `diving.js`, `seabeasts.js` | ferries, launches and rowing boats; surfing and breakers; diving; sea beasts |
+| `boats.js`, `surf.js`, `diving.js`, `seabeasts.js` | ferries, launches and rowing boats; surfing and breakers (built of small cubes); diving; sea beasts |
+| `sea.js` | life on the sea floor and in the sea, the underwater look, the sea caves |
 | `contests.js`, `casino.js` | the eight daily contests; the casinos |
 | `wealth.js` | purchases, smithies, mounts and flight, marinas, house upgrades, arms and wear |
 | `weather.js` | weather field, climates, rain, lightning, tornadoes, tsunamis |

@@ -171,7 +171,7 @@
     const sg = new THREE.PlaneGeometry(900, 900, 1, 1); sg.rotateX(-Math.PI / 2);
     seabed = new THREE.Mesh(sg, new THREE.MeshLambertMaterial({ color: 0x17657c }));
     seabed.position.y = 1; scene.add(seabed);
-    App.scene = scene; App.camera = camera; App.renderer = renderer;
+    App.scene = scene; App.camera = camera; App.renderer = renderer; App.waterMesh = water; App.seabedMesh = seabed;
     App.voxMaterial = new THREE.MeshLambertMaterial({ vertexColors: true });
     makeSky();
     App.applyGfx();
@@ -384,6 +384,20 @@
     // following a Tickle up on its griffin: the camera goes up with it
     const fl = cam.follow != null && App.pop && App.pop.agent[cam.follow];
     const up = fl && fl.flyY != null ? Math.max(0, fl.pos.y - Math.max(WATER_Y, s.y)) : 0;
+    // following a Tickle down under the water: the view goes down with it, from above and a little behind, close
+    // enough to stay under the surface (the underwater look is in sea.js)
+    // (from above, as diving in the old handheld games: the surface is not drawn and the water closes round the diver)
+    const diver = fl && fl.pos.y < WATER_Y - 0.9 && fl.group.visible;
+    App.diveView = !!diver;
+    if (diver) {
+      if (!cam.dive) cam.dive = { r: cam.radius, phi: cam.phi };
+      const ty = fl.pos.y + 0.8;
+      cam.target.y += (ty - cam.target.y) * Math.min(1, dt * 4);
+      cam.phi += (0.55 - cam.phi) * Math.min(1, dt * 2);
+      cam.radius += (Math.max(9, Math.min(16, cam.radius)) - cam.radius) * Math.min(1, dt * 2);
+      return;
+    }
+    if (cam.dive) { cam.radius = cam.dive.r; cam.phi = cam.dive.phi; cam.dive = null; }
     cam.target.y += (Math.max(WATER_Y, s.y) + 1 + up - cam.target.y) * Math.min(1, dt * 4);
   };
   function initControls(el) {
@@ -622,6 +636,7 @@
     applyCamera();
     if (App.inside && App.renderInside) { App.renderInside(renderer, camera); return; }
     updateSky(); updateShadows();
+    if (App.underwaterRender) App.underwaterRender(camera, 1 / 60); // (sea.js)
     renderer.render(scene, camera);
   };
 })();
