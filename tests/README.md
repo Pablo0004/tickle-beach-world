@@ -91,6 +91,12 @@ loaded in Node without a browser: `require('./tests/node_kit').KIT`).
   healer, tamer, brawler) against the cave's monsters; `fp_strike.png`, `fp_bar.png`.
 - `t_fp3.js` — a game controller (the Gamepad API stubbed): left stick walks, right stick turns, A jumps, X
   strikes, Start leaves.
+- `t_tex.js` — block textures and the graphics quality (item 1.2): close views of a village, a beach and the
+  horizon (`Q=normal|high|ultra`, `NOTEX=1`); waits for the finer near models; `tex_<Q><n>.png`.
+- `t_waves.js` — the sea's breakers built of small cubes: three waves held at building, full and breaking
+  (`waves_stages.png`), then the live ones close up (`waves_N.png`).
+- `t_manor.js` — a citadel, a keep and an estate up close once their finer copies are made (`Q=`, `KINDS=`);
+  `manor_<kind>.png`.
 - `t_sky.js` — the view at several heights (`RADII=46,130,400,1000,2600`): frame time, triangles, far-view
   instances, screenshots `sky_N.png`.
 - `t_big.js` — lists the biggest scenery models (diagnostic for the far view).

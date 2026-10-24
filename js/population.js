@@ -685,7 +685,9 @@
     if (!G) return 0;
     const F = TB.FRAGMENTS && TB.FRAGMENTS[key], m = key.match(/^(.*)_(\d+)$/), K = !F && m && TB.KIT[m[1]];
     const base = F ? (key.startsWith("grass") ? 12 : 10) : K ? K.voxel[0] : 0;
-    return base ? Math.max(G.min, Math.round(base * G.k)) : 0;
+    // (castles, palaces and citadels are huge: their finest copy stops at a cube that the workers can make in a
+    // reasonable time; mansions and everything smaller go all the way)
+    return base ? Math.max(G.min, Math.round(base * G.k), base >= 24 ? (G.k < 0.6 ? 16 : 20) : 0) : 0;
   }
   function ensureFine(key) {
     if (App.fragX[key] || fineLoading.has(key) || fineLoading.size >= 2 || !App.frag[key]) return;
@@ -732,7 +734,9 @@
       // the giant statue is seen from far across the lake: it keeps its detailed model, so it never changes shape
       let L = s.giant || d < (s.tree ? 48 : s.building ? 45 : NEAR_LOD) ? "hi" : "lo";
       // close to the camera, the finest copy once it is made (the usual one until then)
-      if (d < XR + (s.building ? 6 : 0) && !s.giant) { if (App.fragX[s.type]) L = "x"; else ensureFine(s.type); }
+      // (a big building counts from its walls, not its middle)
+      const rad = s.building && App.frag[s.type] ? App.frag[s.type].rad * (s.scale || FRAG_SCALE[s.type] || 1) : 0;
+      if (d - rad < XR && !s.giant) { if (App.fragX[s.type]) L = "x"; else ensureFine(s.type); }
       if (s.type !== "duck") (byType[s.type + ":" + L] = byType[s.type + ":" + L] || []).push(s); // ducks are alive, see critters.js
       if (d < NEAR_LOD + 30) App.sceneryVisible.push(s);
     }

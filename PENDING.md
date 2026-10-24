@@ -43,6 +43,10 @@ the buildings as if they did not exist." To do after 1.2:
   and at least four gates round every town or fortress wall, on the roads;
 - the routes go through the gates; a Tickle that is inside goes out by the door;
 - check with a test that counts how many walkers end up inside a building footprint over a simulated day.
+- also (asked 24 October): not every Tickle gets into its castle or mansion at night: they crowd at the door and
+  sleep there. Every resident must go in (each has a bed inside, interiors.js) and vanish from the outside.
+- and a small one: the logs Tickles sit on round the village fire should lie side-on to it (their length along
+  the circle, so whoever sits faces the fire).
 
 ### 1.3 An encyclopedia (asked 22-23 October)
 
@@ -110,8 +114,10 @@ on the walls make sense. Inspired by the game Imperium." Ideas to agree on with 
   for the models near the camera (`App.fragX`, made in the workers the first time a model comes near: High 0.65 of
   the usual cube within 26 blocks, Ultra 0.5 within 40), the sun's shadows (a shadow map following the view,
   2048 or 4096, none at night) and a higher pixel ratio; all levels have a sky dome with a gradient (its colours
-  from the day, night and weather background). Test: `t_tex.js` (`Q=`, `NOTEX=`). Still to look at: colour
-  variation inside the models (a leafy tree is one green), the water, interiors.
+  from the day, night and weather background). Test: `t_tex.js` (`Q=`, `NOTEX=`). Still to do (asked 24 October):
+  the sea's waves with more and smaller cubes, so they look more real (surf.js and the open sea); more detail in
+  the castles and mansions (kit-wealth.js models: finer cubes and more parts: windows, battlements, banners,
+  balconies...). Then colour variation inside the models (a leafy tree is one green), the water, interiors.
 - **First person while controlling a Tickle** (item 1.1, asked 22 October; `js/firstperson.js`): a click captures
   the mouse (pointer lock) to look round, Esc frees it and a second Esc leaves; a crosshair and the name of what
   is in front (the inspect picker at the centre, or the building's name), a click opens its inspect window; a HUD

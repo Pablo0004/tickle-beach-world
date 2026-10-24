@@ -8,23 +8,90 @@
   const rnd = Math.random;
   const waves = new Map(); // Tickle id -> { grp, extra, spotKey }
   // the profile of a wave, seen from the side (toward the shore is +u): a long back slope, the crest, the lip
-  // curling over and a steep face; drawn along the beach as one long swell, its lip and crest white with foam
-  function profile(pts) { const sh = new THREE.Shape(); sh.moveTo(pts[0][0], pts[0][1]); for (let k = 1; k < pts.length; k++) sh.lineTo(pts[k][0], pts[k][1]); return sh; }
-  function swellGeo(pts, len) { const g = new THREE.ExtrudeGeometry(profile(pts), { depth: len, bevelEnabled: false }); g.translate(0, 0, -len / 2); g.rotateY(-Math.PI / 2); return g; }
+  // curling over and a steep face. It is built of small cubes (a fifth of a block), like everything else: deep blue
+  // low down, paler towards the crest, the lip white with foam; the crest rises and falls a little along the
+  // beach, and the ends taper off into the sea. The cubes keep their size as the wave grows: a wave is drawn from
+  // one of several ready-made heights.
   const BODY = [[-3.4, 0], [-2.2, 0.18], [-1.2, 0.5], [-0.4, 0.88], [0.25, 1.02], [0.7, 0.86], [0.62, 0.6], [0.5, 0.3], [0.62, 0], [-3.4, 0]];
-  const LIP = [[-0.1, 0.95], [0.25, 1.06], [0.74, 0.9], [0.8, 0.72], [0.66, 0.62], [0.6, 0.8], [0.3, 0.92], [-0.1, 0.95]];
+  const LIP = [[-0.3, 0.86], [0.25, 1.08], [0.78, 0.92], [0.84, 0.66], [0.62, 0.52], [0.56, 0.76], [0.3, 0.86], [-0.3, 0.86]];
+  function inPoly(P, x, y) { let c = false; for (let i = 0, j = P.length - 1; i < P.length; j = i++) { const [xi, yi] = P[i], [xj, yj] = P[j]; if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) c = !c; } return c; }
+  // TALL: the waves stand half again as high as their old smooth shape, so they rise clearly out of the sea
+  const CUBE = 0.2, TALL = 1.5, LEVELS = [0.15, 0.3, 0.5, 0.7, 0.9, 1.1, 1.3, 1.5];
+  const C_DEEP = new THREE.Color("#0d5f86"), C_MID = new THREE.Color("#1d97c0"), C_HI = new THREE.Color("#a6ecf6"), C_FOAM = new THREE.Color("#f4fbff"), C_FACE = new THREE.Color("#0f6a78");
   const geos = {};
-  const waterMat = new THREE.MeshLambertMaterial({ color: 0x2aa7c9, transparent: true, opacity: 0.88 });
+  // the cubes of a wave of length len (along the beach) and height H, as one mesh: only the faces that show
+  function waveGeo(len, H) {
+    const k = len + ":" + H;
+    if (geos[k]) return geos[k];
+    const nu = Math.ceil(4.4 / CUBE), nv = Math.ceil(1.2 * TALL / CUBE) + 1, nz = Math.ceil(len / CUBE);
+    const cell = new Uint8Array(nu * nv * nz); // 0 empty, 1 water, 2 foam
+    const at = (i, j, l) => (i < 0 || j < 0 || l < 0 || i >= nu || j >= nv || l >= nz ? 0 : cell[(l * nv + j) * nu + i]);
+    for (let l = 0; l < nz; l++) {
+      const z = (l + 0.5) / nz, end = Math.min(1, Math.min(z, 1 - z) * 5), wob = 0.9 + 0.1 * Math.sin(l * 0.7 + len) + 0.06 * Math.sin(l * 2.3);
+      const h = H * end * wob;
+      if (h < 0.05) continue;
+      for (let j = 0; j < nv; j++) for (let i = 0; i < nu; i++) {
+        const x = -3.4 + (i + 0.5) * CUBE, y = ((j + 0.5) * CUBE) / h;
+        if (y > 1.1) continue;
+        const v = inPoly(LIP, x, y) && h > 0.2 ? 2 : inPoly(BODY, x, y) ? 1 : 0;
+        if (v) cell[(l * nv + j) * nu + i] = v;
+      }
+    }
+    const pos = [], nor = [], col = [], idx = [];
+    const F = [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]], c = new THREE.Color();
+    for (let l = 0; l < nz; l++) for (let j = 0; j < nv; j++) for (let i = 0; i < nu; i++) {
+      const v = at(i, j, l);
+      if (!v) continue;
+      // the colour: foam on the lip; the water paler the higher it is, with a speckle so it is not one flat blue
+      const up = (j * CUBE) / Math.max(0.2, H), sp = ((i * 7 + j * 13 + l * 29) % 11) / 11;
+      if (v === 2) c.copy(C_FOAM).multiplyScalar(0.94 + sp * 0.06);
+      else {
+        c.copy(C_DEEP).lerp(C_MID, Math.min(1, up * 1.4)).lerp(C_HI, Math.max(0, up - 0.65) * 2); c.multiplyScalar(0.92 + sp * 0.1);
+        // the steep face toward the beach is in its own shadow: darker and greener
+        if (-3.4 + i * CUBE > 0.2) c.lerp(C_FACE, 0.45);
+      }
+      for (const n of F) {
+        if (at(i + n[0], j + n[1], l + n[2])) continue;
+        // the four corners of the face (u, y, z in the wave's own frame; the wave runs along x once turned)
+        const base = [i, j, l];
+        const off = [n[0] > 0 ? 1 : 0, n[1] > 0 ? 1 : 0, n[2] > 0 ? 1 : 0];
+        const A = [0, 0, 0], B = [0, 0, 0];
+        if (n[0]) { A[1] = 1; B[2] = 1; } else if (n[1]) { A[2] = 1; B[0] = 1; } else { A[0] = 1; B[1] = 1; }
+        // (the turn into the wave's frame swaps two axes, which mirrors the faces: wind them the other way round)
+        if (n[0] > 0 || n[1] > 0 || n[2] > 0) { const t = A.slice(); A[0] = B[0]; A[1] = B[1]; A[2] = B[2]; B[0] = t[0]; B[1] = t[1]; B[2] = t[2]; }
+        const sh = n[1] > 0 ? 1 : n[1] < 0 ? 0.6 : n[0] ? 0.86 : 0.92;
+        for (let q = 0; q < 4; q++) {
+          const a = q === 1 || q === 2 ? 1 : 0, b = q >= 2 ? 1 : 0;
+          const p0 = base[0] + off[0] + A[0] * a + B[0] * b, p1 = base[1] + off[1] + A[1] * a + B[1] * b, p2 = base[2] + off[2] + A[2] * a + B[2] * b;
+          // into the wave's frame: u (toward the shore) is +z after the turn, the length runs along x
+          pos.push(p2 * CUBE - len / 2, p1 * CUBE, -3.4 + p0 * CUBE);
+          nor.push(n[2], n[1], n[0]);
+          col.push(c.r * sh, c.g * sh, c.b * sh);
+        }
+        const vc = pos.length / 3 - 4;
+        idx.push(vc, vc + 1, vc + 2, vc, vc + 2, vc + 3);
+      }
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3));
+    g.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
+    g.setIndex(idx);
+    return (geos[k] = g);
+  }
+  const waterMat = new THREE.MeshLambertMaterial({ vertexColors: true, transparent: true, opacity: 0.92 });
   const foamMat = new THREE.MeshLambertMaterial({ color: 0xffffff, transparent: true, opacity: 0.95 });
-  const foamGeo = new THREE.BoxGeometry(1, 1, 1);
+  const FOAM_N = 140, foamBit = new THREE.BoxGeometry(CUBE, CUBE, CUBE);
+  const M4 = new THREE.Matrix4();
   function makeWave(len) {
-    if (!geos[len]) geos[len] = { body: swellGeo(BODY, len), lip: swellGeo(LIP, len * 0.94) };
-    const grp = new THREE.Group(), shape = new THREE.Group();
-    shape.add(new THREE.Mesh(geos[len].body, waterMat), new THREE.Mesh(geos[len].lip, foamMat));
+    const grp = new THREE.Group(), shape = new THREE.Mesh(waveGeo(len, LEVELS[3]), waterMat);
     grp.add(shape);
-    // the white water spilling in front of it once it breaks
-    const foam = new THREE.Mesh(foamGeo, foamMat); grp.add(foam);
-    grp.userData = { shape, foam, len };
+    // the white water spilling in front of it once it breaks: loose cubes of foam
+    const foam = new THREE.InstancedMesh(foamBit, foamMat, FOAM_N);
+    const bits = [];
+    for (let k = 0; k < FOAM_N; k++) bits.push([(rnd() - 0.5) * len * 0.92, rnd(), rnd(), rnd()]);
+    foam.count = 0; grp.add(foam);
+    grp.userData = { shape, foam, len, bits };
     App.scene.add(grp);
     return grp;
   }
@@ -33,13 +100,23 @@
     const x = S.sx - S.dx * d + S.tx * side, z = S.sz - S.dz * d + S.tz * side;
     grp.position.set(x, App.WATER_Y - 0.28, z);
     grp.rotation.y = Math.atan2(S.dx, S.dz);
-    const U = grp.userData;
-    U.shape.scale.set(1, Math.max(0.05, h * (1 - broken * 0.6)), 1);
-    U.foam.visible = broken > 0.02;
-    U.foam.position.set(0, 0.3, 0.6 + broken * 1.2);
-    U.foam.scale.set(U.len * 0.9, 0.12 + broken * 0.2, 0.3 + broken * 2.4);
+    const U = grp.userData, H = Math.max(0.05, h * TALL * (1 - broken * 0.6));
+    let best = LEVELS[0];
+    for (const L of LEVELS) if (Math.abs(L - H) < Math.abs(best - H)) best = L;
+    const g = waveGeo(U.len, best);
+    if (U.shape.geometry !== g) U.shape.geometry = g;
+    // the foam: more of it, spread further toward the beach, the more the wave has broken; it jiggles as it rolls
+    const n = broken > 0.02 ? Math.round(FOAM_N * Math.min(1, broken * 1.4)) : 0, t = performance.now() / 1000;
+    for (let k = 0; k < n; k++) {
+      const B = U.bits[k], s = 0.6 + B[3] * 0.8;
+      M4.makeScale(s, s, s).setPosition(B[0], 0.3 + B[2] * (0.25 + broken * 0.4) + Math.sin(t * 6 + k) * 0.04, 0.6 + B[1] * (0.3 + broken * 2.6));
+      U.foam.setMatrixAt(k, M4);
+    }
+    U.foam.count = n;
+    U.foam.instanceMatrix.needsUpdate = true;
     grp.visible = h > 0.06;
   }
+  App._wave = { makeWave, placeWave }; // (tests/t_waves.js)
   // the surf break in front of a surfer: the line of the shore and how far out the water goes
   function setup(t, a) {
     const sp = a.spot, sh = a.shore;
@@ -84,7 +161,7 @@
     const bob = Math.sin(now * 1.6 + t.id) * 0.06;
     if (mode === "ride") {
       t.heading = Math.atan2(S.dx + S.tx * S.side * Math.cos(((u - 0.5) / 0.5) * Math.PI) * 0.6, S.dz + S.tz * S.side * Math.cos(((u - 0.5) / 0.5) * Math.PI) * 0.6);
-      t.pos.y = App.WATER_Y - 0.28 + Math.max(0.35, waveH * 0.62) + bob * 0.5; // on the face of the wave, just under the lip
+      t.pos.y = App.WATER_Y - 0.28 + Math.max(0.35, waveH * 0.62 * TALL) + bob * 0.5; // on the face of the wave, just under the lip
       t.pivot.rotation.x = 0.12; t.pivot.rotation.z = Math.sin(now * 2.1 + t.id) * 0.18 - S.side * 0.12; t.pivot.position.set(0, 0, 0);
     } else {
       t.heading = Math.atan2(-S.dx, -S.dz);
