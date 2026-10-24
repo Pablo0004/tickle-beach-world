@@ -1207,6 +1207,14 @@
           for (const t of [(-Bq - Math.sqrt(disc)) / (2 * A), (-Bq + Math.sqrt(disc)) / (2 * A)]) if (t >= 0 && t <= 1) { const a = Math.atan2(fz0 + dz * t, fx0 + dx * t); if (!gates.some((g) => Math.abs(Math.atan2(Math.sin(g - a), Math.cos(g - a))) < 0.45)) gates.push(a); }
         }
         if (!gates.length) gates.push(Math.atan2(v.z - v.hall.z, v.x - v.hall.x));
+        // at least four gates round every wall: more go in the middle of the widest stretches without one
+        while (gates.length < 4) {
+          gates.sort((a, b) => a - b);
+          let best = 0, gap = -1;
+          gates.forEach((a, i) => { const b = i + 1 < gates.length ? gates[i + 1] : gates[0] + Math.PI * 2; if (b - a > gap) { gap = b - a; best = i; } });
+          const a = gates[best] + gap / 2;
+          gates.push(Math.atan2(Math.sin(a), Math.cos(a)));
+        }
         gates.sort((a, b) => a - b);
         v.walls = { x: cx, z: cz, r: WALL_R, gates: gates.slice() };
         gates.forEach((a, i) => { const x = cx + Math.cos(a) * WALL_R, z = cz + Math.sin(a) * WALL_R; tsc(key + "/g" + i, "gatehouse_" + v.style, x, z, faceTo(x, z, cx, cz), { building: true, fixed: true, wall: true, gate: true, scale: WALL_SCALE }); });

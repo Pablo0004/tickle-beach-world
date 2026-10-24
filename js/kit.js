@@ -330,10 +330,13 @@
     // layer 0: the base ring
     st.push(S("cylinder", [0, 0, 22], [474, 474, 22], { color: stone2, hole: 0.12 }));
     st.push(S("cylinder", [0, 0, 48], [466, 466, 6], { color: stone, hole: 0.1 }));
-    // layer 1: the piers (none in front of the gate)
+    // four gates through the base ring, one on every side (the arena is entered and left only through them)
+    st.push(S("cube", [0, 0, 40], [74, 520, 60], { m: "sub", color: stone }));
+    st.push(S("cube", [0, 0, 40], [520, 74, 60], { m: "sub", color: stone }));
+    // layer 1: the piers (none in front of a gate)
     for (let k = 0; k < 16; k++) {
       const a = (k / 16) * 6.283 + 0.196;
-      if (Math.sin(a) > 0.95) continue;
+      if (Math.abs(Math.sin(a)) > 0.95 || Math.abs(Math.cos(a)) > 0.95) continue;
       st.push(S("cube", [Math.cos(a) * 452, Math.sin(a) * 452, 150], [34, 26, 100], { color: stone, rot: [0, 0, a], round: 0.2, layer: 1 }));
     }
     // layer 2: the upper ring and cornice
@@ -343,6 +346,13 @@
     st.push(S("cube", [118, 470, 190], [50, 50, 190], { color: stone, round: 0.1, mirror: true, offsX: 118, layer: 3 }));
     st.push(S("cube", [118, 470, 410], [58, 58, 34], { color: gold, cone: 1, mirror: true, offsX: 118, layer: 3 }));
     st.push(S("cube", [118, 522, 270], [20, 6, 34], { m: "rep", color: dark, mirror: true, offsX: 118, layer: 3 }));
+    // and the same towers either side of the other three gates
+    st.push(S("cube", [118, -470, 190], [50, 50, 190], { color: stone, round: 0.1, mirror: true, offsX: 118, layer: 3 }));
+    st.push(S("cube", [118, -470, 410], [58, 58, 34], { color: gold, cone: 1, mirror: true, offsX: 118, layer: 3 }));
+    for (const y of [118, -118]) {
+      st.push(S("cube", [470, y, 190], [50, 50, 190], { color: stone, round: 0.1, mirror: true, offsX: 470, layer: 3 }));
+      st.push(S("cube", [470, y, 410], [58, 58, 34], { color: gold, cone: 1, mirror: true, offsX: 470, layer: 3 }));
+    }
     // layer 4: banners on the towers
     st.push(S("joint", [118, 470, 488], [6, 6, 46], { color: dark, mirror: true, offsX: 118, layer: 4 }));
     st.push(S("cube", [150, 470, 516], [30, 3, 18], { color: red, mirror: true, offsX: 150, layer: 4 }));

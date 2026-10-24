@@ -97,6 +97,14 @@ loaded in Node without a browser: `require('./tests/node_kit').KIT`).
   (`waves_stages.png`), then the live ones close up (`waves_N.png`).
 - `t_manor.js` — a citadel, a keep and an estate up close once their finer copies are made (`Q=`, `KINDS=`);
   `manor_<kind>.png`.
+- `t_night.js` — 22:30 at a citadel, a keep, an estate and a lodge, the night run fast: residents inside and
+  outside, and what those outside are doing (`KINDS=`); `night_<kind>.png`.
+- `t_logs.js` — the log seats round a village fire from above (`logs.png`).
+- `t_walls.js` — gates per fortress wall (at least four), then Tickles, animals and monsters found inside a
+  building's footprint over a fast-run while, at a town, a keep and an arena; `arena_gates.png`.
+- `t_clip.js` — an independent check: visible Tickles inside the full box of a house, mansion or castle model,
+  away from its door.
+- `t_arena.js` — an arena from above and the side, its four gates (`arena_top.png`, `arena_side.png`).
 - `t_sky.js` — the view at several heights (`RADII=46,130,400,1000,2600`): frame time, triangles, far-view
   instances, screenshots `sky_N.png`.
 - `t_big.js` — lists the biggest scenery models (diagnostic for the far view).

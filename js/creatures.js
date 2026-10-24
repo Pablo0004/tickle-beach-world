@@ -214,7 +214,9 @@
     const dx = tx - b.x, dz = tz - b.z, d = Math.hypot(dx, dz);
     if (d < 0.05) return 0;
     const step = Math.min(d, sp * dm), nx = b.x + (dx / d) * step, nz = b.z + (dz / d) * step;
-    if (isLand(nx, nz) && App.climbOK(b.x, b.z, nx, nz)) { b.x = nx; b.z = nz; b.wob += step * 6; }
+    // (never into a building, wild or a pet: a pet waits outside while its Tickle is in)
+    if (App.buildingBlocks && App.buildingBlocks(b.x, b.z, nx, nz)) { /* stays */ }
+    else if (isLand(nx, nz) && App.climbOK(b.x, b.z, nx, nz)) { b.x = nx; b.z = nz; b.wob += step * 6; }
     else if (!b.wild) { b.x = nx; b.z = nz; } // a pet keeps up with its owner whatever the ground
     b.h = turnTo(b.h, Math.atan2(dx, dz), Math.min(1, dm * 6));
     return d - step;

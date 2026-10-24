@@ -936,9 +936,11 @@
   // ---------- buildings stand in the way ----------
   // Every building (houses, halls, granaries, mansions, castles, a fortress's walls, the guild halls, the casinos...)
   // is something a Tickle walks round, never through: its footprint is the box of its model, turned with it. A gate
-  // leaves its arch open. Fences and pens, docks and piers, arenas, caves, mines and the like are walked into as
-  // before, and a building is no obstacle to whoever is going into it or is already standing in it.
-  const BC = 8, bcells = new Map(), NO_BLOCK = /^(fence|dock|pier|arena|dungeon|mine|trough|sty|coop|etherfield|altar|logseat|campfire|plotsign|paddock|roost|maker)/;
+  // leaves its arch open. Only fences, troughs, docks and piers, the Ether fields, the log seats and the fire are
+  // walked over or past as before; sheds, stables, roosts, altars, the statue, cave and mine mouths are buildings.
+  // A building is gone into and left only by its doors (doorway, below): the middle of its front, or for an arena
+  // the gate on each of its four sides.
+  const BC = 8, bcells = new Map(), NO_BLOCK = /^(fence|dock|pier|trough|etherfield|logseat|campfire|plotsign)/;
   let bBuilt = -1e9;
   const bkey = (cx, cz) => cx * 100003 + cz;
   function footprintsOf(s0) {
@@ -950,8 +952,28 @@
       const off = (300 / 160) * k, hw = (140 / 160) * k, hd = (150 / 160) * k;
       return [{ x: s0.x + c * off, z: s0.z - sn * off, c, s: sn, hx: hw, hz: hd, sc: s0 }, { x: s0.x - c * off, z: s0.z + sn * off, c, s: sn, hx: hw, hz: hd, sc: s0 }];
     }
-    const shrink = s0.wall ? 1 : 0.88, pad = s0.wall ? 0.35 : 0; // (a wall's stretches overlap, so there is no gap to slip through)
-    return [{ x: s0.x, z: s0.z, c, s: sn, hx: ((F.box.max.x - F.box.min.x) / 2) * k * shrink + pad, hz: Math.max(s0.wall ? 0.9 : 0, ((F.box.max.z - F.box.min.z) / 2) * k * shrink), sc: s0 }];
+    // the base of the building: its cubes in the first two blocks up (so the eaves and the roof do not count, and
+    // the walls do, to the edge)
+    const G = groundBox(F), pad = s0.wall ? 0.35 : 0; // (a wall's stretches overlap, so there is no gap to slip through)
+    const ox = ((G.x0 + G.x1) / 2) * k, oz = ((G.z0 + G.z1) / 2) * k;
+    return [{ x: s0.x + ox * c + oz * sn, z: s0.z - ox * sn + oz * c, c, s: sn, hx: ((G.x1 - G.x0) / 2) * k + pad, hz: Math.max(s0.wall ? 0.9 : 0, ((G.z1 - G.z0) / 2) * k), sc: s0 }];
+  }
+  function groundBox(F) {
+    if (F.ground) return F.ground;
+    const md = F.md, P = md && md.position, e = F.local.elements, sx = e[0], tx = e[12], ty = e[13], tz = e[14];
+    const G = { x0: F.box.min.x - (F.box.min.x + F.box.max.x) / 2, x1: F.box.max.x - (F.box.min.x + F.box.max.x) / 2, z0: F.box.min.z - (F.box.min.z + F.box.max.z) / 2, z1: F.box.max.z - (F.box.min.z + F.box.max.z) / 2 };
+    if (P && P.length) {
+      let y0 = Infinity;
+      for (let i = 1; i < P.length; i += 3) y0 = Math.min(y0, P[i] * sx + ty);
+      let a = Infinity, b = -Infinity, c = Infinity, d = -Infinity;
+      for (let i = 0; i < P.length; i += 3) {
+        if (P[i + 1] * sx + ty > y0 + 2) continue;
+        const x = P[i] * sx + tx, z = P[i + 2] * sx + tz;
+        if (x < a) a = x; if (x > b) b = x; if (z < c) c = z; if (z > d) d = z;
+      }
+      if (b > a && d > c) { G.x0 = a; G.x1 = b; G.z0 = c; G.z1 = d; }
+    }
+    return (F.ground = G);
   }
   // (rebuilt every few seconds: buildings are moved by the hand, burn down and go back up, and their models load late)
   function buildBlocks() {
@@ -978,6 +1000,8 @@
     if (list) for (const f of list) if (insideF(f, x, z)) return f;
     return null;
   };
+  // for animals, creatures and monsters: a step from (x0, z0) to (x1, z1) into a building they are not already in
+  App.buildingBlocks = (x0, z0, x1, z1) => { const f = App.buildingAt(x1, z1); return !!f && !insideF(f, x0, z0); };
   // in the way of t going from where it stands to target: a building that holds neither of them
   const inTheWay = (x, z, t, a, b) => { const f = App.buildingAt(x, z); return !!f && !insideF(f, t.pos.x, t.pos.z) && !(a && insideF(f, a.x, a.z)) && !(b && insideF(f, b.x, b.z)); };
   // a spot inside a building is moved out to just beside it, through its nearest side
@@ -989,7 +1013,34 @@
     if (f.hx - Math.abs(lx) < f.hz - Math.abs(lz)) nx = Math.sign(lx || 1) * (f.hx + 0.8); else nz = Math.sign(lz || 1) * (f.hz + 0.8);
     return { x: f.x + nx * f.c + nz * f.s, z: f.z - nx * f.s + nz * f.c };
   };
+  // ---------- doors ----------
+  // A Tickle whose way goes into a building it is not in walks first to the nearest of its doors, and one leaving a
+  // building walks out by the nearest door first; the walls of a fortress are passed through their gates (they are
+  // walked round as any building, and the gatehouse's arch is open). The models face +z: the door is in the middle
+  // of the front, just outside the base of the model.
+  function doorsOf(f) {
+    const ez = f.hz + 0.7, ex = f.hx + 0.7;
+    const L = (lx, lz) => ({ x: f.x + lx * f.c + lz * f.s, z: f.z - lx * f.s + lz * f.c });
+    return /^arena/.test(f.sc.type) ? [L(0, ez), L(0, -ez), L(ex, 0), L(-ex, 0)] : [L(0, ez)];
+  }
+  App.doorsOf = (s0) => { const f = (footprintsOf(s0) || [])[0]; return f ? doorsOf(f) : []; };
+  function doorway(t, target) {
+    const fT = App.buildingAt(target.x, target.z), fS = App.buildingAt(t.pos.x, t.pos.z);
+    if (fT === fS || (fT && fS && fT.sc === fS.sc)) return null;
+    // leaving comes first, then going in
+    const f = fS || fT;
+    if (f.sc.wall) return null;
+    let best = null, bd = 1e9;
+    for (const d of doorsOf(f)) { const dd = Math.hypot(d.x - t.pos.x, d.z - t.pos.z) + Math.hypot(d.x - target.x, d.z - target.z) * 0.5; if (dd < bd) { bd = dd; best = d; } }
+    if (!best) return null;
+    if (f === fS) return best; // (outside its footprint it is out, and on its way)
+    return Math.hypot(best.x - t.pos.x, best.z - t.pos.z) > 0.7 ? best : null; // at the door: in it goes
+  }
+  App.doorway = doorway;
   function walkTo(t, target, dm, dtReal, water, mult) {
+    // into a building or out of it: by its door
+    const door = doorway(t, target);
+    if (door) target = door;
     // follow a planned detour first, if there is one for this target
     if (t.detour && (t.detour.tx !== target.x || t.detour.tz !== target.z)) t.detour = null;
     let goal = target;

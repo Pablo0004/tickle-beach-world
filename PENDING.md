@@ -32,18 +32,6 @@ to about their cube size. Notes for the work:
   occlusion on the models.
 - The Tickles themselves are the on-chain models at their own resolution and stay as they are.
 
-### 1.2b Nothing walks through buildings; doors everywhere (asked 24 October)
-
-"Tickles walk through many structures without using the doors, and many buildings such as some colosseums have no
-doors; the walls have few gates too (there must be at least 4 round a wall); no animal or Tickle may go through
-the buildings as if they did not exist." To do after 1.2:
-- every building model with a footprint that blocks walking (`App.climbOK`, the walking rules in sim.js
-  `walkTo`, the route finder `App.route`), so Tickles, animals, monsters and creatures go round it or in by its door;
-- doors on every building that is entered or crossed: the arenas / colosseums (at least one gate, better four),
-  and at least four gates round every town or fortress wall, on the roads;
-- the routes go through the gates; a Tickle that is inside goes out by the door;
-- check with a test that counts how many walkers end up inside a building footprint over a simulated day.
-
 ### 1.2c Diving: first person, the seabed, caves only reached by diving (asked 24 October)
 
 "Make it possible to dive in first person; work the seabed with a variety of details, fish, seaweed...; I want
@@ -111,6 +99,18 @@ on the walls make sense. Inspired by the game Imperium." Ideas to agree on with 
 - **Creature tournament fights** may resolve too fast to be watched comfortably.
 
 ## 4. Done in version 50 (preview, not yet in the game)
+
+- **Nothing walks through buildings; doors and gates** (item 1.2b, asked 24 October): a building's footprint is
+  now the base of its model (its cubes in the first two blocks up, sim.js `groundBox`), no longer the whole box
+  shrunk by an eighth, so its walls block to their edge; every building is gone into and left only by its doors
+  (sim.js `doorsOf`, `doorway`, used by `walkTo`: the middle of the front, the models face +z; an arena has a gate
+  on each side); sheds, stables, roosts, altars, the statue and cave and mine mouths now block as buildings (only
+  fences, troughs, docks and piers, Ether fields, log seats and the fire do not); the arenas got four gates cut
+  through their ring with a pair of towers at each (kit.js `arena`); every fortress wall has at least four gates
+  (geo.js: more in the middle of the widest stretches); farm and wild animals, creatures (pets wait outside) and
+  cave monsters never step into a building (`App.buildingBlocks`). Tests: `t_walls.js`, `t_clip.js`, `t_arena.js`.
+  Still to watch: the far walking figures (pawns) follow straight lines between plan points.
+- Fine models are made only when the workers are idle, so the Tickles coming into view are never held up.
 
 - **Residents go inside their castle or mansion** (asked 24 October): they used to crowd and sleep at the door.
   Now, for the shared homes (citadel, fortress, keep, estate, plot), they walk to the door and go in from a couple

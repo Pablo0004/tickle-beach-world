@@ -169,7 +169,7 @@
     const dx = m.t.x - m.x, dz = m.t.z - m.z, d = Math.hypot(dx, dz);
     if (d < 0.3) { m.t = null; m.wait = 2 + rnd() * 6; return; }
     const step = Math.min(d, 0.8 * dm), nx = m.x + (dx / d) * step, nz = m.z + (dz / d) * step;
-    if (!isLand(nx, nz) || !App.climbOK(m.x, m.z, nx, nz)) { m.t = null; return; }
+    if (!isLand(nx, nz) || !App.climbOK(m.x, m.z, nx, nz) || (App.buildingBlocks && App.buildingBlocks(m.x, m.z, nx, nz))) { m.t = null; return; }
     m.x = nx; m.z = nz; m.wob += step * 6; m.h = turnTo(m.h, Math.atan2(dx, dz), Math.min(1, dm * 4));
   }
   App.monsterDown = (m) => { m.dead = true; m.foe = null; respawn.set(m.d.i + ":" + m.slot, st.T + 150); poof(m); };

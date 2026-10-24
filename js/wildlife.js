@@ -408,7 +408,7 @@
         let x, z;
         if (an.home.rect) { const R = an.home.rect; x = R.x + (rnd() * 2 - 1) * (R.w - 1); z = R.z + (rnd() * 2 - 1) * (R.d - 1); }
         else { const a = rnd() * 6.28, d = rnd() * an.home.r; x = an.home.x + Math.cos(a) * d; z = an.home.z + Math.sin(a) * d; }
-        if (isLand(x, z)) an.t = { x, z };
+        if (isLand(x, z) && !(App.buildingAt && App.buildingAt(x, z))) an.t = { x, z };
       }
       if (!an.t) { an.wait = 2; return; }
     }
@@ -416,7 +416,8 @@
     if (dist < 0.3) { an.t = null; an.wait = (an.kind === "chicken" ? 0.5 : 2) + rnd() * (an.wild ? 4 : 8); return; }
     const step = Math.min(dist, sp * dm);
     const nx = an.x + (dx / dist) * step, nz = an.z + (dz / dist) * step;
-    if (!isLand(nx, nz) || !App.climbOK(an.x, an.z, nx, nz)) { an.t = null; return; }
+    // (never into a building: it goes another way)
+    if (!isLand(nx, nz) || !App.climbOK(an.x, an.z, nx, nz) || (App.buildingBlocks && App.buildingBlocks(an.x, an.z, nx, nz))) { an.t = null; return; }
     an.x = nx; an.z = nz;
     an.h = turn(an.h, Math.atan2(dx, dz), Math.min(1, dm * 4));
     an.wob += step * 6;

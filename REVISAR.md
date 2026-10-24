@@ -41,3 +41,6 @@ mando, ni tarjeta gráfica). Ve tachando lo que veas bien y apunta lo que no.
 - [ ] De noche, en un castillo o una mansión: ¿entran todos? (Fuera solo deberían quedar los guardias de la
       muralla y los que vuelven de viaje.)
 - [ ] Los troncos alrededor de la hoguera, de lado, mirando al fuego.
+- [ ] Nadie atraviesa los edificios: Tickles, animales, criaturas y monstruos rodean las casas, castillos,
+      establos, altares, la estatua... y entran y salen por la puerta.
+- [ ] Las arenas (coliseos) con 4 puertas y sus torres; las murallas con al menos 4 puertas.

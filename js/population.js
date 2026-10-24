@@ -674,7 +674,7 @@
     })));
   };
   // ---------- the finest level of detail: smaller cubes for the models close to the camera ----------
-  // (Menu > Settings > Graphics, gfx.js.) Made the first time a model comes near, one or two at a time in the
+  // (Menu > Settings > Graphics, gfx.js.) Made the first time a model comes near, one at a time in the
   // workers, with the same recipe as its usual copy (an on-chain floor model, or a kit model) at a smaller cube.
   App.fragX = {};
   const fineLoading = new Set();
@@ -690,7 +690,8 @@
     return base ? Math.max(G.min, Math.round(base * G.k), base >= 24 ? (G.k < 0.6 ? 16 : 20) : 0) : 0;
   }
   function ensureFine(key) {
-    if (App.fragX[key] || fineLoading.has(key) || fineLoading.size >= 2 || !App.frag[key]) return;
+    // (only when the workers have nothing else to do: the Tickles coming into view are made first)
+    if (App.fragX[key] || fineLoading.has(key) || fineLoading.size >= 1 || !App.frag[key] || (App.jobsPending && App.jobsPending() > 0)) return;
     const voxel = fineVoxel(key);
     if (!voxel) return;
     const F = TB.FRAGMENTS && TB.FRAGMENTS[key], m = key.match(/^(.*)_(\d+)$/), K = !F && m && TB.KIT[m[1]];
