@@ -2,7 +2,8 @@
 
 Updated 24 October 2026. This repository (`main`) holds version 50: version 49 (published as the game on 24
 October, https://claude.ai/artifact/Y2NNeAnZA2GCzhpAS2qC6b) plus first person while controlling a Tickle (item
-1.1, done and tested, in a separate preview until the owner approves it; see section 4). Items are worked in the order agreed with the project owner;
+1.1, done and tested, in a separate preview until the owner approves it,
+https://claude.ai/artifact/Q5L8KVvvTrdNaJfVrHzSA2; see section 4). Items are worked in the order agreed with the project owner;
 one item is finished before the next one starts. The browser test scripts and what each one checks are in
 [tests/README.md](tests/README.md).
 
