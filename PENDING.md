@@ -15,7 +15,8 @@ they do. Next, in this order:
 
 1. **1.3 The encyclopedia**: a section of the menu.
 2. **1.5 Wars between holders**: agree how they work with the owner first.
-3. **1.6 Editable mansions**.
+3. **1.6 Editing homes and a better build mode**: every home inside and out (houses, mansions, castles...), and the
+   build mode with removing and a catalogue of objects to place; agree the details with the owner first.
 4. **1.6b Oxygen tanks**: decided with the owner; confirm first whether a tank refills at the surface or only at
    a shop or the dock.
 5. **1.7 The smaller things left over from version 50**: ask the owner before widening any of them.
@@ -46,9 +47,23 @@ on the walls make sense. Inspired by the game Imperium." Ideas to agree on with 
 - a war panel (who is at war, armies, sieges, with Watch), and the war in the inspect window and the
   encyclopedia.
 
-### 1.6 Later
+### 1.6 Editing homes and a better build mode (asked 16 and 24 October)
 
-- Mansions editable inside and out (asked 16 October, for later).
+"Not only the mansions: mansions, castles, houses... I also want to improve the option to build in the mode that
+allows it, to be able to remove things and to have a variety of objects to place." To agree the details with the
+owner before building:
+- **Edit every home, inside and out**: houses, townhouses, manors, mansions of every region, castles, palaces and
+  the warrens. Inside (interiors.js rooms): move, add and remove furniture, change floors and walls. Outside: paint
+  colours (walls, roof, shutters), extras (porch, balcony, chimney, garden, fence, flowers), maybe extend it. Who
+  may edit: only the holder's own homes when playing as a holder; anything in "I'm in control" mode.
+- **A better build mode** ("I'm in control", the dock: Select, Give orders, Build, Dig, Place object): today Build and
+  Dig set single blocks and Place object only puts down objects approved in Review (sim.js `App.placeProp`). Wanted:
+  - **removing** what was placed (`App.removeProp` exists but has no tool) and undo;
+  - a **catalogue of objects** to place, in groups (furniture, garden, lights, decoration, market stalls, fences and
+    walls, statues, trees and plants, play...), from the kit and the approved designs, with a preview, turning
+    them before placing (and moving them afterwards);
+  - better block building: more block types, filling and clearing an area, lines and walls, a ghost of the block
+    before it goes down.
 
 ### 1.6b Oxygen tanks (asked 24 October, decided with the owner; not started)
 
