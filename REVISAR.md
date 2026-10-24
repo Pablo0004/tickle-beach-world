@@ -49,7 +49,7 @@ mando, ni tarjeta gráfica). Ve tachando lo que veas bien y apunta lo que no.
 
 - [ ] Con un Tickle tuyo en primera persona, en el mar abierto: C para bajar, Espacio para subir. ¿Se ve bien el
       fondo (algas que se mecen, corales en Beach Sand y la Palma, peces, tortugas, mantas, medusas, cangrejos)?
-- [ ] La barra de aire: ¿45 segundos bajo el agua te parece bien?
+- [ ] La barra de aire (de momento 45 segundos; pasará a 1 minuto y medio con las bombonas de oxígeno, pendiente).
 - [ ] Sigue (botón Follow) a un Tickle que esté buceando en un sitio de buceo: la vista desde arriba bajo el agua,
       al estilo de Pokémon Esmeralda.
 - [ ] Busca una cueva submarina (hay 2 por región, mar adentro): baja hasta su boca y pulsa E. Desde la superficie

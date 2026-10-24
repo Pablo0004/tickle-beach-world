@@ -44,6 +44,23 @@ on the walls make sense. Inspired by the game Imperium." Ideas to agree on with 
 
 - Mansions editable inside and out (asked 16 October, for later).
 
+### 1.6b Oxygen tanks (asked 24 October, decided with the owner; not started)
+
+Without a tank a Tickle holds its breath for **1 minute 30 seconds** under the water (today 45 seconds,
+firstperson.js `a.air`, `dtReal / 45`). With an **oxygen tank** it has **10 more minutes** of air. Decided with the
+owner: a tank can be **bought and found**, both. Plan:
+- the catalogue (wealth.js `CAT`): `tank: [null, { name: "an oxygen tank", short: "Oxygen tank", price: 40 }]`, owned
+  as `st.own[id].ox`; offered on the Tickle's card (`allNext`, `App.buyFor`) and wished for by Tickles who love the
+  water (`wishes`, a little more by fishers and divers), with its own lines in `line()` and `LABEL`;
+- found: a rare dive find (diving.js `FINDS`/`ITEM`/`credit`: "an old oxygen tank, still sound"; kept if it has
+  none, sold for shells if it has one), and a chance in the sea caves' chests (interiors.js `seaCaveMap`);
+- in first person: the tank's air is used first, then the breath; a second bar ("Tank") in the HUD when it has one;
+  the breath and the tank fill again at the surface (to confirm with the owner: refilled at the surface, or only at
+  a shop or the dock);
+- a tank on its back in the model while diving (a small kit model on the pivot, like the weapons in rampage.js
+  `weaponShow`), and in the inspect window and the encyclopedia (1.3);
+- NPC divers: with a tank they stay down longer per dive (diving.js `CYCLE`) and find a little more.
+
 ### 1.7 Left over from version 50 (smaller; ask the owner before widening any of them)
 
 - More detail: colour variation inside the models (a leafy tree is one green), the water surface, the interiors.
@@ -57,7 +74,8 @@ on the walls make sense. Inspired by the game Imperium." Ideas to agree on with 
 
 - **The menu and the clock**: the world keeps running while the menu is open; should it pause? (Asked in
   `REVISAR.md`.)
-- **Breath under water**: 45 seconds; right or not? (Asked in `REVISAR.md`.)
+- **Breath under water**: decided (24 October): 1 minute 30 seconds without a tank, 10 more minutes with one (item
+  1.6b). Still to confirm: whether the tank refills at the surface or only at a shop or the dock.
 - **Waves in the rivers and the lake** (item 8b): the waves at the mouths of the channels were removed (the
   "open sea" no longer includes the channels between regions), and the lake and ponds are calm. If the owner
   meant something else — for example the dark stripes of the stepped riverbed seen through the water — it is
