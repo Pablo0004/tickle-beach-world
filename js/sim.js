@@ -464,10 +464,12 @@
     const a = o.action.act;
     return !!a && (a.where === "stroll" || a.where === "self") && o.needs.social < 75;
   }
+  const BIG_HOMES = new Set(["citadel", "fortress", "keep", "grand", "medium"]);
   function startDo(t, ad, order, until) {
-    // (the folk of a mansion or a castle spread out along its front instead of crowding its door)
-    const bigHome = ad.act && ad.act.where === "home" && (() => { const v = App.villageOfToken(t.id); return !!v && (v.kind === "fortress" || v.kind === "grand"); })();
-    const spread = bigHome ? 5 : ad.exact ? 0 : ad.self || ad.ownItem ? 0.3 : ad.joinItem ? 1.6 : ad.prop ? ad.prop.rad + 0.7 : ad.item ? ad.item.rad + 0.6 : ad.pondR ? ad.pondR + 2.5 : ad.scenery ? sceneryReach(ad.scenery) : ad.water ? 0.2 : ad.project ? 2.6 : ad.act.where === "plaza" ? 3.5 : ad.work ? 2.5 : 0.9;
+    // the folk of a castle, a mansion or a shared house go to its door and in: they do not crowd at it (stepDo lets
+    // them in from a couple of blocks away, or when the crowd at the door holds them up)
+    const bigHome = ad.act && (ad.act.where === "home" || INDOOR.has(ad.act.id)) && (() => { const v = App.villageOfToken(t.id); return !!v && BIG_HOMES.has(v.kind); })();
+    const spread = bigHome ? 0 : ad.exact ? 0 : ad.self || ad.ownItem ? 0.3 : ad.joinItem ? 1.6 : ad.prop ? ad.prop.rad + 0.7 : ad.item ? ad.item.rad + 0.6 : ad.pondR ? ad.pondR + 2.5 : ad.scenery ? sceneryReach(ad.scenery) : ad.water ? 0.2 : ad.project ? 2.6 : ad.act.where === "plaza" ? 3.5 : ad.work ? 2.5 : 0.9;
     let spot = null;
     for (let k = 0; k < 14 && !spot; k++) {
       const ang = rnd() * Math.PI * 2;
@@ -475,8 +477,8 @@
       if (ad.water || ad.self || App.isLand(c.x, c.z)) spot = c;
     }
     if (!spot) spot = { x: ad.spot.x, z: ad.spot.z };
-    if (!ad.water) spot = App.clearOfBuildings(spot);
-    t.action = { kind: "do", act: ad.act, ref: ad.ref, key: occKey(ad.act.id, ad.ref), spot, center: ad.face || ad.spot, phase: "walk", started: st.T,
+    if (!ad.water && !bigHome) spot = App.clearOfBuildings(spot);
+    t.action = { kind: "do", indoor: bigHome || undefined, act: ad.act, ref: ad.ref, key: occKey(ad.act.id, ad.ref), spot, center: ad.face || ad.spot, phase: "walk", started: st.T,
       water: !!ad.water, project: ad.project || null, prop: ad.prop || null, order: !!order, host: ad.host, until: until || null, item: !!ad.ownItem,
       itemName: ad.itemName || null, shore: ad.spot && ad.spot.lx != null ? { x: ad.spot.lx, z: ad.spot.lz } : null };
     if (ad.ownItem) { if (t.itemObj || t.fishGear) itemVisual(t, null); t.useItem = ad.itemName || null; }
@@ -1231,7 +1233,11 @@
     let walking = false;
     if (a.phase === "walk") {
       const dist = Math.hypot(a.spot.x - t.pos.x, a.spot.z - t.pos.z);
-      if (dist > (a.chat ? 0.35 : 0.45)) {
+      // into a castle or a mansion: through the door from a couple of blocks away, or from further when the crowd
+      // at the door holds it up; inside, it is at its home (and out of sight, animate)
+      const inNow = a.indoor && (dist < 2.2 || (dist < 6 && (t.stuck > 8 || st.T - a.started > 40)));
+      if (inNow) { t.pos.x = a.spot.x; t.pos.z = a.spot.z; t.stuck = 0; }
+      if (!inNow && dist > (a.chat ? 0.35 : 0.45)) {
         walking = true;
         if (a.item) itemVisual(t, ITEM_USE[itemOf(t)] && ITEM_USE[itemOf(t)].ride ? "ride" : "carry");
         walkTo(t, a.spot, dm, dtReal, a.water);
@@ -1688,7 +1694,7 @@
     const sleeping = act0 && (act0.id === "rest" || act0.id === "recover") && t.action.phase === "doing";
     // asleep (or recovering) means inside the house
     const indoor = act0 && INDOOR.has(act0.id) && t.action.phase === "doing";
-    t.group.visible = !(indoor && Math.hypot(t.pos.x - t.home.x, t.pos.z - t.home.z) < 1.6) && !(t.action && t.action.kind === "delve" && t.action.phase === "inside");
+    t.group.visible = !(indoor && (t.action.indoor || Math.hypot(t.pos.x - t.home.x, t.pos.z - t.home.z) < 1.6)) && !(t.action && t.action.kind === "delve" && t.action.phase === "inside");
     const now = performance.now();
     if (t.action && (t.action.kind === "box" || t.action.kind === "ringwait") && !walking) {
       const k = Math.max(0, 1 - (now - (t.punchAt || 0)) / 260), hit = Math.max(0, 1 - (now - (t.hitAt || 0)) / 300);
@@ -1782,7 +1788,7 @@
     const T = st.tickles;
     for (let i = 0; i < T.length; i++) for (let j = i + 1; j < T.length; j++) {
       const a = T[i], b = T[j];
-      const floaty = (x) => x.action && (x.action.kind === "held" || x.action.kind === "flying" || x.action.kind === "spirit" || x.action.kind === "fall" || x.action.kind === "box" || x.action.kind === "ride" || x.action.kind === "row" || (x.action.kind === "contest" && x.action.fixed) || x.action.kind === "dive" || x.action.kind === "sail" || x.flyY != null);
+      const floaty = (x) => x.action && (x.action.kind === "held" || x.action.kind === "flying" || x.action.kind === "spirit" || x.action.kind === "fall" || x.action.kind === "box" || x.action.kind === "ride" || x.action.kind === "row" || (x.action.kind === "contest" && x.action.fixed) || x.action.kind === "dive" || x.action.kind === "sail" || x.flyY != null || (x.action.indoor && x.action.phase === "doing") || !x.group.visible); // (nor anyone indoors)
       if (floaty(a) || floaty(b)) continue;
       const dx = b.pos.x - a.pos.x, dz = b.pos.z - a.pos.z, d = Math.hypot(dx, dz);
       if (d < 1.05 && d > 1e-4) {

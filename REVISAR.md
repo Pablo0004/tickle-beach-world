@@ -31,3 +31,13 @@ mando, ni tarjeta gráfica). Ve tachando lo que veas bien y apunta lo que no.
       el cambio de nivel de detalle al moverte (un "salto")?
 - [ ] Las sombras del sol en Alta y Ultra; de noche no hay.
 - [ ] El cielo con degradado, de día, al atardecer, de noche y con tormenta.
+- [ ] Las olas del mar abierto (playas del exterior): hechas de cubos, más altas, con espuma.
+- [ ] Castillos, palacios y mansiones de cerca: marcos y alféizares en las ventanas, escalones en las puertas,
+      hiladas de piedra en los castillos.
+- [ ] ¿Carga el juego algo más rápido que antes?
+
+## Vida en los pueblos
+
+- [ ] De noche, en un castillo o una mansión: ¿entran todos? (Fuera solo deberían quedar los guardias de la
+      muralla y los que vuelven de viaje.)
+- [ ] Los troncos alrededor de la hoguera, de lado, mirando al fuego.

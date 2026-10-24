@@ -504,6 +504,7 @@ casino, mine and dungeon leads into its own small maps (rooms) drawn apart on bl
 | Zoom | mouse wheel or pinch, from a few steps away up into the sky with the whole map in sight |
 | Inspect | click anything: a small window about it (health, needs, abilities, arms...) |
 | Dismiss a notification | click it; Menu > Settings switches the activity notifications off |
+| Graphics quality | Menu > Settings > Graphics: Normal, High (default) or Ultra |
 | Travel | click the minimap; M opens the big map |
 | Pick up / throw | press on something and drag; release while moving to throw |
 | Building or landmark card | click it |
@@ -517,6 +518,12 @@ casino, mine and dungeon leads into its own small maps (rooms) drawn apart on bl
 **Stack**: plain JavaScript (no build step, no framework) and three.js r128 from cdnjs. One page
 (`index.html`) loads the scripts in order; a Web Worker voxelizes models. Everything runs client-side; the
 only network requests are three.js, the music files and, optionally, ownership refreshes.
+
+**Levels of detail**: every model of the scenery has a usual copy (near) and a coarse one (far); with the
+graphics quality at High or Ultra a third, finer copy (smaller cubes) is made in the workers the first time a
+model comes within a few dozen blocks (`App.fragX`, population.js). Beyond the streamed scenery the far view
+(farview.js) draws coarse copies and stand-ins. The sun casts shadows round the middle of the view at High and
+Ultra.
 
 **Simulation tiers**: full agents near the camera (needs, smart objects, chats, building, fights, poses),
 walking figures further away, and a clock-driven simulation for everyone else that follows the same
@@ -539,7 +546,9 @@ sea beasts, wealth and weather. A layout tag (`App.LAYOUT`) lets an old save mig
 | `data.js` | on-chain models and theme data, verbatim from `htmlForToken()` |
 | `keccak.js` | keccak256 and the contract's seed formula |
 | `tickle-core.js` | port of the on-chain decoder, trait picker, part assembly, theming; arm splitting |
-| `sdf.js` | CPU port of the on-chain SDF shader and the octree voxelizer |
+| `sdf.js` | CPU port of the on-chain SDF shader and the octree voxelizer (each octree node looks only at the strokes its parent kept, and cubes are culled by their box: the same voxels as the shader, about three times faster); the voxel mesher (faces in full light of one colour merged into rectangles) |
+| `blocktex.js` | the block textures: one 16-pixel tile per block face (grass, sand, dirt, cobbles, bark, planks, leaves, paths, furrows, plaster) in a mipmapped atlas |
+| `gfx.js` | graphics quality (Normal / High / Ultra): the finer near models, the shadows, the pixel ratio |
 | `worker.js` | voxelization worker: Tickles, on-chain pieces, kit and AI strokes to meshes |
 | `owners.js` | `ownerOf()` snapshot (block 26,125,466) |
 | `kit.js`, `kit-interior.js`, `kit-monsters.js`, `kit-myth.js`, `kit-wealth.js` | the game's model kit in the on-chain stroke format |
@@ -548,7 +557,7 @@ sea beasts, wealth and weather. A layout tag (`App.LAYOUT`) lets an old save mig
 | `prison.js`, `listings.js` | the prison for Tickles up for sale; the snapshot of marketplace listings |
 | `parliament.js` | the Parliament: seats, ministers, sittings, laws and votes |
 | `geo.js` | world layout: regions, lake, bridges, places, holders' places, roads, fields, farms, arenas, caves, lairs, mines, Ether fields, guild quarters, casinos, smithies; terrain heights; routes |
-| `world.js` | open-world engine: chunked block terrain, meshes, camera, picking, daylight |
+| `world.js` | open-world engine: chunked block terrain (textured), meshes, camera, picking, daylight, the sky dome with its gradient, the sun's shadows |
 | `population.js` | all 9,629 Tickles: traits, jobs, daily plans, pawns, owners |
 | `sim.js` | full agents, needs, smart objects, walking and path-finding (A*, detours, swimming), the Director, save/load |
 | `village.js` | clans, granaries, chores, raids, food sharing, layout migration |

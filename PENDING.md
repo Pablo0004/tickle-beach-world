@@ -1,6 +1,6 @@
 # Tickle Beach World — what is pending
 
-Updated 24 October 2026. This repository (`main`) holds version 50: version 49 (published as the game on 24
+Updated 24 October 2026 (evening). This repository (`main`) holds version 50: version 49 (published as the game on 24
 October, https://claude.ai/artifact/Y2NNeAnZA2GCzhpAS2qC6b) plus first person while controlling a Tickle (item
 1.1, done and tested, in a separate preview until the owner approves it,
 https://claude.ai/artifact/Q5L8KVvvTrdNaJfVrHzSA2; see section 4). Items are worked in the order agreed with the project owner;
@@ -43,10 +43,16 @@ the buildings as if they did not exist." To do after 1.2:
   and at least four gates round every town or fortress wall, on the roads;
 - the routes go through the gates; a Tickle that is inside goes out by the door;
 - check with a test that counts how many walkers end up inside a building footprint over a simulated day.
-- also (asked 24 October): not every Tickle gets into its castle or mansion at night: they crowd at the door and
-  sleep there. Every resident must go in (each has a bed inside, interiors.js) and vanish from the outside.
-- and a small one: the logs Tickles sit on round the village fire should lie side-on to it (their length along
-  the circle, so whoever sits faces the fire).
+
+### 1.2c Diving: first person, the seabed, caves only reached by diving (asked 24 October)
+
+"Make it possible to dive in first person; work the seabed with a variety of details, fish, seaweed...; I want
+caves that can only be reached by diving; it should look like diving in Pokemon Emerald (when it is not in first
+person)." Plan, to agree on as it goes: first person under water with your own Tickle (swim down and up, its
+breath); a seabed of sand, rocks, coral, kelp and seaweed beds, shells, wrecks, fish shoals and other sea life,
+in cubes; underwater caves in the sea floor (entrances only under water) with their own inside (interiors.js), loot
+and creatures; the third-person view under water like Pokemon Emerald's diving: the view from above, a dark
+blue-green tint, light rays and bubbles, the seabed and its plants swaying.
 
 ### 1.3 An encyclopedia (asked 22-23 October)
 
@@ -106,6 +112,13 @@ on the walls make sense. Inspired by the game Imperium." Ideas to agree on with 
 
 ## 4. Done in version 50 (preview, not yet in the game)
 
+- **Residents go inside their castle or mansion** (asked 24 October): they used to crowd and sleep at the door.
+  Now, for the shared homes (citadel, fortress, keep, estate, plot), they walk to the door and go in from a couple
+  of blocks away (or from further when the crowd holds them up), out of sight, and nobody pushes them back out
+  (sim.js `startDo` `indoor`, `separate`). Test: `t_night.js`. The ones left outside at night are wall guards on
+  patrol and those still on their way home.
+- **Log seats lengthwise round the fire** (asked 24 October; geo.js: the log model is long along its z).
+
 - **More detail, always in cubes** (item 1.2, in progress): block textures on the terrain (`js/blocktex.js`: a
   16-pixel tile per block face, grey multipliers of the block colour, the grass side in colour; mipmapped,
   anisotropic); merged faces in the voxel mesher (`sdf.js meshVoxels`: faces in full light of one colour become
@@ -114,10 +127,15 @@ on the walls make sense. Inspired by the game Imperium." Ideas to agree on with 
   for the models near the camera (`App.fragX`, made in the workers the first time a model comes near: High 0.65 of
   the usual cube within 26 blocks, Ultra 0.5 within 40), the sun's shadows (a shadow map following the view,
   2048 or 4096, none at night) and a higher pixel ratio; all levels have a sky dome with a gradient (its colours
-  from the day, night and weather background). Test: `t_tex.js` (`Q=`, `NOTEX=`). Still to do (asked 24 October):
-  the sea's waves with more and smaller cubes, so they look more real (surf.js and the open sea); more detail in
-  the castles and mansions (kit-wealth.js models: finer cubes and more parts: windows, battlements, banners,
-  balconies...). Then colour variation inside the models (a leafy tree is one green), the water, interiors.
+  from the day, night and weather background). Test: `t_tex.js` (`Q=`, `NOTEX=`). Also done (24 October): the sea's
+  breakers built of small cubes (surf.js: a fifth of a block, deep blue to pale crest, a darker face, a foam lip,
+  loose foam cubes; ready-made heights so the cubes keep their size; half again as tall); the castles and
+  mansions in more detail (kit-wealth.js `adorn`: every window framed with glazing bars and a sill, every door
+  framed with a step, courses of darker stone on castle walls and towers; their finest copy goes down to a cube of
+  16 (Ultra) or 20 (High) for castles and palaces, all the way for mansions); the voxelizer about three times
+  faster with identical output (checked model by model: `sdf.js` evalList, box culling of cubes), which also
+  shortens loading. Still open: colour variation inside the models (a leafy tree is one green), the water
+  surface, the interiors.
 - **First person while controlling a Tickle** (item 1.1, asked 22 October; `js/firstperson.js`): a click captures
   the mouse (pointer lock) to look round, Esc frees it and a second Esc leaves; a crosshair and the name of what
   is in front (the inspect picker at the centre, or the building's name), a click opens its inspect window; a HUD
