@@ -654,7 +654,7 @@
     for (const p of pois) {
       const r = rng(p.i * 53 + 11);
       const around = (type, n, rad, minR) => { for (let k = 0; k < n; k++) { const a = r() * 6.28, d = (minR || 0) + r() * rad; sc(type, p.x + Math.cos(a) * d, p.z + Math.sin(a) * d, r() * 6.28); } };
-      if (p.type === "camp") { sc("campfire", p.x, p.z, r() * 6.28); for (let k = 0; k < 3; k++) { const a = (k / 3) * 6.28; sc("logseat", p.x + Math.cos(a) * 4, p.z + Math.sin(a) * 4, a); } around("grass16", 3, 10, 6); }
+      if (p.type === "camp") { sc("campfire", p.x, p.z, r() * 6.28); for (let k = 0; k < 3; k++) { const a = (k / 3) * 6.28; sc("logseat", p.x + Math.cos(a) * 4, p.z + Math.sin(a) * 4, -a); } around("grass16", 3, 10, 6); }
       else if (p.type === "meadow") { around("grass14", 3, 12); around("grass4", 2, 12); around("logseat", 1, 4); }
       else if (p.type === "pond") {
         // many ponds are fed by a little waterfall coming off a rocky bank
@@ -990,7 +990,7 @@
       v.seats = [];
       for (const s of v.logs.filter(Boolean)) {
         const a = Math.atan2(s.z - v.z, s.x - v.x), tx = -Math.sin(a), tz = Math.cos(a);
-        s.rot = Math.atan2(tx, tz) + Math.PI / 2;
+        s.rot = Math.atan2(tx, tz); // (the log model is long along its z: lengthwise round the fire)
         for (const side of [-0.8, 0.8]) v.seats.push({ x: s.x + tx * side, z: s.z + tz * side, log: s });
       }
     }
@@ -1127,7 +1127,7 @@
       v.seats = [];
       for (const s0 of v.logs.filter(Boolean)) {
         const a = Math.atan2(s0.z - v.z, s0.x - v.x), tx = -Math.sin(a), tz = Math.cos(a);
-        s0.rot = Math.atan2(tx, tz) + Math.PI / 2;
+        s0.rot = Math.atan2(tx, tz); // (the log model is long along its z: lengthwise round the fire)
         for (const side of [-0.8, 0.8]) v.seats.push({ x: s0.x + tx * side, z: s0.z + tz * side, log: s0 });
       }
     };
