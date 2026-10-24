@@ -11,8 +11,14 @@ one item is finished before the next one starts. The browser test scripts and wh
 
 Done on 24 October and published as the game (version 50): 1.0, 1.1 (first person), 1.2 (more detail), 1.2b (doors),
 1.2c (diving), 1.4 (the menu); see section 4. The owner has not tested yet: `REVISAR.md` is the checklist for when
-they do. Next, in this order: **1.3 the encyclopedia** (a section of the menu), then 1.5 wars between holders (to
-agree with the owner first), then 1.6, then the smaller things left over in 1.7.
+they do. Next, in this order:
+
+1. **1.3 The encyclopedia**: a section of the menu.
+2. **1.5 Wars between holders**: agree how they work with the owner first.
+3. **1.6 Editable mansions**.
+4. **1.6b Oxygen tanks**: decided with the owner; confirm first whether a tank refills at the surface or only at
+   a shop or the dock.
+5. **1.7 The smaller things left over from version 50**: ask the owner before widening any of them.
 
 ### 1.3 An encyclopedia (asked 22-23 October)
 
