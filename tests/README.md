@@ -82,6 +82,10 @@ loaded in Node without a browser: `require('./tests/node_kit').KIT`).
 - `t_inspect4.js` — starts a sea beast attack and clicks the beast.
 - `t_notify.js` — a click dismisses a notification; the Watch button still works; Menu > Settings switches them
   off (answers to the player's keys still show); first person works after zooming out to the sky.
+- `t_fp.js` — first person with your own Tickle (item 1.1): the HUD (health, needs, compass, what the crosshair
+  names), walking with W, a jump with Space, turning with a drag, the wheel to third person, a click inspecting
+  what is in front, the touch stick, Esc; `fp1.png` (first person), `fp2.png` (third person), `fp3.png` (stick).
+  Software WebGL runs at about one frame a second, so it waits several seconds for each step.
 - `t_sky.js` — the view at several heights (`RADII=46,130,400,1000,2600`): frame time, triangles, far-view
   instances, screenshots `sky_N.png`.
 - `t_big.js` — lists the biggest scenery models (diagnostic for the far view).

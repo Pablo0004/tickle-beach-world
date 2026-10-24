@@ -226,6 +226,7 @@
     const r = App.rayFrom(ndc);
     let hit = null, hd = Infinity;
     for (const t of st.tickles) {
+      if (App.fpId && t.id === App.fpId()) continue; // (the eyes we are looking through)
       const box = new THREE.Box3(new THREE.Vector3(t.pos.x - 0.65, t.pos.y, t.pos.z - 0.65), new THREE.Vector3(t.pos.x + 0.65, t.pos.y + t.height, t.pos.z + 0.65));
       if (r.intersectBox(box, tmpV)) { const d = tmpV.distanceTo(r.origin); if (d < hd) { hd = d; hit = { type: "tickle", t }; } }
     }
@@ -336,7 +337,7 @@
   App.keys = ui.keys; // first person reads them (firstperson.js)
   window.addEventListener("keydown", (e) => {
     if (e.target && (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT" || e.target.tagName === "SELECT")) return;
-    if (e.key === "Escape" && App.fpOn && App.fpOn()) { App.exitFP(); return; }
+    if (e.key === "Escape" && App.fpOn && App.fpOn()) { if (!App.fpEscape()) App.exitFP(); return; }
     if ((e.key === "v" || e.key === "V") && App.enterFP) { if (App.fpOn()) App.exitFP(); else if (ui.sel != null) App.enterFP(ui.sel); else App.toast("Pick a Tickle first, then press V to see through its eyes."); return; }
     // driving your own Tickle in first person: M into the saddle, Space and C up and down on a griffin
     if (App.fpDriving && App.fpDriving() && ["KeyM", "Space", "KeyC"].includes(e.code)) { ui.keys.add(e.code); e.preventDefault(); return; }

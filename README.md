@@ -468,7 +468,11 @@ casino, mine and dungeon leads into its own small maps (rooms) drawn apart on bl
 - **First person** (V, or the button on a Tickle's card): ride along with any Tickle through its day
   (races, regattas, dives...), or, with one of your own while in control, walk it yourself (it swims in the
   water, goes inside with E, and mounts its horse or griffin with M). Under water the view turns blue and
-  hazy.
+  hazy. A click captures the mouse to look round as in any first-person game (Esc frees it, a second Esc
+  leaves); a crosshair names what is in front and a click opens its inspect window. A HUD shows the Tickle's
+  health, its four needs and a compass. Space jumps on foot, the head bobs with the stride, and the mouse wheel
+  pulls the camera back behind the Tickle (third person) and in again. On a touch screen a stick on the left
+  walks it and a drag on the right looks round; a tap inspects what was tapped.
 
 ## 19. The Director (AI) and the Library
 
@@ -497,7 +501,7 @@ casino, mine and dungeon leads into its own small maps (rooms) drawn apart on bl
 | Building or landmark card | click it |
 | Go inside / leave | E near a door, cave or mine / Esc |
 | Follow a Tickle | select it and press F |
-| First person | V (WASD to walk, Shift to run, Z/X or drag to turn, E to enter, M to mount, Space/C to climb/descend on a griffin, Esc to leave) |
+| First person | V (click to capture the mouse and look round, click again to inspect what is under the crosshair; WASD to walk, Shift to run, Space to jump, Z/X or drag to turn, wheel for the camera behind it, E to enter, M to mount, Space/C to climb/descend on a griffin; Esc frees the mouse, Esc again leaves; touch: stick on the left, drag on the right) |
 | Time | Space pauses; 1, 2, 3 set the speed (1x, 4x, 12x) |
 
 ## 21. Technical overview

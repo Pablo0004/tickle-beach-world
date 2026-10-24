@@ -395,24 +395,24 @@
     el.addEventListener("contextmenu", (e) => e.preventDefault());
     el.addEventListener("pointerdown", (e) => {
       try { el.setPointerCapture(e.pointerId); } catch (err) { /* synthetic or already released pointer */ }
+      // in first person every pointer goes to firstperson.js (mouse capture, looking round, the touch stick)
+      if (App.fpOn && App.fpOn()) { App.fpPointer("down", e); return; }
       pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
       sx = e.clientX; sy = e.clientY; moved = false;
       mode = e.button === 2 || e.button === 1 || e.ctrlKey || e.altKey ? "rot" : "pan";
-      if (App.fpOn && App.fpOn()) mode = "look"; // in first person every drag looks round
       // pressing on a Tickle, an animal or a loose object picks it up instead of dragging the map
       if (mode === "pan" && pts.size === 1 && App.handPress && App.handPress(e)) mode = "hand";
       if (mode === "pan") startGrab(e.clientX, e.clientY);
-      if (mode === "look") return;
       if (pts.size === 2) { const [a, b] = [...pts.values()]; lastPinch = Math.hypot(a.x - b.x, a.y - b.y); lastMid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; lastAng = Math.atan2(b.y - a.y, b.x - a.x); mode = "pinch"; }
     });
     el.addEventListener("pointermove", (e) => {
+      if (App.fpOn && App.fpOn()) { App.fpPointer("move", e); return; }
       const p = pts.get(e.pointerId);
       if (!p) return;
       const dx = e.clientX - p.x, dy = e.clientY - p.y;
       p.x = e.clientX; p.y = e.clientY;
       if (Math.hypot(e.clientX - sx, e.clientY - sy) > 6) moved = true;
       if (!moved) return;
-      if (mode === "look") { App.fpLook(dx, dy); return; }
       if (mode === "hand") {
         if (!App.handHolding()) App.handGrab();
         el.style.cursor = "grabbing";
@@ -442,6 +442,7 @@
       }
     });
     el.addEventListener("pointerup", (e) => {
+      if (App.fpOn && App.fpOn()) { App.fpPointer("up", e); pts.delete(e.pointerId); return; }
       const wasClick = !moved && pts.size === 1;
       if (mode === "hand") { App.handRelease(); mode = null; }
       pts.delete(e.pointerId);
@@ -453,8 +454,8 @@
         App.onWorldClick({ x: ((e.clientX - r.left) / r.width) * 2 - 1, y: -((e.clientY - r.top) / r.height) * 2 + 1 }, e);
       }
     });
-    el.addEventListener("pointercancel", (e) => { pts.delete(e.pointerId); if (!pts.size) { grab = null; el.style.cursor = ""; } });
-    el.addEventListener("wheel", (e) => { e.preventDefault(); if (App.fpOn && App.fpOn()) return; cam.radius = Math.max(8, Math.min(App.MAX_ZOOM, cam.radius * Math.exp(e.deltaY * 0.0012))); }, { passive: false });
+    el.addEventListener("pointercancel", (e) => { if (App.fpPointer) App.fpPointer("cancel", e); pts.delete(e.pointerId); if (!pts.size) { grab = null; el.style.cursor = ""; } });
+    el.addEventListener("wheel", (e) => { e.preventDefault(); if (App.fpOn && App.fpOn()) { App.fpWheel(e.deltaY); return; } cam.radius = Math.max(8, Math.min(App.MAX_ZOOM, cam.radius * Math.exp(e.deltaY * 0.0012))); }, { passive: false });
     function pan(dx, dy) {
       cam.follow = null; cam.fly = null;
       const k = cam.radius * 0.0016;

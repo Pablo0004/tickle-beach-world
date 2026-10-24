@@ -1,8 +1,8 @@
 # Tickle Beach World — lo pedido, lo hecho y lo pendiente
 
-Actualizado: 23 de octubre de 2026.
-Juego publicado: los artifacts antiguos (la versión 48 publicada y la vista previa de la 49) los borraste el 23 de octubre; la próxima vez se publica uno nuevo desde `main` (ver `CLAUDE.md`).
-Código en GitHub: https://github.com/Pablo0004/tickle-beach-world — la versión 49 está en `main` (fusionada el 23 de octubre); en inglés: `README.md` (el juego completo) y `PENDING.md` (lo pendiente).
+Actualizado: 24 de octubre de 2026.
+Juego publicado: la versión 49, en un artifact nuevo publicado el 24 de octubre: https://claude.ai/artifact/Y2NNeAnZA2GCzhpAS2qC6b (una partida nueva, porque las partidas se guardan por artifact).
+Código en GitHub: https://github.com/Pablo0004/tickle-beach-world — la versión 50 (la 49 más la primera persona nueva) está en `main`; en inglés: `README.md` (el juego completo) y `PENDING.md` (lo pendiente).
 
 ---
 
@@ -15,8 +15,12 @@ Código en GitHub: https://github.com/Pablo0004/tickle-beach-world — la versi�
 - **GitHub**: vinculado; la versión 49 fusionada en `main`; README, PENDING y este documento puestos al día.
 - **Scripts de prueba** en `tests/` (abren el juego en un navegador automático y comprueban cada cosa): qué hace cada uno y cómo se ejecutan, en `tests/README.md`. Y `CLAUDE.md` en la raíz, con lo esencial para retomar el trabajo en una sesión nueva sin más contexto (dónde está cada documento, tus reglas, cómo publicar).
 
+**24 de octubre: versión 49 publicada y primera persona hecha (versión 50, en vista previa).**
+- **Versión 49 publicada** como juego en un artifact nuevo (enlace arriba). De paso, dos archivos (`parliament.js`, `prison.js`) tenían caracteres no ASCII; ya están escapados como pide la norma del proyecto.
+- **Primera persona al controlar un Tickle: HECHO Y PROBADO, en vista previa** (`js/firstperson.js`, prueba `tests/t_fp.js`). Un clic captura el ratón para mirar alrededor como en cualquier juego en primera persona; Esc lo suelta y un segundo Esc sale. Punto de mira en el centro con el nombre de lo que tienes delante (un Tickle, un animal, un edificio...), y un clic abre su ventana. HUD con la barra de vida, las cuatro necesidades y una brújula (N/E/S/O). Espacio para saltar a pie, balanceo de la cabeza al andar y altura de los ojos suavizada. La rueda del ratón aleja la cámara detrás del Tickle (tercera persona, hasta 14 bloques) y la vuelve a acercar a sus ojos. En pantallas táctiles: un joystick a la izquierda para andar (al fondo, corre) y arrastrar a la derecha para mirar; un toque abre la ventana de lo tocado. En el móvil se oculta el minimapa en primera persona. **Por decidir contigo**: actuar desde la primera persona (golpear a un monstruo, hablar con el Tickle de delante).
+
 **PENDIENTE (pedido el 22-23 de octubre), por este orden; el detalle de cada punto está en `PENDING.md`:**
-1. **Primera persona al controlar un Tickle**: ratón capturado para mirar (como en cualquier juego en primera persona), punto de mira con el nombre de lo que tienes delante (y clic para su ventana), HUD con vida y necesidades y brújula, saltar con Espacio, balanceo al andar, la rueda para pasar a vista en tercera persona detrás del Tickle, mando táctil en pantallas táctiles.
+1. ~~Primera persona al controlar un Tickle~~: hecho (arriba).
 2. **Más detalle en todos los modelos y texturas**, "como un juego profesional": cubos más pequeños donde se pueda (con un ajuste de calidad gráfica Normal / Alta / Ultra en Settings para que vaya fluido en cualquier ordenador), texturas en el terreno (hierba, arena, piedra, caminos, sembrados, tablones...), sombras del sol y un cielo con degradado. Los Tickles son los modelos on-chain y se quedan como están.
 3. **Enciclopedia** con cada entrada numerada y todas sus especificaciones: animales, criaturas, monstruos, guardianes, dragones, bestias marinas, armas, escudos, hechizos, reliquias, monturas, barcos, minerales, lugares, oficios, gremios, facciones, leyes y unidades de guerra (modelo, dónde vive, vida, ataque, defensa, velocidad, tipo, habilidades, quién la usa o la doma, precio, qué da).
 4. **Menú de juego profesional** que se pueda ocultar y desplegar, con dentro el panel de la derecha (que hoy no se puede cerrar), las secciones del menú, el directorio, el mapa grande y la enciclopedia; con el menú cerrado, el mundo a pantalla completa.

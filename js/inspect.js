@@ -238,7 +238,7 @@
     let best = null, bd = 1e9;
     App.applyCamera();
     const consider = (fn, x, y, z, r, bias, live, tickle) => { const p = App.project(V.set(x, y, z)); if (p.behind) return; const d = Math.hypot(p.x - cx, p.y - cy); if (d < r && d + bias < bd) { bd = d + bias; best = { fn, live, tickle, d }; } };
-    for (const t of st.tickles) if (t.group.visible) consider(() => tickleInfo(t.id), t.pos.x, t.pos.y + 1.3, t.pos.z, 30, 0, true, t.id);
+    for (const t of st.tickles) if (t.group.visible && t.id !== App.inspectSkip) consider(() => tickleInfo(t.id), t.pos.x, t.pos.y + 1.3, t.pos.z, 30, 0, true, t.id);
     for (const d of App.dragonObjects ? App.dragonObjects.values() : []) if (d.group && d.group.visible !== false) consider(() => dragonInfo(d), d.x, d.y + 3, d.z, 70, 2, true);
     for (const b of App.creatureBodiesNear ? App.creatureBodiesNear(tx, tz, 110) : []) if (!(b.ridden && performance.now() - b.ridden < 300)) consider(() => creatureInfo(b), b.x, (b.y || 0) + 0.6, b.z, 24, 3, true);
     for (const m of App.monstersNear ? App.monstersNear(tx, tz, 110) : []) consider(() => monsterInfo(m), m.x, (m.y || 0) + 0.8, m.z, 26, 3, true);

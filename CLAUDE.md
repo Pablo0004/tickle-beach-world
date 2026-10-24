@@ -35,11 +35,10 @@ JavaScript, no build step). The owner talks in Spanish: answer in Spanish. Code,
 
 The game is published as a private claude.ai artifact: the page `index.html` with every file of `js/`, every file
 of `music/` and `onchain-tickle.html` beside it (publish with `root` = the repository and those files in `files`,
-about 75; on an update, only the changed ones). The owner
-deleted the old artifacts on 23 October 2026 (the live game, version 48, and the version 49 preview): the next
-time the owner wants to play or test, publish a new artifact from `main` and give the owner its link. Keep a
-preview separate from the game the owner plays, and only update the game when the owner approves. Saved games
-live in the browser per artifact, so a new artifact starts a new world.
+about 80; on an update, only the changed ones). The game the owner plays (version 49, published 24 October 2026):
+https://claude.ai/artifact/Y2NNeAnZA2GCzhpAS2qC6b. Keep a preview separate from the game the owner plays (a
+second artifact), and only update the game when the owner approves. Saved games live in the browser per
+artifact, so a new artifact starts a new world.
 
-GitHub: https://github.com/Pablo0004/tickle-beach-world (`main` has version 49). Repository settings (the
+GitHub: https://github.com/Pablo0004/tickle-beach-world (`main` has version 50). Repository settings (the
 description) cannot be changed from a Claude session; give the owner the text instead.

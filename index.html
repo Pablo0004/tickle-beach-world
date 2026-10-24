@@ -234,14 +234,38 @@ input[type="text"] { background: rgba(0,0,0,0.3); border: 1px solid var(--line);
 #casinoWin[hidden] { display: none; }
 #contestHud { position: absolute; left: 16px; top: 96px; width: 250px; background: rgba(9, 29, 41, 0.9); color: #fff; border-radius: 12px; padding: 9px 12px 10px; z-index: 29; font-size: 12.5px; pointer-events: none; border: 1px solid rgba(255, 210, 63, 0.35); }
 #contestHud[hidden] { display: none; }
-#fpHud { position: absolute; left: 50%; transform: translateX(-50%); top: 84px; background: rgba(9, 29, 41, 0.88); color: #fff; border-radius: 999px; padding: 6px 8px 6px 16px; z-index: 31; font-size: 12.5px; white-space: nowrap; display: flex; align-items: center; gap: 8px; }
+#fpHud { position: absolute; left: calc(50% - 192px); transform: translateX(-50%); top: 150px; max-width: calc(100% - 430px); width: max-content; white-space: normal !important; border-radius: 14px !important; background: rgba(9, 29, 41, 0.88); color: #fff; border-radius: 999px; padding: 6px 8px 6px 16px; z-index: 31; font-size: 12.5px; white-space: nowrap; display: flex; align-items: center; gap: 8px; }
 #fpHud[hidden] { display: none; }
+#fpHud b { white-space: nowrap; }
+#fpCompass { position: absolute; left: calc(50% - 192px); top: 114px; width: 300px; height: 28px; margin-left: -150px; overflow: hidden; z-index: 31; pointer-events: none; background: rgba(9, 29, 41, 0.72); border-radius: 8px; -webkit-mask-image: linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent); mask-image: linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent); }
+#fpCompass::after { content: ""; position: absolute; left: 50%; top: 0; width: 2px; height: 7px; margin-left: -1px; background: #ffd23f; }
+#fpCompass .strip { position: absolute; left: 0; top: 0; height: 100%; will-change: transform; }
+#fpCompass span { position: absolute; top: 0; transform: translateX(-50%); font: 800 12px/28px Nunito, system-ui, sans-serif; color: #c9d4e0; }
+#fpCompass span.c { color: #fff; font-size: 14px; }
+#fpCompass span.t { width: 1px; height: 6px; top: 22px; background: rgba(255, 255, 255, 0.45); }
+#fpCross { position: absolute; left: 50%; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; z-index: 31; pointer-events: none; }
+#fpCross::before, #fpCross::after { content: ""; position: absolute; background: #fff; box-shadow: 0 0 2px rgba(0, 0, 0, 0.8); border-radius: 1px; }
+#fpCross::before { left: 10px; top: 3px; width: 2px; height: 16px; }
+#fpCross::after { left: 3px; top: 10px; width: 16px; height: 2px; }
+#fpCross.on::before, #fpCross.on::after { background: #ffd23f; }
+#fpCross.free { opacity: 0.55; }
+#fpAim { position: absolute; left: 50%; top: calc(50% + 20px); transform: translateX(-50%); z-index: 31; pointer-events: none; background: rgba(9, 29, 41, 0.8); color: #ffd23f; font-weight: 800; font-size: 12.5px; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
+#fpStats { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); width: 210px; z-index: 30; pointer-events: none; background: rgba(9, 29, 41, 0.82); color: #fff; border-radius: 12px; padding: 9px 12px 10px; font-size: 11.5px; }
+#fpStats .fs-name { font-weight: 900; font-size: 14px; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#fpStats .fs-row { display: grid; grid-template-columns: 52px 1fr 44px; align-items: center; gap: 6px; padding: 2px 0; }
+#fpStats .fs-row span { color: #c9d4e0; font-weight: 700; }
+#fpStats .fs-row i { display: block; height: 7px; border-radius: 4px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
+#fpStats .fs-row b { display: block; height: 100%; border-radius: 4px; }
+#fpStats .fs-row em { font-style: normal; text-align: right; font-variant-numeric: tabular-nums; color: #fff; font-weight: 700; }
+#fpStick { position: absolute; width: 104px; height: 104px; margin: -52px 0 0 -52px; border-radius: 50%; background: rgba(9, 29, 41, 0.35); border: 2px solid rgba(255, 255, 255, 0.45); z-index: 32; pointer-events: none; }
+#fpCompass[hidden], #fpCross[hidden], #fpAim[hidden], #fpStats[hidden], #fpStick[hidden] { display: none; }
+#fpStick i { position: absolute; left: 32px; top: 32px; width: 40px; height: 40px; border-radius: 50%; background: rgba(255, 255, 255, 0.8); }
 #beastBar { position: absolute; transform: translate(-50%, -100%); width: 150px; z-index: 12; pointer-events: none; background: rgba(9, 29, 41, 0.85); border-radius: 8px; padding: 3px 6px 5px; color: #fff; font-size: 11.5px; font-weight: 800; text-align: center; }
 #beastBar i { display: block; height: 6px; margin-top: 3px; border-radius: 3px; background: #e8443a; }
 #beastBar[hidden] { display: none; }
 #uwTint { position: absolute; inset: 0; pointer-events: none; z-index: 0; background: radial-gradient(ellipse at 50% 40%, rgba(40, 150, 190, 0.28), rgba(10, 60, 95, 0.55)); }
 #uwTint[hidden] { display: none; }
-@media (max-width: 760px) { #fpHud { white-space: normal; width: calc(100% - 32px); border-radius: 12px; top: 112px; } }
+@media (max-width: 760px) { #fpHud { white-space: normal; width: calc(100% - 32px); border-radius: 12px; top: 166px; } #fpCompass { left: 50%; top: 130px; width: 220px; margin-left: -110px; } #fpHud { left: 50%; max-width: none; width: auto; justify-content: space-between; } #fpHud .fh-keys { display: none; } body.fpmode #mapbox { display: none; } #fpStats { top: 220px; transform: none; width: 160px; padding: 6px 9px; } }
 #contestHud .ch-t { font-weight: 900; font-size: 15px; color: #ffd23f; }
 #contestHud .ch-r { color: #c9d4e0; font-weight: 700; font-size: 12px; }
 #contestHud .ch-s { color: #c9d4e0; margin: 1px 0 6px; }
@@ -347,7 +371,7 @@ input[type="text"] { background: rgba(0,0,0,0.3); border: 1px solid var(--line);
 <div id="app">
   <canvas id="world" aria-label="Tickle Beach island, 3D view"></canvas>
   <div id="uwTint" hidden></div>
-  <div id="roomFade"></div><div id="roomHud" hidden></div><div id="contestHud" hidden></div><div id="fpHud" hidden></div><div id="beastBar" hidden></div><div id="doorChip" hidden></div><div id="placeCard" hidden></div>
+  <div id="roomFade"></div><div id="roomHud" hidden></div><div id="contestHud" hidden></div><div id="fpHud" hidden></div><div id="fpCompass" hidden></div><div id="fpCross" class="free" hidden></div><div id="fpAim" hidden></div><div id="fpStats" hidden></div><div id="fpStick" hidden><i></i></div><div id="beastBar" hidden></div><div id="doorChip" hidden></div><div id="placeCard" hidden></div>
     <div id="overlay"></div>
 
   <header id="topbar" class="glass">
@@ -573,7 +597,7 @@ input[type="text"] { background: rgba(0,0,0,0.3); border: 1px solid var(--line);
 <script src="js/kit-myth.js?v=225"></script>
 <script src="js/kit-wealth.js?v=246"></script>
 <script src="js/approved.js?v=225"></script>
-<script src="js/world.js?v=253"></script>
+<script src="js/world.js?v=254"></script>
 <script src="js/sim.js?v=250"></script>
 <script src="js/geo.js?v=250"></script>
 <script src="js/population.js?v=253"></script>
@@ -597,19 +621,19 @@ input[type="text"] { background: rgba(0,0,0,0.3); border: 1px solid var(--line);
 <script src="js/casino.js?v=225"></script>
 <script src="js/contests.js?v=250"></script>
 <script src="js/diving.js?v=225"></script>
-<script src="js/firstperson.js?v=250"></script>
+<script src="js/firstperson.js?v=253"></script>
 <script src="js/seabeasts.js?v=252"></script>
 <script src="js/wealth.js?v=252"></script>
-<script src="js/prison.js?v=250"></script>
-<script src="js/parliament.js?v=250"></script>
+<script src="js/prison.js?v=251"></script>
+<script src="js/parliament.js?v=251"></script>
 <script src="js/birds.js?v=225"></script>
 <script src="js/weather.js?v=248"></script>
 <script src="js/interiors.js?v=252"></script>
 <script src="js/places.js?v=251"></script>
-<script src="js/inspect.js?v=252"></script>
+<script src="js/inspect.js?v=253"></script>
 <script src="js/farview.js?v=253"></script>
 <script src="js/sfx.js?v=225"></script>
 <script src="js/music.js?v=225"></script>
 <script src="js/hand.js?v=225"></script>
-<script src="js/ui.js?v=253"></script>
+<script src="js/ui.js?v=254"></script>
 <script src="js/directory.js?v=225"></script>

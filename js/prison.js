@@ -194,9 +194,9 @@
     const I = App.listingsInfo(), ids = App.prisoners(), m = st.T % DAY;
     const now = m < 420 || m >= 1200 ? "locked in their cells" : (m >= 720 && m < 780) || (m >= 1140 && m < 1200) ? "at the canteen" : (m >= 600 && m < 1020) ? "breaking rocks in the yard" : "out in the yard";
     const rows = [["Inmates", ids.length ? ids.length.toLocaleString() + " Tickles up for sale, " + now : "nobody: no Tickle is up for sale"], ["The list", I.date ? "read " + esc(I.date) + (I.from ? " (" + esc(I.from) + ")" : "") : "no listings read yet"]];
-    if (ids.length) rows.push(["Some of them", ids.slice(0, 8).map((id) => '<a href="#" data-tickle="' + id + '">' + esc(App.nameOf(id)) + "</a>").join(", ") + (ids.length > 8 ? " …" : "")]);
+    if (ids.length) rows.push(["Some of them", ids.slice(0, 8).map((id) => '<a href="#" data-tickle="' + id + '">' + esc(App.nameOf(id)) + "</a>").join(", ") + (ids.length > 8 ? " \u2026" : "")]);
     const text = "<p>Every Tickle that its holder has put up for sale on a marketplace is sent here until somebody buys it: it leaves home, sleeps in a cell down below, eats in the canteen and spends its days in the yard breaking rocks. Once it is sold it walks free and moves in with its new holder; if the listing is taken down it goes home. The list comes from the marketplaces (tools/update_listings.py reads it with an OpenSea key), or you can type one in the Holders tab.</p>";
-    return { name: P.name, sub: "Prison" + " · " + App.regions[P.region].name, rows, text };
+    return { name: P.name, sub: "Prison" + " \u00b7 " + App.regions[P.region].name, rows, text };
   };
   // the Holders tab: who is for sale, and a list of token numbers you can type in yourself
   App.prisonHoldersHTML = () => {

@@ -1,34 +1,14 @@
 # Tickle Beach World — what is pending
 
-Updated 23 October 2026. This repository (`main`) holds version 49, finished and tested. The old claude.ai
-artifacts (the published version 48 and the version 49 preview) were deleted by the owner on 23 October 2026:
-the game is to be published again as a new artifact from `main` (see `CLAUDE.md`). Items are worked in the order agreed with the project owner;
+Updated 24 October 2026. This repository (`main`) holds version 50: version 49 (published as the game on 24
+October, https://claude.ai/artifact/Y2NNeAnZA2GCzhpAS2qC6b) plus first person while controlling a Tickle (item
+1.1, done and tested, in a separate preview until the owner approves it; see section 4). Items are worked in the order agreed with the project owner;
 one item is finished before the next one starts. The browser test scripts and what each one checks are in
 [tests/README.md](tests/README.md).
 
 ---
 
 ## 1. Next, in order
-
-### 1.0 Publish version 49
-
-Publish `main` as a new claude.ai artifact for the owner to try (the old ones were deleted); it becomes the game
-once the owner approves it.
-
-### 1.1 First person when controlling a Tickle (asked 22 October)
-
-"Work on first person mode while I control a Tickle." What there is today (`js/firstperson.js`): V or the card's
-button; with one of your own Tickles in "I'm in control": WASD to walk, Shift to run, drag or Z/X to turn, E to go
-in, M into the saddle, Space/C to climb/descend on a griffin, Esc to leave; the body is hidden, the arms and what
-they hold are shown, blue haze under water. Plan:
-- mouse look with pointer lock (click to capture the mouse, Esc to release), as in any first-person game;
-- a crosshair, and the name of what is in front of it (from the inspect picker, `App.inspectPick` at the centre);
-  a click opens the inspect window on it;
-- a HUD: health bar and the four needs of the Tickle you control, a compass with N/E/S/W;
-- jump with Space when on foot, head bob when walking, smooth camera;
-- the mouse wheel pulls the camera back behind the Tickle (third person) and in again;
-- touch screens: a virtual stick on the left, drag to look on the right;
-- (to decide later) acting from first person: hitting a monster, talking to the Tickle in front.
 
 ### 1.2 More detail in every model and texture (asked 22 October)
 
@@ -104,7 +84,20 @@ on the walls make sense. Inspired by the game Imperium." Ideas to agree on with 
   else, never closed.
 - **Creature tournament fights** may resolve too fast to be watched comfortably.
 
-## 4. Done in version 49 (not yet published)
+## 4. Done in version 50 (preview, not yet in the game)
+
+- **First person while controlling a Tickle** (item 1.1, asked 22 October; `js/firstperson.js`): a click captures
+  the mouse (pointer lock) to look round, Esc frees it and a second Esc leaves; a crosshair and the name of what
+  is in front (the inspect picker at the centre, or the building's name), a click opens its inspect window; a HUD
+  with the health bar, the four needs and a compass (N/E/S/W); Space jumps on foot; a head bob with the stride and
+  a steadied eye height; the mouse wheel pulls the camera back behind the Tickle (third person, up to 14 blocks)
+  and in again; on touch screens a stick on the left third walks (pushed to the edge it runs) and a drag
+  elsewhere looks, a tap inspects. In first person every pointer goes to `App.fpPointer` (world.js hands them
+  over). On phones the minimap hides in first person and the key hints shrink to the name and Leave. Test:
+  `tests/t_fp.js`. Acting from first person (hitting a monster, talking to the Tickle in front) is still to be
+  decided with the owner.
+
+## 5. Done in version 49 (published 24 October)
 
 - **Every holder has its own place** (item 11): towns, plots, estates and fortresses by the number of Tickles, fixed
   plots that survive ownership changes, mansions by region, castles and palaces, warrens for overflow, Tickles

@@ -201,7 +201,7 @@
         st.parl.log.unshift({ day, name: nm, kind: it.kind, yes: res.yes, no: res.no, passed: res.passed, by });
         App.log("parliament", "Parliament " + (res.passed ? "passed " : "threw out ") + nm + ", " + res.yes + " to " + res.no + ".",
           (by ? "Proposed by " + by + ". " : "") + (it.kind === "law" ? (res.passed ? "From now on " : "It would have meant that ") + LAWS[it.law].text + "." : it.kind === "repeal" ? (res.passed ? "No longer: " : "Still in force: ") + LAWS[it.law].text + "." : res.passed ? "It stays in the world." : "It is taken out of the world."));
-        if (App.toast && (it.kind !== "director" || res.passed)) App.toast("Parliament " + (res.passed ? "passed " : "threw out ") + nm + " (" + res.yes + "–" + res.no + ")");
+        if (App.toast && (it.kind !== "director" || res.passed)) App.toast("Parliament " + (res.passed ? "passed " : "threw out ") + nm + " (" + res.yes + "\u2013" + res.no + ")");
       }
       st.parl.log = st.parl.log.slice(0, 40);
       if (App.refresh) App.refresh(true);
@@ -259,7 +259,7 @@
   App.parliamentNote = () => {
     const A = st.parl && st.parl.agenda, day = Math.floor(st.T / DAY), m = st.T - day * DAY;
     if (!A || A.day !== day || !A.items.length) return "No sitting right now: the Parliament sits every afternoon from 16:00, and votes at 17:30.";
-    return (A.done ? "Today's votes: " + A.items.map((it) => itemName(it) + (it.res ? (it.res.passed ? " passed " : " failed ") + it.res.yes + "–" + it.res.no : "")).join("; ") : "On the agenda: " + A.items.map(itemName).join("; ") + ". The vote is at 17:30.") + (m < S1 ? "" : "");
+    return (A.done ? "Today's votes: " + A.items.map((it) => itemName(it) + (it.res ? (it.res.passed ? " passed " : " failed ") + it.res.yes + "\u2013" + it.res.no : "")).join("; ") : "On the agenda: " + A.items.map(itemName).join("; ") + ". The vote is at 17:30.") + (m < S1 ? "" : "");
   };
 
   // ---------- the cards ----------
@@ -269,12 +269,12 @@
     shareSeats();
     const laws = Object.keys(LAWS).filter((k) => App.lawOn(k));
     const rows = [["Seats", SEATS + ", shared out among " + blocs.length + " holders by how many Tickles each has (D'Hondt)"],
-      ["Biggest blocs", blocs.slice(0, 4).map((g) => esc(g.addr.slice(0, 6) + "…" + g.addr.slice(-4)) + " " + g.s).join(", ")],
+      ["Biggest blocs", blocs.slice(0, 4).map((g) => esc(g.addr.slice(0, 6) + "\u2026" + g.addr.slice(-4)) + " " + g.s).join(", ")],
       ["Laws in force", laws.length ? laws.map((k) => esc(LAWS[k].name)).join(", ") : "none yet"],
       ["Today", esc(App.parliamentNote())]];
     const L = st.parl.log[0];
-    if (L) rows.push(["Last vote", esc(L.name) + (L.passed ? " passed " : " failed ") + L.yes + "–" + L.no]);
-    return { name: P.name, sub: "On the Maker's Isle · sits every afternoon", rows,
+    if (L) rows.push(["Last vote", esc(L.name) + (L.passed ? " passed " : " failed ") + L.yes + "\u2013" + L.no]);
+    return { name: P.name, sub: "On the Maker's Isle \u00b7 sits every afternoon", rows,
       text: "<p>The Tickles' democracy. Every holder has seats by how many Tickles it holds, and sends its best Tickles as ministers. Each afternoon they put a law to the vote, and everything new the Director has come up with too: what passes is done, what fails goes. Go inside to see the chamber when it sits.</p>" };
   };
   App.parliamentHTML = () => {
@@ -283,7 +283,7 @@
     let h = '<div class="card"><h3>The Parliament</h3><p class="note">' + SEATS + " seats on the Maker's Isle, shared out among " + blocs.length + " holders by how many Tickles each has (D'Hondt); every holder sends its best Tickles as ministers and they vote together. It sits every afternoon from 16:00 and votes at 17:30: a law, and whatever the Director has come up with. " + esc(App.parliamentNote()) + "</p><div class=\"kv\">";
     for (const k in LAWS) h += '<span class="k">' + esc(LAWS[k].name) + "</span><span>" + (App.lawOn(k) ? "<b>in force</b> since day " + (st.parl.laws[k] + 1) + ": " : '<span class="note">not in force: </span>') + esc(LAWS[k].text) + "</span>";
     h += "</div>";
-    if (st.parl.log.length) h += '<p class="note">' + st.parl.log.slice(0, 6).map((L) => "Day " + (L.day + 1) + ": " + esc(L.name) + (L.passed ? " passed " : " failed ") + L.yes + "–" + L.no).join("<br>") + "</p>";
+    if (st.parl.log.length) h += '<p class="note">' + st.parl.log.slice(0, 6).map((L) => "Day " + (L.day + 1) + ": " + esc(L.name) + (L.passed ? " passed " : " failed ") + L.yes + "\u2013" + L.no).join("<br>") + "</p>";
     return h + "</div>";
   };
 })(typeof self !== "undefined" ? self : this);
