@@ -9,30 +9,10 @@ one item is finished before the next one starts. The browser test scripts and wh
 
 ## 1. Next, in order
 
-Done on 24 October: 1.0 (version 49 published), 1.1 (first person), 1.2 (more detail), 1.2b (doors), 1.2c
-(diving), 1.4 (the menu); see section 4. Next: **1.3 the encyclopedia** (it goes into the menu as a section), then
-1.5 wars between holders (to agree with the owner first), then 1.6.
-
-### 1.2 More detail in every model and texture (asked 22 October)
-
-"Go through every texture of the game and give all of them a higher level of detail; the cubes may need to be
-smaller, if possible; I want the details of a professional game." **The owner insists (24 October): everything
-stays made of cubes** — smaller cubes and pixel-style textures per block face, never smooth models; the
-reference is the Tickles themselves, which are cubes with a good level of detail: bring the rest of the models
-to about their cube size. Notes for the work:
-- Kit models (`TB.KIT[kind].voxel = [near, far]`, SDF units, `App.S` = 1/160 world unit) are meshed at load in
-  two levels (`App.frag`, `App.fragLo`, `loadFragments` in population.js); the far view (farview.js) adds coarse
-  copies and stand-ins. Smaller cubes means smaller `voxel` values: about 8 times the voxels when halved, more
-  meshing time at load and more triangles. Measure first (the scene is about 1.6 million triangles at the usual
-  distance, 2.4 to 2.8 million pulled back).
-- A **graphics quality** setting in Menu > Settings (Normal / High / Ultra) choosing the cube size of the near
-  models, the shadows and the textures, so slower machines keep the game fluid.
-- **Terrain textures**: today every block face is a flat colour with ambient occlusion and a little jitter
-  (world.js `meshChunk`). Add a small procedural texture per block (grass, sand grains, stone, path, farmland
-  furrows, planks, logs, leaves), multiplied with the block colour (UVs in the chunk mesh, a texture atlas).
-- **Shadows** from the sun (a shadow map round the middle of the view), a sky with a gradient, maybe ambient
-  occlusion on the models.
-- The Tickles themselves are the on-chain models at their own resolution and stay as they are.
+Done on 24 October and published as the game (version 50): 1.0, 1.1 (first person), 1.2 (more detail), 1.2b (doors),
+1.2c (diving), 1.4 (the menu); see section 4. The owner has not tested yet: `REVISAR.md` is the checklist for when
+they do. Next, in this order: **1.3 the encyclopedia** (a section of the menu), then 1.5 wars between holders (to
+agree with the owner first), then 1.6, then the smaller things left over in 1.7.
 
 ### 1.3 An encyclopedia (asked 22-23 October)
 
@@ -64,8 +44,20 @@ on the walls make sense. Inspired by the game Imperium." Ideas to agree on with 
 
 - Mansions editable inside and out (asked 16 October, for later).
 
+### 1.7 Left over from version 50 (smaller; ask the owner before widening any of them)
+
+- More detail: colour variation inside the models (a leafy tree is one green), the water surface, the interiors.
+- The far walking figures (pawns) follow straight lines between plan points and can cross buildings.
+- First-person abilities against dragons, sea beasts and the Underworld's guardians (first person is not available
+  inside); ability levels or choices.
+- Under the sea: things for your own Tickle to find or catch (pearls, shells), sea creatures in the sea caves, the
+  sea floor seen from above through the water (the surface is nearly opaque from above).
+
 ## 2. Open questions
 
+- **The menu and the clock**: the world keeps running while the menu is open; should it pause? (Asked in
+  `REVISAR.md`.)
+- **Breath under water**: 45 seconds; right or not? (Asked in `REVISAR.md`.)
 - **Waves in the rivers and the lake** (item 8b): the waves at the mouths of the channels were removed (the
   "open sea" no longer includes the channels between regions), and the lake and ponds are calm. If the owner
   meant something else — for example the dark stripes of the stepped riverbed seen through the water — it is
