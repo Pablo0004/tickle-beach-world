@@ -5,7 +5,12 @@
  * lock) so it looks round as in any first-person game, and Esc frees it again; a crosshair names what is in
  * front, and a click opens the inspect window on it. The mouse wheel pulls the camera back behind the Tickle
  * (third person) and in again. On a touch screen a stick on the left walks and a drag on the right looks.
- * A HUD shows its health, its four needs and a compass. Its own body is hidden so it does not fill the view,
+ * A HUD shows its health, its four needs and a compass. Your own Tickle fights with an ability bar, as in a
+ * MOBA: F a basic blow, Q and G two abilities and R the ultimate, each with its cooldown; which ones depends on
+ * what it is (warrior, mage of its school, healer, tamer, or a plain brawler). The cave monsters fight back.
+ * T talks to the Tickle in front. On a touch screen the bar's buttons are tapped. A game controller works too
+ * (standard layout): left stick to walk (pressed in to run), right stick to look, A jump (and up on a griffin, LT
+ * down), X or RT the basic blow, Y Q, LB G, RB R, B talk, Back to mount, Start to leave. Its own body is hidden so it does not fill the view,
  * but its arms and whatever they hold are there; under the water the view turns blue and hazy. */
 (function () {
   "use strict";
@@ -28,7 +33,7 @@
     const M = App.mountOf && App.mountOf(t.id);
     const mouse = coarse ? "" : locked() ? "Esc frees the mouse \u00b7 click to inspect" : "click to capture the mouse";
     const parts = fp.drive
-      ? [coarse ? "stick to walk, drag to look" : "WASD to walk, Shift to run, Space to jump", mouse, "wheel: camera back", "E to go in"]
+      ? [coarse ? "stick to walk, drag to look" : "WASD to walk, Shift to run, Space to jump", mouse, coarse ? "" : "F, Q, G, R to fight, T to talk", "wheel: camera back", "E to go in"]
       : ["riding along", coarse ? "drag to look round" : mouse, "wheel: camera back"];
     if (fp.drive && M) parts.push("M to " + (M.fly ? "mount its griffin (Space up, C down)" : M.kind === "horse" ? "mount its horse" : "ride " + M.name.replace(/^Riding /, "its ").replace(/^Stag$/, "its stag")));
     el.innerHTML = "<span><b>" + esc(t.name) + '</b><span class="fh-keys"> \u00b7 ' + parts.filter(Boolean).join(" \u00b7 ") + '</span></span><button class="btn" id="fpLeave">Leave (Esc)</button>';
@@ -36,6 +41,8 @@
   }
   function show(on) {
     for (const id of ["fpCross", "fpCompass", "fpStats"]) { const el = $(id); if (el) el.hidden = !on; }
+    const bar = $("fpBar");
+    if (bar) bar.hidden = !(on && fp && fp.drive);
     document.body.classList.toggle("fpmode", on);
     if (!on) { const a = $("fpAim"); if (a) a.hidden = true; stickUI(null); }
   }
@@ -49,6 +56,7 @@
     App.cam.follow = id; App.cam.fly = null;
     App.camera.fov = FOV; App.camera.updateProjectionMatrix();
     buildCompass();
+    if (fp.drive) buildBar(t);
     show(true);
     showHud(t);
     hudStats(t);
@@ -88,7 +96,13 @@
     const c = $("fpCross");
     if (c) c.classList.toggle("free", !locked());
   });
-  window.addEventListener("keydown", (e) => { if (fp && fp.drive && e.code === "Space" && !e.repeat) fp.jump = true; });
+  window.addEventListener("keydown", (e) => {
+    if (!fp || !fp.drive || e.repeat) return;
+    if (e.code === "Space") fp.jump = true;
+    else if (SLOT_KEYS[e.code]) fp.act = SLOT_KEYS[e.code];
+    else if (e.code === "KeyT") fp.act = "talk";
+  });
+  document.addEventListener("click", (e) => { const b = e.target.closest && e.target.closest("#fpBar button"); if (b && fp && fp.drive) fp.act = b.dataset.act; });
   document.addEventListener("mousemove", (e) => { if (locked()) App.fpLook(e.movementX || 0, e.movementY || 0, 0.7); });
   function lock(onFail) {
     const el = canvas();
@@ -154,6 +168,24 @@
     el.style.left = x + "px"; el.style.top = y + "px";
     el.firstChild.style.transform = "translate(" + vx + "px," + vy + "px)";
   }
+  // ---------- a game controller (the browser's Gamepad API, standard layout) ----------
+  const PAD_BTN = { 0: "jump", 1: "talk", 2: "F", 7: "F", 3: "Q", 4: "G", 5: "R" };
+  const padWas = {};
+  let padSeen = false;
+  function pad(dt) {
+    let gp = null;
+    try { for (const g of navigator.getGamepads ? navigator.getGamepads() : []) if (g && g.connected) { gp = g; break; } } catch (err) { return; }
+    if (!gp) { fp.pad = null; return; }
+    const B = (i) => !!(gp.buttons[i] && gp.buttons[i].pressed), dz = (v) => (Math.abs(v || 0) < 0.15 ? 0 : v);
+    const lx = dz(gp.axes[0]), ly = dz(gp.axes[1]), rx = dz(gp.axes[2]), ry = dz(gp.axes[3]);
+    fp.pad = { f: -ly, s: lx, run: B(10), up: B(0), down: B(6), mount: B(8) };
+    if (rx || ry) App.fpLook(rx * dt * 520, ry * dt * 420);
+    if (fp.drive) for (const i in PAD_BTN) { const on = B(i); if (on && !padWas[i]) { if (PAD_BTN[i] === "jump") fp.jump = true; else fp.act = PAD_BTN[i]; } padWas[i] = on; }
+    const start = B(9), leave = start && !padWas[9];
+    padWas[9] = start;
+    if (leave) App.exitFP();
+  }
+  window.addEventListener("gamepadconnected", () => { if (!padSeen) { padSeen = true; App.toast("Controller connected: in first person, left stick to walk, right stick to look, A to jump, X/Y/LB/RB to fight."); } });
   // ---------- the HUD: health and needs, the compass, the name of what is in front ----------
   function hudStats(t) {
     const el = $("fpStats");
@@ -191,9 +223,12 @@
   function aim() {
     const el = $("fpAim");
     if (!el) return;
-    let name = null;
-    App.inspectSkip = fp.id;
-    try {
+    let name = null, foe = false;
+    const t = agentOf(fp.id), near = t && fp.drive ? inFront(t) : {};
+    if (near.mon) { const M = (App.MONSTERS || {})[near.mon.kind] || {}; name = (M.name || "Monster") + " " + Math.max(0, Math.round(near.mon.hp)) + "/" + near.mon.max; foe = true; }
+    else if (near.tk) name = near.tk.name + " \u00b7 " + App.relLabel(App.relGet(t.id, near.tk.id)) + (coarse ? "" : " \u00b7 T to talk");
+    if (!name) App.inspectSkip = fp.id;
+    if (!name) try {
       const seen = App.inspectPick ? App.inspectPick({ x: 0, y: 0 }) : null;
       if (seen && seen.d < 36) { const o = seen.fn(); name = o && (o.title || o.name); }
       if (!name && App.pickPlace) { const P = App.pickPlace(App.rayFrom({ x: 0, y: 0 })); if (P && P.name && P.dist < 70) name = P.name; }
@@ -201,12 +236,212 @@
     el.textContent = name || "";
     el.hidden = !name;
     const c = $("fpCross");
-    if (c) c.classList.toggle("on", !!name);
+    if (c) { c.classList.toggle("on", !!name && !foe); c.classList.toggle("foe", foe); }
+  }
+  // ---------- acting from first person ----------
+  // what is within reach in front of it: a cave monster to strike, a Tickle to talk to
+  const REACH = 3.2, TALK = 4.8;
+  function inFront(t) {
+    const yaw = t.heading + fp.look;
+    const ahead = (x, z, r) => {
+      const dx = x - t.pos.x, dz = z - t.pos.z, d = Math.hypot(dx, dz);
+      if (d > r) return -1;
+      let da = Math.atan2(dx, dz) - yaw;
+      while (da > Math.PI) da -= 2 * Math.PI;
+      while (da < -Math.PI) da += 2 * Math.PI;
+      return d < 1 || Math.abs(da) < 0.7 ? d : -1;
+    };
+    let mon = null, md = 1e9, tk = null, td = 1e9;
+    for (const m of App.monstersNear ? App.monstersNear(t.pos.x, t.pos.z, REACH + 4) : []) { const d = ahead(m.x, m.z, REACH); if (d >= 0 && d < md) { md = d; mon = m; } }
+    for (const o of st.tickles) {
+      if (o === t || !o.group.visible || App.isKO(o.id) || App.isDead(o.id)) continue;
+      const d = ahead(o.pos.x, o.pos.z, TALK);
+      if (d >= 0 && d < td) { td = d; tk = o; }
+    }
+    return { mon, tk };
+  }
+  // ---------- the ability bar: F a basic blow, Q and G two abilities, R the ultimate ----------
+  // Which abilities depends on what the Tickle is (guilds.js App.combatRole): a warrior, a mage of its school, a
+  // healer, a tamer with its creature, or a plain brawler. Cooldowns are in real seconds.
+  const SLOT_KEYS = { KeyF: "F", KeyQ: "Q", KeyG: "G", KeyR: "R" };
+  const SLOTS = ["F", "Q", "G", "R"];
+  const KITS = {
+    warrior: {
+      F: { name: "Strike", cd: 0.45, info: "A blow with its weapon at the monster in front." },
+      Q: { name: "Cleave", cd: 6, info: "A wide swing that hits every monster in front." },
+      G: { name: "Shield Wall", cd: 14, info: "For 5 seconds it takes less than half the damage." },
+      R: { name: "Charge", cd: 30, info: "Rushes 9 blocks ahead and slams every monster on the way (triple damage)." },
+    },
+    mage: {
+      F: { name: "Staff Blow", cd: 0.5, info: "A knock with the staff at the monster in front." },
+      Q: { name: "Bolt", cd: 2.5, info: "Its school's spell at the monster it looks at, up to 16 blocks away." },
+      G: { name: "Blink", cd: 10, info: "A jump through the air to 7 blocks ahead." },
+      R: { name: "Nova", cd: 35, info: "A burst of its magic hitting every monster within 7 blocks (triple damage)." },
+    },
+    healer: {
+      F: { name: "Staff Blow", cd: 0.5, info: "A knock with the staff at the monster in front." },
+      Q: { name: "Mend", cd: 8, info: "Heals itself a third of its health." },
+      G: { name: "Bless", cd: 10, info: "Heals the Tickle in front and lifts its spirits." },
+      R: { name: "Sanctuary", cd: 45, info: "Heals itself and every Tickle within 8 blocks fully; the light burns monsters near." },
+    },
+    tamer: {
+      F: { name: "Strike", cd: 0.45, info: "A blow at the monster in front." },
+      Q: { name: "Sic 'em", cd: 4, info: "Its creature attacks the monster it looks at, up to 10 blocks away." },
+      G: { name: "Roar", cd: 12, info: "Its creature roars: monsters within 6 blocks are stunned for a few seconds." },
+      R: { name: "Stampede", cd: 30, info: "Its creature charges through everything in front up to 8 blocks (double and a half)." },
+    },
+    brawler: {
+      F: { name: "Punch", cd: 0.45, info: "A punch at the monster in front." },
+      Q: { name: "Kick", cd: 5, info: "A strong kick that pushes the monster back." },
+      G: { name: "Sprint", cd: 12, info: "Runs almost twice as fast for 4 seconds." },
+      R: { name: "Haymaker", cd: 25, info: "A huge blow at the monster in front (four times the damage)." },
+    },
+  };
+  const roleOf = (t) => (App.combatRole && App.combatRole(t.id)) || "brawler";
+  const kitOf = (t) => KITS[roleOf(t)] || KITS.brawler;
+  App.fpKit = (id) => { const t = agentOf(id); return t ? { role: roleOf(t), kit: kitOf(t) } : null; };
+  function buildBar(t) {
+    const el = $("fpBar");
+    if (!el) return;
+    const K = kitOf(t);
+    el.innerHTML = SLOTS.map((k) => '<button class="ab' + (k === "R" ? " ult" : "") + '" data-act="' + k + '" title="' + esc(K[k].name + ": " + K[k].info) + '"><kbd>' + k + "</kbd><span>" + esc(K[k].name) + "</span><i></i></button>").join("") +
+      '<button class="ab talk" data-act="talk" title="Talk: a few words with the Tickle in front"><kbd>T</kbd><span>Talk</span><i></i></button>';
+    fp.barRole = roleOf(t);
+  }
+  // the cooldowns drawn on the bar: the dark part shrinks as the ability comes back
+  function drawBar(t, a) {
+    const el = $("fpBar");
+    if (!el || el.hidden) return;
+    if (fp.barRole !== roleOf(t)) buildBar(t);
+    const K = kitOf(t), now = performance.now(), cds = (a && a.cds) || {};
+    for (const b of el.children) {
+      const k = b.dataset.act, cd = K[k] ? K[k].cd * 1000 : 2500, left = Math.max(0, (k === "talk" ? (a && a.talkAt) || 0 : cds[k] || 0) + cd - now);
+      const i = b.lastChild, h = Math.round((left / cd) * 100) + "%";
+      if (i.style.height !== h) i.style.height = h;
+      b.classList.toggle("cool", left > 0);
+    }
+  }
+  const baseDmg = (t) => { const g = (App.gearOf && App.gearOf(t.id)) || {}; return (4 + App.levelOf(t.id) * 1.4 + Math.random() * 4) * (g.weapon ? 1.4 : 1) * (g.silver ? 1.5 : 1); }; // monsters fear silver
+  const MCOL = { fire: "#ff7a2f", frost: "#8fd3f4", storm: "#fff4a0", arcane: "#c9a6ff", light: "#7be08f" };
+  // a blow lands on a monster: it turns on the Tickle; at zero it falls and the Tickle gets its experience
+  function hitMonster(t, a, m, dmg, col) {
+    if (!m || m.dead) return;
+    m.hp -= dmg; m.foe = t; a.foe = m;
+    if (App.FX) { App.FX.number(App.scene, { x: m.x, y: (m.y || 0) + 2.2, z: m.z }, String(Math.round(dmg)), col || "#ffd23f"); App.FX.burst(App.scene, { x: m.x, y: (m.y || 0) + 1, z: m.z }, col || "#ffd23f", 6, 0.1); }
+    if (m.hp <= 0) {
+      const M = (App.MONSTERS || {})[m.kind] || { name: "monster", xp: 10 };
+      App.monsterDown(m); if (a.foe === m) a.foe = null;
+      if (App.giveXP) App.giveXP(t.id, M.xp);
+      App.say(t, "Got it!", 2);
+      App.toast(t.name + " beat a " + M.name + " (+" + M.xp + " xp).");
+    }
+  }
+  const yawOf = (t) => t.heading + fp.look;
+  // the monsters round it: within r, and (with a cone) in front
+  function monstersAround(t, r, cone) {
+    const yaw = yawOf(t), out = [];
+    for (const m of App.monstersNear ? App.monstersNear(t.pos.x, t.pos.z, r + 4) : []) {
+      if (m.dead) continue;
+      const dx = m.x - t.pos.x, dz = m.z - t.pos.z, d = Math.hypot(dx, dz);
+      if (d > r) continue;
+      let da = Math.atan2(dx, dz) - yaw;
+      while (da > Math.PI) da -= 2 * Math.PI;
+      while (da < -Math.PI) da += 2 * Math.PI;
+      if (!cone || d < 1 || Math.abs(da) < cone) out.push(m);
+    }
+    return out;
+  }
+  const nearestAhead = (t, r) => monstersAround(t, r, 0.45).sort((p, q) => Math.hypot(p.x - t.pos.x, p.z - t.pos.z) - Math.hypot(q.x - t.pos.x, q.z - t.pos.z))[0] || null;
+  // a step straight ahead, stopping before water or a cliff
+  function rush(t, dist) {
+    const yaw = yawOf(t), dx = Math.sin(yaw), dz = Math.cos(yaw);
+    let x = t.pos.x, z = t.pos.z, went = 0;
+    for (let k = 0; k < dist * 2; k++) {
+      const nx = x + dx * 0.5, nz = z + dz * 0.5;
+      if (!App.isLand(nx, nz) || (App.climbOK && !App.climbOK(x, z, nx, nz))) break;
+      x = nx; z = nz; went += 0.5;
+    }
+    const from = { x: t.pos.x, y: t.pos.y + 1, z: t.pos.z };
+    t.pos.x = x; t.pos.z = z;
+    return { from, went };
+  }
+  function cast(t, a, k) {
+    const K = kitOf(t), A = K[k], now = performance.now();
+    if (!A) return;
+    a.cds = a.cds || {};
+    if (now - (a.cds[k] || -1e9) < A.cd * 1000) { if (k !== "F") App.say(t, A.name + " is not ready yet", 1); return; }
+    a.cds[k] = now;
+    const role = roleOf(t), g = (App.gearOf && App.gearOf(t.id)) || {}, school = (App.mageSchool && App.mageSchool(t.id)) || "arcane";
+    const P = { x: t.pos.x, y: t.pos.y + 1.2, z: t.pos.z }, FX = App.FX, sc = App.scene;
+    const melee = () => { t.swingAt = now; a.armedAt = now; if (g.weapon && !t.weaponObj) App.weaponShow(t, g.weapon, g.armor); };
+    const spell = () => { t.castAt = now; };
+    if (k === "F") { melee(); hitMonster(t, a, nearestAhead(t, 3.2), baseDmg(t)); if (FX) FX.slash(sc, { x: P.x + Math.sin(yawOf(t)) * 1.2, y: P.y, z: P.z + Math.cos(yawOf(t)) * 1.2 }, yawOf(t), "#ffffff"); return; }
+    if (role === "warrior") {
+      if (k === "Q") { melee(); if (FX) { FX.slash(sc, P, yawOf(t) - 0.5, "#ffd23f"); FX.slash(sc, P, yawOf(t) + 0.5, "#ffd23f"); } for (const m of monstersAround(t, 3.8, 1.05)) hitMonster(t, a, m, baseDmg(t) * 1.3); }
+      else if (k === "G") { a.guardUntil = now + 5000; App.say(t, "Shields up!", 1.5); if (FX) FX.ring(sc, P, "#8fd3f4", 2.2, 0.8); }
+      else if (k === "R") { melee(); const r = rush(t, 9); if (FX) FX.ring(sc, r.from, "#ffd23f", 2, 0.5); for (const m of monstersAround(t, 3, 0).concat(monstersAround({ pos: r.from, heading: yawOf(t) }, r.went + 1.5, 0.35))) hitMonster(t, a, m, baseDmg(t) * 3); App.say(t, "Chaaarge!", 1.5); }
+    } else if (role === "mage") {
+      if (k === "Q") { spell(); const m = nearestAhead(t, 16); const to = m ? { x: m.x, y: (m.y || 0) + 1, z: m.z } : { x: P.x + Math.sin(yawOf(t)) * 12, y: P.y, z: P.z + Math.cos(yawOf(t)) * 12 }; if (FX) FX.bolt(sc, P, to, school, () => hitMonster(t, a, m, baseDmg(t) * 1.6, MCOL[school])); else hitMonster(t, a, m, baseDmg(t) * 1.6); }
+      else if (k === "G") { spell(); const r = rush(t, 7); if (FX) { FX.burst(sc, r.from, MCOL[school] || "#c9a6ff", 16, 0.14); FX.burst(sc, { x: t.pos.x, y: t.pos.y + 1, z: t.pos.z }, MCOL[school] || "#c9a6ff", 16, 0.14); } }
+      else if (k === "R") { spell(); if (FX) { FX.ring(sc, P, MCOL[school] || "#c9a6ff", 7, 0.9); FX.burst(sc, P, MCOL[school] || "#c9a6ff", 30, 0.18); } for (const m of monstersAround(t, 7, 0)) hitMonster(t, a, m, baseDmg(t) * 3, MCOL[school]); App.say(t, "Nova!", 1.5); }
+    } else if (role === "healer") {
+      const healT = (o, n) => { if (!(o.hpMax > 0)) { o.hpMax = App.maxHPOf ? App.maxHPOf(o.id) : 100; o.hp = o.hpMax; } o.hpAt = st.T; const got = Math.min(o.hpMax - o.hp, n); o.hp += got; if (FX) { FX.heal(sc, o.pos); FX.number(sc, { x: o.pos.x, y: o.pos.y + 3.2, z: o.pos.z }, "+" + Math.round(got), "#7be08f"); } };
+      if (k === "Q") { spell(); healT(t, (t.hpMax || (App.maxHPOf ? App.maxHPOf(t.id) : 100)) / 3); }
+      else if (k === "G") { spell(); const o = inFront(t).tk; if (!o) { App.say(t, "Nobody to bless here", 1.5); a.cds.G = 0; return; } healT(o, (o.hpMax || 100) / 2); o.needs.fun = Math.min(100, o.needs.fun + 10); if (App.bumpRel) App.bumpRel(t, o, 3); App.say(o, "Thank you!", 2); }
+      else if (k === "R") { spell(); if (FX) FX.ring(sc, P, "#7be08f", 8, 1.1); healT(t, 1e6); for (const o of st.tickles) if (o !== t && !App.isKO(o.id) && Math.hypot(o.pos.x - t.pos.x, o.pos.z - t.pos.z) < 8) healT(o, 1e6); for (const m of monstersAround(t, 6, 0)) hitMonster(t, a, m, baseDmg(t) * 1.5, "#7be08f"); App.say(t, "Be healed!", 1.5); }
+    } else if (role === "tamer") {
+      const c = App.leadCreature ? App.leadCreature(t.id) : null, cn = (c && c.name) || "its creature";
+      if (k === "Q") { spell(); const m = nearestAhead(t, 10); if (FX) FX.bolt(sc, P, m ? { x: m.x, y: (m.y || 0) + 1, z: m.z } : { x: P.x + Math.sin(yawOf(t)) * 8, y: P.y, z: P.z + Math.cos(yawOf(t)) * 8 }, "venom", () => hitMonster(t, a, m, baseDmg(t) * 1.8, "#7bd34a")); App.say(t, "Get it, " + cn + "!", 1.5); }
+      else if (k === "G") { spell(); if (FX) FX.ring(sc, P, "#ffb24a", 6, 0.8); for (const m of monstersAround(t, 6, 0)) { m.atk = -3; m.wait = 3; if (FX) FX.number(sc, { x: m.x, y: (m.y || 0) + 2.4, z: m.z }, "stunned", "#ffb24a"); } }
+      else if (k === "R") { spell(); if (FX) FX.ring(sc, P, "#ffb24a", 8, 0.8); for (const m of monstersAround(t, 8, 0.6)) hitMonster(t, a, m, baseDmg(t) * 2.5, "#ffb24a"); App.say(t, "Stampede!", 1.5); }
+    } else {
+      if (k === "Q") { melee(); const m = nearestAhead(t, 3.2); hitMonster(t, a, m, baseDmg(t) * 1.6); if (m && !m.dead) { const yaw = yawOf(t), nx = m.x + Math.sin(yaw) * 2, nz = m.z + Math.cos(yaw) * 2; if (App.isLand(nx, nz)) { m.x = nx; m.z = nz; } m.atk = -1; } }
+      else if (k === "G") { a.sprintUntil = now + 4000; App.say(t, "Go go go!", 1.2); if (FX) FX.burst(sc, { x: t.pos.x, y: t.pos.y + 0.3, z: t.pos.z }, "#ffffff", 10, 0.1); }
+      else if (k === "R") { melee(); hitMonster(t, a, nearestAhead(t, 3.2), baseDmg(t) * 4, "#ff6b5e"); if (FX) FX.ring(sc, P, "#ff6b5e", 2.5, 0.5); App.say(t, "HAYMAKER!", 1.5); }
+    }
+  }
+  // the monster it is fighting lunges back: every lunge is a blow (a shield takes some of it); at zero health, knocked out
+  function foeBack(t, a) {
+    const m = a.foe;
+    if (!m) return false;
+    if (m.dead || Math.hypot(m.x - t.pos.x, m.z - t.pos.z) > 6) { if (m.foe === t) m.foe = null; a.foe = null; return false; }
+    if (m.lungeAt && m.lungeAt !== a.lunge) {
+      a.lunge = m.lungeAt;
+      const M = (App.MONSTERS || {})[m.kind] || { name: "monster", atk: 6 };
+      const guard = performance.now() < (a.guardUntil || 0) ? 0.4 : 1;
+      if (App.hurt && App.hurt(t, M.atk * (0.6 + Math.random() * 0.6) * guard, "fighting a " + M.name + (m.d ? " at " + m.d.name : ""), "Ouch\u2026 KO!", 0.02)) { m.foe = null; return true; }
+    }
+    return false;
+  }
+  // T: a few words with the Tickle in front; it turns to answer. They get on a little better, and both feel less lonely
+  const HELLO = ["Hi there, ", "Nice day, isn't it, ", "How's it going, ", "Good to see you, ", "Fancy meeting you here, "];
+  const REPLY = [["Oh! Hello.", "Do I know you?", "Hi\u2026 nice hat."], ["Hey! All good here.", "Not bad, you?", "Lovely day for it!"], ["My friend! Come here!", "There you are!", "Always a pleasure!"]];
+  function talk(t, a) {
+    const now = performance.now();
+    if (now - (a.talkAt || 0) < 2500) return;
+    a.talkAt = now;
+    const o = inFront(t).tk;
+    if (!o) { App.say(t, "Hello? Anyone?", 1.6); return; }
+    o.heading = Math.atan2(t.pos.x - o.pos.x, t.pos.z - o.pos.z);
+    App.say(t, HELLO[Math.floor(Math.random() * HELLO.length)] + (o.traits && o.traits.Character ? o.traits.Character : o.name) + "!", 3);
+    const r = App.relGet(t.id, o.id), set = REPLY[r >= 30 ? 2 : r >= 8 ? 1 : 0];
+    setTimeout(() => { if (o.group) App.say(o, set[Math.floor(Math.random() * set.length)], 3); }, 900);
+    t.needs.social = Math.min(100, t.needs.social + 6);
+    o.needs.social = Math.min(100, o.needs.social + 4);
+    if (App.bumpRel) App.bumpRel(t, o, 1.5 + (App.compatibility ? App.compatibility(t, o) : 0));
   }
   // every frame, instead of moving the map: keys turn the view, and the world streams round the Tickle
   App.fpFollow = (dt, keys) => {
     const t = fp && agentOf(fp.id);
     if (!t) { App.exitFP(); return; }
+    if (fp.drive && !(t.action && t.action.kind === "fp")) {
+      const ko = App.isKO(t.id) || App.isDead(t.id);
+      App.exitFP();
+      if (ko) App.toast(t.name + " was knocked out: first person ends here.");
+      return;
+    }
+    pad(dt);
+    if (!fp) return;
     let turn = 0;
     if (keys.has("KeyZ") || (fp.drive && keys.has("ArrowLeft"))) turn += 1;
     if (keys.has("KeyX") || (fp.drive && keys.has("ArrowRight"))) turn -= 1;
@@ -216,6 +451,7 @@
     fp.back += (fp.backT - fp.back) * Math.min(1, dt * 8);
     const now = performance.now();
     if (now - fp.aimAt > 220) { fp.aimAt = now; hudStats(t); aim(); }
+    if (fp.drive) drawBar(t, t.action);
   };
   // the camera at its eyes (or behind it, pulled back with the wheel), looking the way it looks
   const EYE = new THREE.Vector3(), DIR = new THREE.Vector3(), POS = new THREE.Vector3();
@@ -275,14 +511,16 @@
     if (keys.has("KeyD")) s += 1;
     if (keys.has("KeyA")) s -= 1;
     if (fp.stick) { f += fp.stick.f; s += fp.stick.s; }
+    const P = fp.pad;
+    if (P) { f += P.f; s += P.s; }
     const mag = Math.min(1, Math.hypot(f, s));
-    const run = keys.has("ShiftLeft") || keys.has("ShiftRight") || (fp.stick && Math.hypot(fp.stick.f, fp.stick.s) > 0.95);
+    const run = keys.has("ShiftLeft") || keys.has("ShiftRight") || (fp.stick && Math.hypot(fp.stick.f, fp.stick.s) > 0.95) || (P && P.run);
     const moving = mag > 0.12 && dm > 0;
     // the head bob follows the stride
     fp.bobAmp += ((moving && !a.water && !a.ride ? (run ? 1.3 : 1) : 0) - fp.bobAmp) * Math.min(1, dtReal * 6);
     if (moving) fp.bobPh += dtReal * (run ? 11 : 7.5);
     // M: into the saddle or out of it (wealth.js keeps the mount under it)
-    const mDown = keys.has("KeyM");
+    const mDown = keys.has("KeyM") || !!(P && P.mount);
     if (mDown && !a.mWas && App.mountOf && App.mountOf(t.id)) { a.ride = !a.ride; if (!a.ride) { a.alt = 0; t.flyY = null; } if (fp) showHud(t); }
     a.mWas = mDown;
     const M = a.ride && App.fpSaddle ? App.fpSaddle(t, true) : null;
@@ -292,10 +530,14 @@
     // (a press is remembered even when it is shorter than a frame)
     if (fp.jump && !M && !a.water && !(a.jy > 0)) { a.vy = 7; a.jy = 0.001; }
     fp.jump = false;
+    // F and T (or the touch buttons): a blow at the monster in front, a word with the Tickle in front
+    if (fp.act === "talk") talk(t, a); else if (fp.act) cast(t, a, fp.act);
+    fp.act = null;
+    if (foeBack(t, a)) return;
     if (M && M.fly) {
       // the griffin: up and down with Space and C, and over everything once it is off the ground
-      if (keys.has("Space")) a.alt = Math.min(30, (a.alt || 0) + dtReal * 8);
-      if (keys.has("KeyC")) a.alt = Math.max(0, (a.alt || 0) - dtReal * 8);
+      if (keys.has("Space") || (P && P.up)) a.alt = Math.min(30, (a.alt || 0) + dtReal * 8);
+      if (keys.has("KeyC") || (P && P.down)) a.alt = Math.max(0, (a.alt || 0) - dtReal * 8);
       const ground = Math.max(App.surfaceAt(t.pos.x, t.pos.z).y, App.WATER_Y);
       t.flyY = ground + (a.alt || 0); t.riding.alt = a.alt || 0;
       if (moving && (a.alt || 0) > 1.5) {
@@ -308,7 +550,7 @@
     if (moving) {
       const h = t.heading, len = Math.hypot(f, s);
       FWD.set((Math.sin(h) * f - Math.cos(h) * s) / len, 0, (Math.cos(h) * f + Math.sin(h) * s) / len);
-      const speed = (run ? 7 : 3.6) * mag * (a.water ? 0.55 : 1) * (M ? (M.fly ? 1.6 : M.mul * 0.8) : 1), want = speed * Math.min(dtReal, 0.1);
+      const speed = (run ? 7 : 3.6) * mag * (performance.now() < (a.sprintUntil || 0) ? 1.8 : 1) * (a.water ? 0.55 : 1) * (M ? (M.fly ? 1.6 : M.mul * 0.8) : 1), want = speed * Math.min(dtReal, 0.1);
       // the same rules as any Tickle: no climbing cliffs, round the obstacles
       const keep = t.heading;
       App.walkTo(t, { x: t.pos.x + FWD.x * 2, z: t.pos.z + FWD.z * 2 }, dm, dtReal, true, want / Math.max(1e-6, App.WALK_SPEED * dm));

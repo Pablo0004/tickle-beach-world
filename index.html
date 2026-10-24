@@ -249,6 +249,18 @@ input[type="text"] { background: rgba(0,0,0,0.3); border: 1px solid var(--line);
 #fpCross::after { left: 3px; top: 10px; width: 16px; height: 2px; }
 #fpCross.on::before, #fpCross.on::after { background: #ffd23f; }
 #fpCross.free { opacity: 0.55; }
+#fpCross.foe::before, #fpCross.foe::after { background: #ff6b5e; }
+#fpBar { position: absolute; left: calc(50% - 192px); transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 64px); display: flex; gap: 8px; z-index: 32; padding: 8px; background: rgba(9, 29, 41, 0.82); border-radius: 14px; }
+#fpBar[hidden] { display: none; }
+#fpBar .ab { position: relative; width: 62px; height: 62px; padding: 0; border-radius: 10px; border: 2px solid rgba(255, 255, 255, 0.25); background: linear-gradient(160deg, #1d4a63, #0d2a39); color: #fff; font: 800 10.5px/1.1 Nunito, system-ui, sans-serif; cursor: pointer; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 6px; }
+#fpBar .ab.ult { border-color: #ffd23f; background: linear-gradient(160deg, #6a4a12, #2a1d08); }
+#fpBar .ab.talk { border-color: rgba(255, 143, 192, 0.6); }
+#fpBar .ab kbd { position: absolute; left: 5px; top: 4px; font: 900 13px/1 Silkscreen, monospace; color: #ffd23f; }
+#fpBar .ab span { position: relative; z-index: 1; text-align: center; padding: 0 2px; }
+#fpBar .ab i { position: absolute; left: 0; right: 0; bottom: 0; height: 0; background: rgba(0, 0, 0, 0.62); pointer-events: none; }
+#fpBar .ab.cool { color: #9fb0bf; }
+#fpBar .ab:focus-visible { outline: 2px solid #ffd23f; }
+body.fpmode #mapbox, body.fpmode #dock { display: none !important; }
 #fpAim { position: absolute; left: 50%; top: calc(50% + 20px); transform: translateX(-50%); z-index: 31; pointer-events: none; background: rgba(9, 29, 41, 0.8); color: #ffd23f; font-weight: 800; font-size: 12.5px; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
 #fpStats { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); width: 210px; z-index: 30; pointer-events: none; background: rgba(9, 29, 41, 0.82); color: #fff; border-radius: 12px; padding: 9px 12px 10px; font-size: 11.5px; }
 #fpStats .fs-name { font-weight: 900; font-size: 14px; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -265,7 +277,7 @@ input[type="text"] { background: rgba(0,0,0,0.3); border: 1px solid var(--line);
 #beastBar[hidden] { display: none; }
 #uwTint { position: absolute; inset: 0; pointer-events: none; z-index: 0; background: radial-gradient(ellipse at 50% 40%, rgba(40, 150, 190, 0.28), rgba(10, 60, 95, 0.55)); }
 #uwTint[hidden] { display: none; }
-@media (max-width: 760px) { #fpHud { white-space: normal; width: calc(100% - 32px); border-radius: 12px; top: 166px; } #fpCompass { left: 50%; top: 130px; width: 220px; margin-left: -110px; } #fpHud { left: 50%; max-width: none; width: auto; justify-content: space-between; } #fpHud .fh-keys { display: none; } body.fpmode #mapbox { display: none; } #fpStats { top: 220px; transform: none; width: 160px; padding: 6px 9px; } }
+@media (max-width: 760px) { #fpHud { white-space: normal; width: calc(100% - 32px); border-radius: 12px; top: 166px; } #fpCompass { left: 50%; top: 130px; width: 220px; margin-left: -110px; } #fpHud { left: 50%; max-width: none; width: auto; justify-content: space-between; } #fpHud .fh-keys { display: none; } body.fpmode #mapbox { display: none; } #fpStats { top: 220px; transform: none; width: 160px; padding: 6px 9px; } #fpBar { left: auto; right: 10px; transform: none; bottom: auto; top: 220px; flex-direction: column; padding: 6px; gap: 6px; } #fpBar .ab { width: 54px; height: 54px; font-size: 9.5px; } }
 #contestHud .ch-t { font-weight: 900; font-size: 15px; color: #ffd23f; }
 #contestHud .ch-r { color: #c9d4e0; font-weight: 700; font-size: 12px; }
 #contestHud .ch-s { color: #c9d4e0; margin: 1px 0 6px; }
@@ -371,7 +383,7 @@ input[type="text"] { background: rgba(0,0,0,0.3); border: 1px solid var(--line);
 <div id="app">
   <canvas id="world" aria-label="Tickle Beach island, 3D view"></canvas>
   <div id="uwTint" hidden></div>
-  <div id="roomFade"></div><div id="roomHud" hidden></div><div id="contestHud" hidden></div><div id="fpHud" hidden></div><div id="fpCompass" hidden></div><div id="fpCross" class="free" hidden></div><div id="fpAim" hidden></div><div id="fpStats" hidden></div><div id="fpStick" hidden><i></i></div><div id="beastBar" hidden></div><div id="doorChip" hidden></div><div id="placeCard" hidden></div>
+  <div id="roomFade"></div><div id="roomHud" hidden></div><div id="contestHud" hidden></div><div id="fpHud" hidden></div><div id="fpCompass" hidden></div><div id="fpCross" class="free" hidden></div><div id="fpAim" hidden></div><div id="fpStats" hidden></div><div id="fpStick" hidden><i></i></div><div id="fpBar" hidden></div><div id="beastBar" hidden></div><div id="doorChip" hidden></div><div id="placeCard" hidden></div>
     <div id="overlay"></div>
 
   <header id="topbar" class="glass">
@@ -598,7 +610,7 @@ input[type="text"] { background: rgba(0,0,0,0.3); border: 1px solid var(--line);
 <script src="js/kit-wealth.js?v=246"></script>
 <script src="js/approved.js?v=225"></script>
 <script src="js/world.js?v=254"></script>
-<script src="js/sim.js?v=250"></script>
+<script src="js/sim.js?v=252"></script>
 <script src="js/geo.js?v=250"></script>
 <script src="js/population.js?v=253"></script>
 <script src="js/critters.js?v=225"></script>
@@ -621,7 +633,7 @@ input[type="text"] { background: rgba(0,0,0,0.3); border: 1px solid var(--line);
 <script src="js/casino.js?v=225"></script>
 <script src="js/contests.js?v=250"></script>
 <script src="js/diving.js?v=225"></script>
-<script src="js/firstperson.js?v=253"></script>
+<script src="js/firstperson.js?v=256"></script>
 <script src="js/seabeasts.js?v=252"></script>
 <script src="js/wealth.js?v=252"></script>
 <script src="js/prison.js?v=251"></script>
@@ -635,5 +647,5 @@ input[type="text"] { background: rgba(0,0,0,0.3); border: 1px solid var(--line);
 <script src="js/sfx.js?v=225"></script>
 <script src="js/music.js?v=225"></script>
 <script src="js/hand.js?v=225"></script>
-<script src="js/ui.js?v=254"></script>
+<script src="js/ui.js?v=256"></script>
 <script src="js/directory.js?v=225"></script>

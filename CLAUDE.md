@@ -11,6 +11,8 @@ JavaScript, no build step). The owner talks in Spanish: answer in Spanish. Code,
 - `ESTADO_Y_PENDIENTES.md`: everything asked, done and pending, in Spanish. Update it (and `PENDING.md`) after
   every item.
 - `README.md`: the whole game, controls, technical overview and what each file in `js/` does.
+- `REVISAR.md` (Spanish): the checklist the owner goes through at the end, when they test everything; add to it
+  after every item (the owner does not want to test until the work is finished).
 - `tests/README.md`: the browser test scripts (Playwright), how to run them and what each one checks. Use them
   to see a change working before publishing.
 

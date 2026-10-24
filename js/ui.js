@@ -340,7 +340,7 @@
     if (e.key === "Escape" && App.fpOn && App.fpOn()) { if (!App.fpEscape()) App.exitFP(); return; }
     if ((e.key === "v" || e.key === "V") && App.enterFP) { if (App.fpOn()) App.exitFP(); else if (ui.sel != null) App.enterFP(ui.sel); else App.toast("Pick a Tickle first, then press V to see through its eyes."); return; }
     // driving your own Tickle in first person: M into the saddle, Space and C up and down on a griffin
-    if (App.fpDriving && App.fpDriving() && ["KeyM", "Space", "KeyC"].includes(e.code)) { ui.keys.add(e.code); e.preventDefault(); return; }
+    if (App.fpDriving && App.fpDriving() && ["KeyM", "Space", "KeyC", "KeyF", "KeyT", "KeyQ", "KeyG", "KeyR"].includes(e.code)) { ui.keys.add(e.code); e.preventDefault(); return; }
     if (["KeyW", "KeyA", "KeyS", "KeyD", "KeyZ", "KeyX", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "ShiftLeft", "ShiftRight"].includes(e.code)) { ui.keys.add(e.code); if (e.code.startsWith("Arrow")) e.preventDefault(); return; }
     if (e.code === "Space") { e.preventDefault(); setSpeed(st.speed ? 0 : 1); }
     else if (e.key === "1") setSpeed(1); else if (e.key === "2") setSpeed(4); else if (e.key === "3") setSpeed(12);

@@ -1526,6 +1526,7 @@
     if (before < 30 && st.rel[k] >= 30) App.log("social", a.name + " and " + b.name + " are now friends.", "They hit it off over a few chats.", { who: [a.id, b.id] });
     if (before < 60 && st.rel[k] >= 60) App.log("social", a.name + " and " + b.name + " are best friends.", "", { who: [a.id, b.id] });
   }
+  App.bumpRel = bumpRel; // (talking from first person, firstperson.js)
   App.relLabel = (v) => (v >= 60 ? "Best friends" : v >= 30 ? "Friends" : v >= 8 ? "Acquaintances" : "Just met");
 
   const INDOOR = new Set(["rest", "recover", "breakfast", "shelter"]); // done inside the house
@@ -1550,8 +1551,11 @@
       else if (use === "lift") { const b = Math.abs(Math.sin(w * 2.5 + ph)); rx = -0.2 - b * 2.7; lx = -0.1; rz = 0.12 * b; } // the weight is in one paw: only that arm lifts it
       else if (use === "dig") { rx = lx = -0.8 + Math.sin(w * 4.4 + ph) * 0.5; }
       else if (use === "trick" || use === "skate") { rz = 0.9; lz = -0.9; rx = Math.sin(w * 3 + ph) * 0.4; lx = -rx; }
-    } else if (k === "slay") {
-      // chop: raised overhead, then down; the shield held up in front
+    } else if (k === "fp" && since(t.castAt, 520) > 0) {
+      // a spell cast from first person: both paws thrown up and forward
+      const s = since(t.castAt, 520); rx = lx = -2.4 + (1 - s) * 0.9; rz = 0.2; lz = -0.2;
+    } else if (k === "slay" || (k === "fp" && since(t.swingAt, 340) > 0)) {
+      // chop: raised overhead, then down; the shield held up in front (also a blow struck from first person)
       const s = since(t.swingAt, 340);
       rx = s > 0 ? -2.8 + (1 - s) * 2.4 : -0.7; lx = a.armor ? -1.2 : -0.1; lz = a.armor ? -0.2 : 0;
     } else if (k === "box" || k === "ringwait") {
@@ -1692,7 +1696,7 @@
       t.pivot.rotation.z = Math.sin(now / 160 + t.id) * 0.08; t.pivot.position.y = Math.abs(Math.sin(now / 180 + t.id)) * 0.08;
       return;
     }
-    if ((t.weaponObj || t.shieldObj) && !(t.action && (t.action.kind === "slay" || t.action.kind === "forge"))) App.weaponShow(t, null);
+    if ((t.weaponObj || t.shieldObj) && !(t.action && (t.action.kind === "slay" || t.action.kind === "forge" || (t.action.kind === "fp" && performance.now() - (t.action.armedAt || 0) < 8000)))) App.weaponShow(t, null);
     if (t.action && t.action.kind === "command" && !walking) {
       const k = Math.max(0, 1 - (now - (t.throwAt || 0)) / 500);
       t.pivot.rotation.x = -0.25 * k + 0.05; t.pivot.position.y = k * 0.2; t.pivot.rotation.z = Math.sin(now / 200) * 0.05;

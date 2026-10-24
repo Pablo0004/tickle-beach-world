@@ -472,7 +472,15 @@ casino, mine and dungeon leads into its own small maps (rooms) drawn apart on bl
   leaves); a crosshair names what is in front and a click opens its inspect window. A HUD shows the Tickle's
   health, its four needs and a compass. Space jumps on foot, the head bobs with the stride, and the mouse wheel
   pulls the camera back behind the Tickle (third person) and in again. On a touch screen a stick on the left
-  walks it and a drag on the right looks round; a tap inspects what was tapped.
+  walks it and a drag on the right looks round; a tap inspects what was tapped. Movement is as in a shooter: W/S
+  forward and back, A/D sideways, the mouse turns. With your own Tickle there is an ability bar, as in a MOBA:
+  F a basic blow, Q and G two abilities and R the ultimate, each with a cooldown, by what the Tickle is (warrior:
+  Strike, Cleave, Shield Wall, Charge; mage: Staff Blow, Bolt of its school, Blink, Nova; healer: Staff Blow,
+  Mend, Bless, Sanctuary; tamer: Strike, Sic 'em, Roar, Stampede; anyone else: Punch, Kick, Sprint, Haymaker).
+  The cave monsters fight back (a knock-out ends first person). T talks to the Tickle in front (it answers, they
+  get on a little better). A game controller works too: left stick to walk (pressed in to run), right stick to
+  look, A jump (up on a griffin, LT down), X or RT the basic blow, Y Q, LB G, RB R, B talk, Back to mount, Start
+  to leave.
 
 ## 19. The Director (AI) and the Library
 
@@ -501,7 +509,7 @@ casino, mine and dungeon leads into its own small maps (rooms) drawn apart on bl
 | Building or landmark card | click it |
 | Go inside / leave | E near a door, cave or mine / Esc |
 | Follow a Tickle | select it and press F |
-| First person | V (click to capture the mouse and look round, click again to inspect what is under the crosshair; WASD to walk, Shift to run, Space to jump, Z/X or drag to turn, wheel for the camera behind it, E to enter, M to mount, Space/C to climb/descend on a griffin; Esc frees the mouse, Esc again leaves; touch: stick on the left, drag on the right) |
+| First person | V (click to capture the mouse and look round, click again to inspect what is under the crosshair; WASD to walk, Shift to run, Space to jump, Z/X or drag to turn, wheel for the camera behind it, E to enter, M to mount, Space/C to climb/descend on a griffin; F/Q/G/R abilities, T talk; Esc frees the mouse, Esc again leaves; touch: stick on the left, drag on the right; a game controller works too) |
 | Time | Space pauses; 1, 2, 3 set the speed (1x, 4x, 12x) |
 
 ## 21. Technical overview

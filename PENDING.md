@@ -14,7 +14,10 @@ one item is finished before the next one starts. The browser test scripts and wh
 ### 1.2 More detail in every model and texture (asked 22 October)
 
 "Go through every texture of the game and give all of them a higher level of detail; the cubes may need to be
-smaller, if possible; I want the details of a professional game." Notes for the work:
+smaller, if possible; I want the details of a professional game." **The owner insists (24 October): everything
+stays made of cubes** — smaller cubes and pixel-style textures per block face, never smooth models; the
+reference is the Tickles themselves, which are cubes with a good level of detail: bring the rest of the models
+to about their cube size. Notes for the work:
 - Kit models (`TB.KIT[kind].voxel = [near, far]`, SDF units, `App.S` = 1/160 world unit) are meshed at load in
   two levels (`App.frag`, `App.fragLo`, `loadFragments` in population.js); the far view (farview.js) adds coarse
   copies and stand-ins. Smaller cubes means smaller `voxel` values: about 8 times the voxels when halved, more
@@ -95,8 +98,14 @@ on the walls make sense. Inspired by the game Imperium." Ideas to agree on with 
   and in again; on touch screens a stick on the left third walks (pushed to the edge it runs) and a drag
   elsewhere looks, a tap inspects. In first person every pointer goes to `App.fpPointer` (world.js hands them
   over). On phones the minimap hides in first person and the key hints shrink to the name and Leave. Test:
-  `tests/t_fp.js`. Acting from first person (hitting a monster, talking to the Tickle in front) is still to be
-  decided with the owner.
+  `tests/t_fp.js`.
+- **Acting from first person** (agreed 24 October): movement as in Counter-Strike (W/S, A/D sideways, the mouse
+  turns); an ability bar as in League of Legends (the owner's idea): F basic, Q, G, R ultimate, with cooldowns,
+  by role (`App.combatRole`: warrior, mage, healer, tamer, brawler; `KITS` in firstperson.js); the cave monsters
+  fight back (`App.hurt`; Shield Wall takes 60% off; a knock-out ends first person); T talks to the Tickle in
+  front (`App.bumpRel`). A game controller (Gamepad API). Tests: `t_fp2.js`, `t_fp3.js`. Not yet: abilities
+  against dragons, sea beasts and the Underworld's guardians (first person is not available inside), levels or
+  choices of abilities.
 
 ## 5. Done in version 49 (published 24 October)
 
