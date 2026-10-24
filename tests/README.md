@@ -110,6 +110,8 @@ loaded in Node without a browser: `require('./tests/node_kit').KIT`).
   entered from its mouth; the view following a diver from above; `dive_fp.png`, `dive_cave.png`, `dive_follow.png`.
 - `t_uw.js` — first person three blocks down in a kelp forest and a coral garden, with the nearest sea life;
   `uw_0.png`, `uw_1.png`.
+- `t_menu.js` — the game menu: the world full-screen, the Menu button and Esc, every section, M for the map, a
+  Tickle's full card, travelling closes it (`menu_world.png`, `menu_<page>.png`; `W=400 H=800` for a phone).
 - `t_sky.js` — the view at several heights (`RADII=46,130,400,1000,2600`): frame time, triangles, far-view
   instances, screenshots `sky_N.png`.
 - `t_big.js` — lists the biggest scenery models (diagnostic for the far view).

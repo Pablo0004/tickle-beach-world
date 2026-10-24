@@ -42,5 +42,15 @@ https://claude.ai/artifact/Y2NNeAnZA2GCzhpAS2qC6b. Keep a preview separate from 
 second artifact), and only update the game when the owner approves. Saved games live in the browser per
 artifact, so a new artifact starts a new world.
 
+The version 50 preview (everything since version 49, not yet approved as the game):
+https://claude.ai/artifact/Q5L8KVvvTrdNaJfVrHzSA2. From a session on the owner's own computer (not the cloud), the
+same Artifact tool publishes; a new session can update that preview by passing its URL (read it first).
+
+## Working locally
+
+No build step: serve the repository (`node tests/serve.js`, http://localhost:8765) and open it in a browser. The
+browser tests need Node 18+ and Playwright with Chromium; see `tests/README.md` (optional local three.js in
+`tests/vendor/`). Software WebGL in a headless browser runs at about one frame a second, so the tests wait long.
+
 GitHub: https://github.com/Pablo0004/tickle-beach-world (`main` has version 50). Repository settings (the
 description) cannot be changed from a Claude session; give the owner the text instead.

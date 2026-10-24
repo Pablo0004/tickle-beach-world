@@ -55,3 +55,14 @@ mando, ni tarjeta gráfica). Ve tachando lo que veas bien y apunta lo que no.
 - [ ] Busca una cueva submarina (hay 2 por región, mar adentro): baja hasta su boca y pulsa E. Desde la superficie
       no debe dejarte entrar.
 - [ ] Dentro de la gruta: cristales, coral, tesoros y la cámara de las perlas.
+
+## El menú (punto 1.4)
+
+- [ ] Botón amarillo "Menu" (arriba a la izquierda) y Esc lo abren; Esc o "Back to the world" lo cierran.
+- [ ] Con el menú cerrado, el mundo a pantalla completa; ¿echas algo de menos a la vista?
+- [ ] Cada sección: Tickles, Holders, Adventure, Map, Directory, Director, Review, Library, How it works, Controls,
+      Sound, Settings, Credits.
+- [ ] La tecla M abre y cierra el mapa dentro del menú; un clic en el mapa te lleva y cierra el menú.
+- [ ] "Full card" en la ventana de un Tickle abre el menú en su ficha.
+- [ ] ¿Prefieres que el juego se pause mientras el menú está abierto? Ahora sigue corriendo.
+- [ ] En el móvil: las secciones en una fila arriba.

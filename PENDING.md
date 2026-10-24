@@ -1,6 +1,6 @@
 # Tickle Beach World — what is pending
 
-Updated 24 October 2026 (night). This repository (`main`) holds version 50: version 49 (published as the game on 24
+Updated 24 October 2026 (end of the day). This repository (`main`) holds version 50: version 49 (published as the game on 24
 October, https://claude.ai/artifact/Y2NNeAnZA2GCzhpAS2qC6b) plus first person while controlling a Tickle (item
 1.1, done and tested, in a separate preview until the owner approves it,
 https://claude.ai/artifact/Q5L8KVvvTrdNaJfVrHzSA2; see section 4). Items are worked in the order agreed with the project owner;
@@ -10,6 +10,10 @@ one item is finished before the next one starts. The browser test scripts and wh
 ---
 
 ## 1. Next, in order
+
+Done on 24 October: 1.0 (version 49 published), 1.1 (first person), 1.2 (more detail), 1.2b (doors), 1.2c
+(diving), 1.4 (the menu); see section 4. Next: **1.3 the encyclopedia** (it goes into the menu as a section), then
+1.5 wars between holders (to agree with the owner first), then 1.6.
 
 ### 1.2 More detail in every model and texture (asked 22 October)
 
@@ -42,15 +46,6 @@ boats, ores and Ethernum, places, jobs, guilds, factions, laws, and the units of
 model, number, what it is, where it lives or is found, health, attack, defence, speed, type and what it is
 strong against, abilities, who can tame or ride or use it, price, what it drops or gives. Possibly "seen /
 not seen yet" entries, unlocked as the player meets them.
-
-### 1.4 A professional game menu (asked 23 October)
-
-"Everything must go inside a menu that can be hidden or opened; include in the menu the panel on the right that
-cannot be closed; leave it all like the menu of a professional game." The right-hand panel (tabs Tickles,
-Holders, Director, Review, Adventure, Library) cannot be closed today; the Menu modal has How it works, Controls,
-Sound, Settings and Credits. Plan: one menu that opens and closes (a button and a key), holding the panel's tabs,
-the menu's sections, the Directory, the big map and the encyclopedia, with the look of a game menu; the world
-full-screen when it is closed. The inspect window, the place cards and the notifications stay over the world.
 
 ### 1.5 Wars between holders, inspired by Imperium (asked 23 October)
 
@@ -89,6 +84,17 @@ on the walls make sense. Inspired by the game Imperium." Ideas to agree on with 
 - **Creature tournament fights** may resolve too fast to be watched comfortably.
 
 ## 4. Done in version 50 (preview, not yet in the game)
+
+- **The game menu** (item 1.4, asked 23 October; `js/menu.js`): the right-hand panel that could not be closed, the
+  Directory, the big map and the old Menu's sections now live in one menu that opens over the world (the Menu
+  button or Esc) and closes again (Esc, "Back to the world"); with it closed the world is full-screen. Sections:
+  Play (Tickles, Holders, Adventure, Map, Directory), World (Director, Review, Library), Options (How it works,
+  Controls, Sound, Settings, Credits). The pages are the same elements as before, moved into the menu, so all their
+  code works unchanged; `App.openMenu(page)`, `App.closeMenu()`, `App.toggleMenu(page)`, `App.gameMenuOpen(page)`;
+  the old openers (`App.setTab`, `App.showMenu`, `App.openMap`, `App.openDirectory`, `App.selectTickle`,
+  `App.openReview`) open the menu at their page, and `App.flyTo`, `App.goToToken`, `App.enter`, `App.enterFP` close
+  it. The world keeps running while the menu is open. Test: `t_menu.js` (desktop and `W=400 H=800`). The
+  encyclopedia (1.3) goes into it as a section of its own when it is made.
 
 - **Diving, the sea floor and the sea caves** (item 1.2c, asked 24 October; `js/sea.js`, firstperson.js,
   interiors.js `seaCaveMap`, world.js): the open sea's floor with kelp, seagrass, coral, anemones, sponges, sea

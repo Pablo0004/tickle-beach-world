@@ -378,6 +378,52 @@ body.fpmode #mapbox, body.fpmode #dock { display: none !important; }
   .hint { display: none; }
   .clock { font-size: 10px; padding: 5px 6px; }
 }
+/* the game menu (menu.js): the world full-screen behind it, a column of sections, the page beside */
+#gameMenu { position: absolute; inset: 0; z-index: 40; display: grid; grid-template-columns: 236px minmax(0, 1fr); gap: 16px; padding-block: calc(env(safe-area-inset-top, 0px) + 14px) calc(env(safe-area-inset-bottom, 0px) + 14px); padding-left: max(14px, env(safe-area-inset-left, 0px)); padding-right: max(14px, env(safe-area-inset-right, 0px)); background: radial-gradient(ellipse at 25% 15%, rgba(14, 46, 62, 0.82), rgba(3, 12, 18, 0.93)); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
+#gameMenu[hidden] { display: none; }
+.gm-nav { display: flex; flex-direction: column; gap: 3px; overflow-y: auto; min-height: 0; padding: 4px 2px; }
+.gm-title { padding: 4px 14px 10px; line-height: 1; }
+.gm-title b { font-family: var(--font-display); font-weight: 400; font-size: 30px; color: var(--sun); text-shadow: 0 3px 0 rgba(0, 0, 0, 0.35); }
+.gm-title span { font-family: var(--font-display); font-size: 30px; color: var(--text); }
+.gm-nav button { display: flex; align-items: center; justify-content: space-between; gap: 8px; text-align: left; border: 0; background: transparent; color: var(--text); font-family: var(--font-body); font-weight: 800; font-size: 15px; padding: 7px 14px; border-radius: 10px; cursor: pointer; }
+.gm-nav button:hover { background: var(--raise-2); }
+.gm-nav button:focus-visible { outline: 2px solid var(--sun); outline-offset: 1px; }
+.gm-nav button[aria-current="true"] { background: var(--sun); color: #2a2100; }
+.gm-nav .gm-resume { background: var(--sea); color: #04232a; margin-bottom: 6px; }
+.gm-nav .gm-resume:hover { filter: brightness(1.08); background: var(--sea); }
+.gm-nav kbd { font-family: var(--font-pixel); font-size: 10px; opacity: 0.7; }
+.gm-group { font-family: var(--font-pixel); font-size: 10.5px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); margin: 9px 14px 2px; }
+.gm-body { position: relative; min-width: 0; min-height: 0; }
+.gm-body > .in-menu { position: absolute; inset: 0; }
+.gm-body > [hidden] { display: none !important; }
+#gmBody #panel { top: 0; right: 0; bottom: 0; left: 0; width: auto; height: auto; border-radius: var(--r); padding-bottom: 0; }
+#gmBody #panel .tabs { display: none; }
+#gmBody #panel .tabbody { padding: 18px 22px; }
+#gmBody .modal { background: transparent; padding: 0; z-index: auto; display: flex; }
+#gmBody .modal > .box { width: 100%; max-width: none; height: 100%; max-height: 100%; }
+#gmBody #helpModal .box > .row:first-child, #gmBody #helpModal .menutabs { display: none; }
+#gmBody #mapModal .bigwrap { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
+#gmBody #bigmap { width: auto; height: auto; max-width: 100%; max-height: 100%; }
+/* with the panel in the menu, the world has the whole screen */
+#topbar { right: auto; max-width: calc(100% - 24px); }
+#topbar .spacer { flex: 0 0 4px; }
+#helpBtn { background: var(--sun); color: #2a2100; border-color: transparent; }
+@media (max-width: 1240px) { #topbar .unofficial { display: none; } }
+#mapbox { right: 12px; }
+#dock { max-width: calc(100% - 260px); }
+#fpHud, #fpCompass, #fpBar { left: 50%; }
+#fpHud { max-width: calc(100% - 40px); }
+@media (max-width: 760px) {
+  #gameMenu { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); gap: 8px; }
+  .gm-nav { flex-direction: row; overflow-x: auto; overflow-y: hidden; gap: 4px; padding-bottom: 4px; }
+  .gm-title, .gm-group, .gm-nav kbd { display: none; }
+  .gm-nav button { white-space: nowrap; font-size: 13.5px; padding: 8px 12px; flex: none; }
+  .gm-nav .gm-resume { margin-bottom: 0; }
+  #gmBody #panel .tabbody { padding: 12px; }
+  #toasts { bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); }
+  #dock { bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); }
+  #mapbox { top: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); }
+}
 </style>
 
 <div id="app">
@@ -387,6 +433,7 @@ body.fpmode #mapbox, body.fpmode #dock { display: none !important; }
     <div id="overlay"></div>
 
   <header id="topbar" class="glass">
+    <button class="iconbtn" id="helpBtn" title="Open the menu (Esc)">&#9776; Menu</button>
     <div class="brand"><b>Tickle Beach</b><span>World</span><em class="unofficial" title="Built from the public on-chain data; not affiliated with the Tickle Beach team">Unofficial prototype</em></div>
     <div class="clock" id="clock">Day 1 &#xb7; 08:00</div>
     <div class="seg" role="group" aria-label="Who runs the world">
@@ -402,8 +449,7 @@ body.fpmode #mapbox, body.fpmode #dock { display: none !important; }
     </div>
     <label class="toggle" id="freeWillWrap" hidden><input type="checkbox" id="freeWill" checked> Free will</label>
     <span class="spacer"></span>
-    <button class="iconbtn primaryish" id="dirOpen">Directory</button>
-    <button class="iconbtn" id="helpBtn">Menu</button>
+    <button class="iconbtn" id="dirOpen">Directory</button>
   </header>
 
   <aside id="panel" class="glass" aria-label="Inspector">
@@ -532,6 +578,29 @@ body.fpmode #mapbox, body.fpmode #dock { display: none !important; }
     </div>
   </div>
 
+  <div id="gameMenu" hidden role="dialog" aria-modal="true" aria-label="Game menu">
+    <nav class="gm-nav" aria-label="Menu">
+      <div class="gm-title"><b>Tickle Beach</b> <span>World</span></div>
+      <button class="gm-resume" data-gm="resume">Back to the world <kbd>Esc</kbd></button>
+      <div class="gm-group">Play</div>
+      <button data-gm="tickles">Tickles</button>
+      <button data-gm="holders">Holders</button>
+      <button data-gm="arena">Adventure</button>
+      <button data-gm="map">Map <kbd>M</kbd></button>
+      <button data-gm="directory">Directory</button>
+      <div class="gm-group">World</div>
+      <button data-gm="director">Director</button>
+      <button data-gm="review">Review<span class="badge" id="gmReviewBadge" data-n="0">0</span></button>
+      <button data-gm="library">Library</button>
+      <div class="gm-group">Options</div>
+      <button data-gm="help">How it works</button>
+      <button data-gm="controls">Controls</button>
+      <button data-gm="music">Sound</button>
+      <button data-gm="settings">Settings</button>
+      <button data-gm="credits">Credits</button>
+    </nav>
+    <main class="gm-body" id="gmBody"></main>
+  </div>
   <div class="modal" id="helpModal" hidden>
     <div class="box glass help">
       <div class="row" style="justify-content: space-between"><h2>Menu</h2><button class="btn primary" id="helpClose">Close</button></div>
@@ -650,5 +719,6 @@ body.fpmode #mapbox, body.fpmode #dock { display: none !important; }
 <script src="js/sfx.js?v=225"></script>
 <script src="js/music.js?v=225"></script>
 <script src="js/hand.js?v=225"></script>
-<script src="js/ui.js?v=259"></script>
+<script src="js/ui.js?v=260"></script>
 <script src="js/directory.js?v=225"></script>
+<script src="js/menu.js?v=1"></script>

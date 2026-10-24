@@ -355,7 +355,7 @@
     else if (e.key === "Escape" && App.inside) { App.leaveInterior(); }
     else if ((e.key === "e" || e.key === "E") && !App.inside) { const T = App.enterableAt(App.cam.target.x, App.cam.target.z); if (T && T.shut) App.toast(T.shut); else if (T) { if (App.fpOn && App.fpOn()) App.exitFP(); App.enter(T); } else App.toast("Nothing to go into here: move close to a door, a cave or a mine."); }
     else if (e.key === "Escape") { ui.sel = null; App.cam.follow = null; App.pinned = null; $("onchainModal").hidden = true; $("helpModal").hidden = true; $("mapModal").hidden = true; $("mapTip").hidden = true; refresh(true); }
-    else if ((e.key === "m" || e.key === "M") && !(e.target && e.target.closest && e.target.closest("input, textarea"))) { if ($("mapModal").hidden) App.openMap(); else $("mapModal").hidden = true; }
+    else if ((e.key === "m" || e.key === "M") && !(e.target && e.target.closest && e.target.closest("input, textarea"))) { if (App.toggleMenu) App.toggleMenu("map"); else if ($("mapModal").hidden) App.openMap(); else $("mapModal").hidden = true; }
   });
   window.addEventListener("keyup", (e) => ui.keys.delete(e.code));
   window.addEventListener("blur", () => ui.keys.clear());
@@ -1394,7 +1394,7 @@
       $("loading").hidden = true;
       let seen = false;
       try { seen = !!localStorage.getItem("tbw-help2"); } catch (e) { /* storage blocked */ }
-      if (!seen && !saved) $("helpModal").hidden = false;
+      if (!seen && !saved) { if (App.openMenu) App.openMenu("help"); else $("helpModal").hidden = false; }
       refresh(true);
       App.checkKit();
       requestAnimationFrame(frame);

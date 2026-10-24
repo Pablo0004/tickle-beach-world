@@ -509,6 +509,17 @@ casino, mine and dungeon leads into its own small maps (rooms) drawn apart on bl
 - World rules the Director keeps: natural things keep natural colours (only umbrellas are remixed), personal
   items are never placed as props, seats and items face what they serve.
 
+## 19b. The screen and the menu
+
+With the menu closed the world fills the screen: a slim bar at the top (the Menu button, the clock and the weather,
+who runs the world, the speed and the music, the Directory), the minimap with its buttons at the bottom right, and
+over the world only what belongs to it: the inspect window and the place cards, the notifications, the first-person
+HUD, the contest and room panels. The menu (menu.js) opens over the world, which keeps running behind it, blurred:
+a column of sections on the left (Play: Tickles, Holders, Adventure, Map, Directory; World: Director, Review,
+Library; Options: How it works, Controls, Sound, Settings, Credits) and the page beside it. A Tickle's full card,
+Review, the Directory and the map (M) open it at their page; travelling from it (a click on the big map, Go, Watch,
+going inside, first person) closes it. On a phone the sections run along the top.
+
 ## 20. Controls
 
 | Action | Input |
@@ -517,6 +528,7 @@ casino, mine and dungeon leads into its own small maps (rooms) drawn apart on bl
 | Turn the view | Z / X, the ⟲ ⟳ buttons under the minimap, right-drag or Ctrl-drag, two-finger twist |
 | Zoom | mouse wheel or pinch, from a few steps away up into the sky with the whole map in sight |
 | Inspect | click anything: a small window about it (health, needs, abilities, arms...) |
+| The menu | the Menu button (top left) or Esc when there is nothing else to close: Tickles, Holders, Adventure, Map, Directory, Director, Review, Library, How it works, Controls, Sound, Settings, Credits; Esc or "Back to the world" closes it |
 | Dismiss a notification | click it; Menu > Settings switches the activity notifications off |
 | Graphics quality | Menu > Settings > Graphics: Normal, High (default) or Ultra |
 | Travel | click the minimap; M opens the big map |
@@ -588,6 +600,7 @@ sea beasts, wealth and weather. A layout tag (`App.LAYOUT`) lets an old save mig
 | `weather.js` | weather field, climates, rain, lightning, tornadoes, tsunamis |
 | `music.js`, `sfx.js` | music by place; synthesized effects and ambience buses |
 | `hand.js`, `firstperson.js` | the hand; first-person view and control |
+| `menu.js` | the game menu: the old side panel, the Directory, the big map and the menu sections inside one menu that opens over the world |
 | `places.js`, `directory.js`, `procgen.js`, `approved.js`, `ui.js` | place cards; the Directory; procedural designs and fidelity checks; baked designs; UI, boot and main loop |
 
 Other files: `tests/` (browser test scripts with Playwright, and what each checks: [tests/README.md](tests/README.md)),
