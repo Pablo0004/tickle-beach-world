@@ -37,13 +37,13 @@ JavaScript, no build step). The owner talks in Spanish: answer in Spanish. Code,
 
 The game is published as a private claude.ai artifact: the page `index.html` with every file of `js/`, every file
 of `music/` and `onchain-tickle.html` beside it (publish with `root` = the repository and those files in `files`,
-about 80; on an update, only the changed ones). The game the owner plays (version 49, published 24 October 2026):
+about 80; on an update, only the changed ones). The game the owner plays (version 50, approved and published 24 October 2026):
 https://claude.ai/artifact/Y2NNeAnZA2GCzhpAS2qC6b. Keep a preview separate from the game the owner plays (a
 second artifact), and only update the game when the owner approves. Saved games live in the browser per
 artifact, so a new artifact starts a new world.
 
-The version 50 preview (everything since version 49, not yet approved as the game):
-https://claude.ai/artifact/Q5L8KVvvTrdNaJfVrHzSA2. From a session on the owner's own computer (not the cloud), the
+The preview artifact for what comes next (it held version 50 before the owner approved it; reuse it for version
+51): https://claude.ai/artifact/Q5L8KVvvTrdNaJfVrHzSA2. From a session on the owner's own computer (not the cloud), the
 same Artifact tool publishes; a new session can update that preview by passing its URL (read it first).
 
 ## Working locally

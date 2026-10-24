@@ -1,9 +1,7 @@
 # Tickle Beach World — what is pending
 
-Updated 24 October 2026 (end of the day). This repository (`main`) holds version 50: version 49 (published as the game on 24
-October, https://claude.ai/artifact/Y2NNeAnZA2GCzhpAS2qC6b) plus first person while controlling a Tickle (item
-1.1, done and tested, in a separate preview until the owner approves it,
-https://claude.ai/artifact/Q5L8KVvvTrdNaJfVrHzSA2; see section 4). Items are worked in the order agreed with the project owner;
+Updated 24 October 2026 (end of the day). This repository (`main`) holds version 50, published as the game
+(https://claude.ai/artifact/Y2NNeAnZA2GCzhpAS2qC6b) once the owner approved it; see section 4. Items are worked in the order agreed with the project owner;
 one item is finished before the next one starts. The browser test scripts and what each one checks are in
 [tests/README.md](tests/README.md).
 
@@ -83,7 +81,7 @@ on the walls make sense. Inspired by the game Imperium." Ideas to agree on with 
   else, never closed.
 - **Creature tournament fights** may resolve too fast to be watched comfortably.
 
-## 4. Done in version 50 (preview, not yet in the game)
+## 4. Done in version 50 (approved by the owner and published as the game on 24 October)
 
 - **The game menu** (item 1.4, asked 23 October; `js/menu.js`): the right-hand panel that could not be closed, the
   Directory, the big map and the old Menu's sections now live in one menu that opens over the world (the Menu
