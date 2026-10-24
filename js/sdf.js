@@ -249,6 +249,41 @@
     return res;
   }
 
+  // The same as evalScene for the strokes in list (ascending indices, the ones that may matter here): the strokes
+  // left out are far away, and a far stroke changes nothing in evalScene (a union, a subtraction or a replace with
+  // something far away gives back what was there), so they are simply skipped. L: each stroke's layer (li), each
+  // layer's last stroke (end, -1 if the layer never ends) and its number of strokes (cnt); a layer of one stroke
+  // is left out, as on-chain.
+  function layersOf(P) {
+    const li = new Int32Array(P.length), end = [], cnt = [];
+    let l = 0, c = 0;
+    for (let i = 0; i < P.length; i++) { li[i] = l; c++; if (P[i].layerEnd === 1) { end.push(i); cnt.push(c); l++; c = 0; } }
+    if (c) { end.push(-1); cnt.push(c); }
+    return { li, end, cnt };
+  }
+  function evalList(P, x, y, z, list, n, L) {
+    let res = R(9999, 0, 0, 0, 0), cur = -1, layerRes = null;
+    const fin = (l) => {
+      const e = L.end[l];
+      if (e < 0 || L.cnt[l] < 2) return;
+      const s = P[e], lm = s.layerMode, lb = s.layerBlend, mode = s.mode;
+      if (lm === 0) res = lb > 0 ? smoothUnion(layerRes, res, lb) : union(layerRes, res);
+      else if (mode === 1) res = s.blend > 0 ? smoothSub(layerRes, res, lb) : subtract(layerRes, res);
+      else if (mode === 3) res = replace(layerRes, res);
+    };
+    for (let j = 0; j < n; j++) {
+      const i = list[j], l = L.li[i];
+      if (l !== cur) { if (cur >= 0) fin(cur); cur = l; layerRes = R(9999, 0, 0, 0, 0); }
+      const s = P[i], mode = s.mode, r = R(strokeDist(s, x, y, z), s.mat, 0, 0, s.blend);
+      if (mode === 0) layerRes = r.k > 0 ? smoothUnion(r, layerRes, r.k) : union(r, layerRes);
+      else if (mode === 1) layerRes = r.k > 0 ? smoothSub(r, layerRes, r.k) : subtract(r, layerRes);
+      else if (mode === 2) layerRes = intersect(r, layerRes);
+      else if (mode === 3) layerRes = replace(r, layerRes);
+    }
+    if (cur >= 0) fin(cur);
+    return res;
+  }
+
   // ---- voxelizer ----
   // opts: {voxel: SDF units per voxel, shell: fraction of a voxel kept outside the surface, colors: fn(mat)->[r,g,b] 0..255}
   function voxelize(P, opts) {
@@ -282,6 +317,52 @@
       return v;
     };
     let evals = 0;
+    // each node of the octree only looks at the strokes its parent kept (opts.slow: the old way, every stroke at every node)
+    const L = layersOf(P), lists = [];
+    for (let k = 0; k <= D; k++) lists.push(new Int32Array(n));
+    const top = new Int32Array(n);
+    let topN = 0;
+    for (let i = 0; i < n; i++) if (!(P[i].mode < 0 || P[i].prim === 0)) top[topN++] = i;
+    function recF(cx, cy, cz, half, depth, plist, pn) {
+      const hd = half * SQ3, list = lists[depth];
+      let cn = 0;
+      for (let j = 0; j < pn; j++) {
+        const i = plist[j], s = P[i];
+        if (s.mode === 2) { list[cn++] = i; continue; }
+        const dy = cy - s.cy, dz = cz - s.cz, ax = cx - s.c1x, bx = cx - s.c2x;
+        const dd = Math.sqrt(Math.min(ax * ax, bx * bx) + dy * dy + dz * dz);
+        if (dd - s.rad >= hd + s.blend + 2) continue;
+        // a cube lies inside its box: a wide flat slab is far from most of the bounding sphere round it
+        if (s.prim === 1) {
+          const qx = s.mirror === 1 ? Math.abs(cx - (s.px - s.offsX)) - Math.abs(s.offsX) : cx - s.px, qy = cy - s.py, qz = cz - s.pz, M = s.R;
+          const ex = Math.max(0, Math.abs(M[0] * qx + M[1] * qy + M[2] * qz) - s.sx), ey = Math.max(0, Math.abs(M[3] * qx + M[4] * qy + M[5] * qz) - s.sy), ez = Math.max(0, Math.abs(M[6] * qx + M[7] * qy + M[8] * qz) - s.sz);
+          if (Math.sqrt(ex * ex + ey * ey + ez * ez) >= hd * lip + s.blend + voxel + 3) continue;
+        }
+        list[cn++] = i;
+      }
+      const r = evalList(P, cx, cy, cz, list, cn, L);
+      evals++;
+      if (depth === D) {
+        if (r.d < shell * voxel * lip) {
+          pos.push(Math.round((cx - ox) / voxel - 0.5), Math.round((cy - oy) / voxel - 0.5), Math.round((cz - oz) / voxel - 0.5));
+          const c1 = linOf(r.m1);
+          if (r.m2 !== 0 && r.b > 0) {
+            const c2 = linOf(r.m2);
+            col.push(mix(c1[0], c2[0], r.b), mix(c1[1], c2[1], r.b), mix(c1[2], c2[2], r.b));
+          } else col.push(c1[0], c1[1], c1[2]);
+        }
+        return;
+      }
+      if (r.d <= -hd * lip) {
+        inner.push(Math.round((cx - half - ox) / voxel), Math.round((cy - half - oy) / voxel), Math.round((cz - half - oz) / voxel), Math.round((2 * half) / voxel));
+        return;
+      }
+      if (Math.abs(r.d) < hd * lip) {
+        // (the children write the next depth's list, so this node's list is copied before they run)
+        const mine = list.slice(0, cn), q = half / 2;
+        for (let o = 0; o < 8; o++) recF(cx + (o & 1 ? q : -q), cy + (o & 2 ? q : -q), cz + (o & 4 ? q : -q), q, depth + 1, mine, cn);
+      }
+    }
     function rec(cx, cy, cz, half, depth, parent) {
       const hd = half * SQ3;
       const mask = masks[depth];
@@ -319,7 +400,8 @@
         }
       }
     }
-    rec(ox + side / 2, oy + side / 2, oz + side / 2, side / 2, 0, all);
+    if (opts.slow) rec(ox + side / 2, oy + side / 2, oz + side / 2, side / 2, 0, all);
+    else recF(ox + side / 2, oy + side / 2, oz + side / 2, side / 2, 0, top, topN);
     return { count: pos.length / 3, positions: Int16Array.from(pos), colors: Float32Array.from(col),
       inner: Int16Array.from(inner), voxel, origin: [ox, oy, oz], depth: D, evals };
   }

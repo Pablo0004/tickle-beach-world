@@ -8,7 +8,7 @@ module.exports = async (pg, log) => {
   log(JSON.stringify(vs));
   for (const k of (process.env.KINDS || 'citadel,keep,grand').split(',')) {
     const v = vs[k]; if (!v) continue;
-    await L.look(pg, v.x, v.z, 40, 0.7, 1.05, 8000); await L.noClouds(pg);
+    await L.look(pg, v.x, v.z, { citadel: 120, keep: 80 }[k] || 40, 0.7, 1.0, 8000); await L.noClouds(pg);
     for (let i = 0; i < 150 && (await pg.evaluate(() => App.jobsPending())); i++) await pg.waitForTimeout(1000);
     await pg.waitForTimeout(3000);
     log(k, v.name, 'fine', await pg.evaluate(() => Object.keys(App.fragX).join(',')));

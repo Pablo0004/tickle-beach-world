@@ -15,7 +15,7 @@
   let jid = 1, workerError = null;
   const busy = new Array(NW).fill(0);
   for (let i = 0; i < NW; i++) {
-    const w = new Worker("js/worker.js?v=121");
+    const w = new Worker("js/worker.js?v=122");
     w.onmessage = (e) => {
       const p = pending.get(e.data.id);
       if (!p) return;

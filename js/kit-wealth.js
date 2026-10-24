@@ -703,6 +703,58 @@
     return st;
   }
 
+  // ---------- the finishing touches on the big houses ----------
+  // Every window gets a frame, glazing bars and a sill; every door at ground level a frame and a step; on the
+  // castles the stone walls and towers get courses of darker stone every few rows, so they read as masonry.
+  // (Applied to the strokes each house is built from; the smaller the cubes, the more of it shows.)
+  const GLASS = new Set(["#8fd3f4", "#ffe08a", "#ffd27a", "#ffd23f"].map(C));
+  function adorn(st, o) {
+    const out = [], frame = C(o.frame), sill = C(o.sill || o.frame), step = C("#8a8478"), band = o.band ? C(o.band) : null, stones = new Set((o.stones || []).map(C));
+    const copy = (s, pos, size, extra) => Object.assign({}, s, { pos, size }, extra, s.mirror ? { offsX: s.offsX === s.pos[0] ? pos[0] : s.offsX } : {});
+    for (const s of st) {
+      const glass = s.m === "rep" && s.p === "cube" && GLASS.has(s.color);
+      const door = s.m === "rep" && s.p === "cube" && !glass && s.pos[2] - s.size[2] < 90 && s.size[2] >= 90 && Math.min(s.size[0], s.size[1]) < 40;
+      if (!glass && !door) {
+        out.push(s);
+        // courses of stone round a castle's walls and towers
+        if (band && s.m === "add" && (s.p === "cube" || s.p === "cylinder") && stones.has(s.color) && s.size[2] >= 300 && !s.cone)
+          for (let z = s.pos[2] - s.size[2] + 160; z < s.pos[2] + s.size[2] - 80; z += 260)
+            out.push(copy(s, [s.pos[0], s.pos[1], z], [s.size[0] + 3, s.size[1] + 3, 7], { m: "rep", color: band, round: 0, blend: 0 }));
+        continue;
+      }
+      const thin = s.size[0] < s.size[1] ? 0 : 1, wide = 1 - thin, outw = Math.sign(s.pos[thin]) || 1;
+      const grow = (dw, dz) => { const z = s.size.slice(); z[wide] += dw; z[2] += dz; return z; };
+      // the frame first (painted onto the wall round the opening), then the opening itself
+      out.push(copy(s, s.pos.slice(), grow(door ? 16 : 13, door ? 14 : 13), { color: frame }));
+      out.push(s);
+      if (glass) {
+        // glazing bars on a big window: one up, one across
+        if (s.size[wide] >= 40 && s.size[2] >= 45) {
+          const v = s.size.slice(); v[wide] = 5; out.push(copy(s, s.pos.slice(), v, { color: frame }));
+          const h = s.size.slice(); h[2] = 5; out.push(copy(s, s.pos.slice(), h, { color: frame }));
+        }
+        // the sill under it, standing out from the wall
+        const p = s.pos.slice(); p[thin] += outw * 10; p[2] = s.pos[2] - s.size[2] - 8;
+        const z = [0, 0, 7]; z[wide] = s.size[wide] + 20; z[thin] = 14;
+        out.push(copy(s, p, z, { m: "add", color: sill, round: 0 }));
+      } else {
+        // a stone step in front of a door
+        const p = s.pos.slice(); p[thin] += outw * 34; p[2] = 10;
+        const z = [0, 0, 10]; z[wide] = s.size[wide] + 22; z[thin] = 30;
+        out.push(copy(s, p, z, { m: "add", color: step, round: 0.2 }));
+      }
+    }
+    return out;
+  }
+  const ADORN = {
+    townhouse: { frame: "#6b4a2b" }, manor: { frame: "#6b4a2b" }, mfarm: { frame: "#5a3a1a" }, mcaptain: { frame: "#f4efe2" },
+    mvilla: { frame: "#c9a06a" }, mtropic: { frame: "#5a3a1a" }, mlodge: { frame: "#efe4c8" },
+    mkeep: { frame: "#cfc8b8", band: "#7a746a", stones: ["#9a948a", "#b0aa9e"] },
+    palace: { frame: "#e8d8a8" },
+    castle: { frame: "#cfc8b8", band: "#78726a", stones: ["#9a948a", "#b0aa9e", "#84807a"] },
+    castle2: { frame: "#cfc8b8", band: "#78726a", stones: ["#9a948a", "#b0aa9e", "#84807a"] },
+    castle3: { frame: "#cfc8b8", band: "#78726a", stones: ["#9a948a", "#b0aa9e", "#84807a"] },
+  };
   const W = { group: "Wealth" }, six = [0, 1, 2, 3, 4, 5];
   Object.assign(TB.KIT, {
     townhouse: Object.assign({ name: "Townhouse", variants: clanV, build: townhouse, voxel: [18, 40], lazy: true, variantLabel: (v) => CLANS[v].species + " roof" }, W),
@@ -732,4 +784,5 @@
     warren: { name: "Warren", group: "Village", variants: clanV, build: warren, voxel: [16, 36], lazy: true, variantLabel: (v) => CLANS[v].species + " door" },
     plotsign: { name: "Plot for Sale", group: "Village", variants: [0], build: plotsign, voxel: [8, 20], lazy: true },
   });
+  for (const k in ADORN) { const b = TB.KIT[k].build; TB.KIT[k].build = (v) => adorn(b(v), ADORN[k]); }
 })(typeof self !== "undefined" ? self : this);
