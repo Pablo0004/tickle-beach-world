@@ -359,10 +359,17 @@
     const has = (X, Y, Z) => (occ.has(key(X, Y, Z)) || inside(X, Y, Z) ? 1 : 0);
     const pos = [], nor = [], col = [], idx = [];
     let vc = 0;
+    // faces in full light (no corner shaded) are merged afterwards into rectangles of one colour (a flat roof, a
+    // wall, the top of a table become a few big quads instead of one quad per voxel): it looks the same, with far
+    // fewer triangles. Shaded faces stay one per voxel, so the ambient occlusion is kept.
+    const dot = (v, X, Y, Z) => v[0] * X + v[1] * Y + v[2] * Z;
+    const flat = FACES.map(() => new Map()); // per direction: plane -> Map(cell -> colour key)
+    const q8 = (v) => Math.max(0, Math.min(255, Math.round(v * 255)));
     for (let i = 0; i < n; i++) {
       const X = P[3 * i], Y = P[3 * i + 2], Z = P[3 * i + 1];
       const r = C[3 * i], g = C[3 * i + 1], b = C[3 * i + 2];
-      for (const f of FACES) {
+      for (let fi = 0; fi < 6; fi++) {
+        const f = FACES[fi];
         const fx = X + f.n[0], fy = Y + f.n[1], fz = Z + f.n[2];
         if (has(fx, fy, fz)) continue;
         const ao = [];
@@ -372,6 +379,11 @@
           const s2 = has(fx + f.v[0] * bb, fy + f.v[1] * bb, fz + f.v[2] * bb);
           const cr = has(fx + f.u[0] * a + f.v[0] * bb, fy + f.u[1] * a + f.v[1] * bb, fz + f.u[2] * a + f.v[2] * bb);
           ao.push(s1 && s2 ? 0 : 3 - (s1 + s2 + cr));
+        }
+        if (ao[0] === 3 && ao[1] === 3 && ao[2] === 3 && ao[3] === 3) {
+          const pl = dot(f.n, X, Y, Z), M = flat[fi].get(pl) || flat[fi].set(pl, new Map()).get(pl);
+          M.set((dot(f.u, X, Y, Z) + 4096) * 8192 + dot(f.v, X, Y, Z) + 4096, (q8(r) << 16) | (q8(g) << 8) | q8(b));
+          continue;
         }
         for (let c = 0; c < 4; c++) {
           const a = c === 1 || c === 2 ? 1 : 0, bb = c >= 2 ? 1 : 0;
@@ -383,6 +395,34 @@
         if (ao[0] + ao[2] >= ao[1] + ao[3]) idx.push(vc, vc + 1, vc + 2, vc, vc + 2, vc + 3);
         else idx.push(vc + 1, vc + 2, vc + 3, vc + 1, vc + 3, vc);
         vc += 4;
+      }
+    }
+    // the merged faces: in each plane, grow a rectangle along u while the colour holds, then along v while whole rows match
+    for (let fi = 0; fi < 6; fi++) {
+      const f = FACES[fi], ax = (v) => (v[0] ? 0 : v[1] ? 1 : 2), nA = ax(f.n), uA = ax(f.u), vA = ax(f.v);
+      for (const [pl, M] of flat[fi]) {
+        const cells = [...M.keys()].sort((p, q) => p - q);
+        for (const k0 of cells) {
+          const c0 = M.get(k0);
+          if (c0 === undefined) continue;
+          const a0 = Math.floor(k0 / 8192), b0 = k0 - a0 * 8192;
+          let w = 1;
+          while (M.get((a0 + w) * 8192 + b0) === c0) w++;
+          let h = 1;
+          for (;;) { let ok = true; for (let k = 0; k < w && ok; k++) if (M.get((a0 + k) * 8192 + b0 + h) !== c0) ok = false; if (!ok) break; h++; }
+          for (let j = 0; j < h; j++) for (let k = 0; k < w; k++) M.delete((a0 + k) * 8192 + b0 + j);
+          const base = [0, 0, 0];
+          base[nA] = pl * f.n[nA]; base[uA] = (a0 - 4096) * f.u[uA]; base[vA] = (b0 - 4096) * f.v[vA];
+          const r = ((c0 >> 16) & 255) / 255, g = ((c0 >> 8) & 255) / 255, b = (c0 & 255) / 255;
+          for (let c = 0; c < 4; c++) {
+            const a = c === 1 || c === 2 ? w : 0, bb = c >= 2 ? h : 0;
+            pos.push(base[0] + f.b[0] + f.u[0] * a + f.v[0] * bb, base[1] + f.b[1] + f.u[1] * a + f.v[1] * bb, base[2] + f.b[2] + f.u[2] * a + f.v[2] * bb);
+            nor.push(f.n[0], f.n[1], f.n[2]);
+            col.push(r, g, b);
+          }
+          idx.push(vc, vc + 1, vc + 2, vc, vc + 2, vc + 3);
+          vc += 4;
+        }
       }
     }
     // bounds in three grid units

@@ -673,6 +673,35 @@
       App.fragLo[key] = fragEntry(lo.mesh, App.frag[key].box);
     })));
   };
+  // ---------- the finest level of detail: smaller cubes for the models close to the camera ----------
+  // (Menu > Settings > Graphics, gfx.js.) Made the first time a model comes near, one or two at a time in the
+  // workers, with the same recipe as its usual copy (an on-chain floor model, or a kit model) at a smaller cube.
+  App.fragX = {};
+  const fineLoading = new Set();
+  let fineGen = 0;
+  App.dropFine = () => { fineGen++; for (const k in App.fragX) App.fragX[k].geo.dispose(); App.fragX = {}; fineLoading.clear(); };
+  function fineVoxel(key) {
+    const G = App.gfxLevel && App.gfxLevel().fine;
+    if (!G) return 0;
+    const F = TB.FRAGMENTS && TB.FRAGMENTS[key], m = key.match(/^(.*)_(\d+)$/), K = !F && m && TB.KIT[m[1]];
+    const base = F ? (key.startsWith("grass") ? 12 : 10) : K ? K.voxel[0] : 0;
+    return base ? Math.max(G.min, Math.round(base * G.k)) : 0;
+  }
+  function ensureFine(key) {
+    if (App.fragX[key] || fineLoading.has(key) || fineLoading.size >= 2 || !App.frag[key]) return;
+    const voxel = fineVoxel(key);
+    if (!voxel) return;
+    const F = TB.FRAGMENTS && TB.FRAGMENTS[key], m = key.match(/^(.*)_(\d+)$/), K = !F && m && TB.KIT[m[1]];
+    if (!F && !K) return;
+    fineLoading.add(key);
+    const gen = fineGen;
+    (F ? App.job("fragment", { key, voxel }) : App.job("compact", { strokes: K.build(+m[2]), voxel, lip: 1.5 })).then((r) => {
+      if (gen !== fineGen) return;
+      fineLoading.delete(key);
+      App.fragX[key] = fragEntry(r.mesh, App.frag[key].box);
+      App.sceneryDirty = true;
+    }).catch(() => { if (gen === fineGen) fineLoading.delete(key); });
+  }
   // which kit kind a scenery type belongs to ("cottage_3" -> "cottage"), and whether review allows it
   App.kindOf = (type) => type.replace(/_\d+$/, "");
   App.kitOn = (kind) => !st.kit || st.kit[kind] !== "rejected";
@@ -686,7 +715,9 @@
   const NEAR_LOD = 70;
   function updateScenery(tx, tz) {
     // rebuild when the view moves on, and also when more models finish loading (trees arrive after the first frame)
-    const sig = Math.floor(tx / 24) + "," + Math.floor(tz / 24) + "," + Object.keys(App.frag).length + "," + Object.keys(App.fragLo).length + (App.sceneryFar ? "f" : "");
+    // (with the finest level of detail on, more often: models come into it within a few dozen blocks)
+    const G = App.gfxLevel && App.gfxLevel().fine ? 8 : 24;
+    const sig = Math.floor(tx / G) + "," + Math.floor(tz / G) + "," + Object.keys(App.frag).length + "," + Object.keys(App.fragLo).length + (App.sceneryFar ? "f" : "");
     if (sig === scnSig && !App.sceneryDirty) return;
     App.sceneryDirty = false;
     scnSig = sig;
@@ -694,11 +725,14 @@
     const all = App.sceneryFar ? [] : App.gridNear("scenery", tx, tz, App.RANGE.scenery);
     const byType = {};
     App.sceneryVisible = [];
+    const fine = App.gfxLevel && App.gfxLevel().fine, XR = fine ? fine.near : 0;
     for (const s of all) {
       const d = Math.hypot(s.x - tx, s.z - tz);
       if (s.gone || d > App.RANGE.scenery || !App.kitOn(App.kindOf(s.type)) || (App.isBroken && App.isBroken(s))) continue;
       // the giant statue is seen from far across the lake: it keeps its detailed model, so it never changes shape
-      const L = s.giant || d < (s.tree ? 48 : s.building ? 45 : NEAR_LOD) ? "hi" : "lo";
+      let L = s.giant || d < (s.tree ? 48 : s.building ? 45 : NEAR_LOD) ? "hi" : "lo";
+      // close to the camera, the finest copy once it is made (the usual one until then)
+      if (d < XR + (s.building ? 6 : 0) && !s.giant) { if (App.fragX[s.type]) L = "x"; else ensureFine(s.type); }
       if (s.type !== "duck") (byType[s.type + ":" + L] = byType[s.type + ":" + L] || []).push(s); // ducks are alive, see critters.js
       if (d < NEAR_LOD + 30) App.sceneryVisible.push(s);
     }
@@ -718,14 +752,15 @@
     }
     shadowMesh.count = ns;
     shadowMesh.instanceMatrix.needsUpdate = true;
-    for (const L of ["hi", "lo"]) for (const key in App.frag) {
-      const F = (L === "hi" ? App.frag : App.fragLo)[key];
+    for (const L of ["x", "hi", "lo"]) for (const key in App.frag) {
+      const F = (L === "x" ? App.fragX : L === "hi" ? App.frag : App.fragLo)[key];
       const k = key + ":" + L, list = byType[k] || [];
+      if (!F) { if (scnMeshes[k]) scnMeshes[k].count = 0; continue; }
       let m = scnMeshes[k];
-      if (!m || m.instanceMatrix.count < list.length) {
+      if (!m || m.instanceMatrix.count < list.length || m.geometry !== F.geo) {
         if (m) App.scene.remove(m);
         m = new THREE.InstancedMesh(F.geo, App.voxMaterial, Math.max(16, Math.ceil(list.length * 1.5)));
-        m.frustumCulled = false;
+        m.frustumCulled = false; m.userData.lod = L;
         scnMeshes[k] = m;
         App.scene.add(m);
       }

@@ -21,3 +21,13 @@ mando, ni tarjeta gráfica). Ve tachando lo que veas bien y apunta lo que no.
       usar el mando dentro del artifact, dímelo.)
 - [ ] En el móvil: joystick a la izquierda, arrastrar a la derecha para mirar, botones de la barra.
 - [ ] Montar a caballo o en grifo con M en primera persona (Espacio/C para subir y bajar con el grifo).
+
+## Más detalle (versión 50, punto 1.2)
+
+- [ ] Menú > Settings > Graphics: prueba Normal, Alta y Ultra. ¿Va fluido en tu ordenador en cada una? (Por
+      defecto está en Alta.)
+- [ ] Las texturas de los bloques (hierba, arena, caminos, tablones, piedra): ¿te gusta el nivel de grano?
+- [ ] Los modelos cercanos con cubos más pequeños (árboles, casas, hogueras): se afinan al acercarte; ¿se nota
+      el cambio de nivel de detalle al moverte (un "salto")?
+- [ ] Las sombras del sol en Alta y Ultra; de noche no hay.
+- [ ] El cielo con degradado, de día, al atardecer, de noche y con tormenta.

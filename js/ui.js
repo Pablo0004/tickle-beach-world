@@ -15,7 +15,7 @@
   let jid = 1, workerError = null;
   const busy = new Array(NW).fill(0);
   for (let i = 0; i < NW; i++) {
-    const w = new Worker("js/worker.js?v=120");
+    const w = new Worker("js/worker.js?v=121");
     w.onmessage = (e) => {
       const p = pending.get(e.data.id);
       if (!p) return;
@@ -137,6 +137,12 @@
     $("menu-settings").innerHTML = '<h3>Notifications</h3><div class="soundrow"><b>Activity</b><label class="row" style="gap:6px"><input type="checkbox" id="set-notify"' + (App.notifyOn() ? " checked" : "") + '> on</label>' +
       '<span class="note">the messages at the bottom of the screen about what is going on (a dragon attacking, a party going down, a sea beast rising...). Off, you still get the answers to what you do yourself, and everything stays in the log. A click on a message takes it away.</span></div>';
     $("set-notify").onchange = (e) => { App.notifyOn(e.target.checked); if (!e.target.checked) $("toasts").innerHTML = ""; };
+    // graphics quality (gfx.js)
+    const L = App.GFX_LEVELS || {};
+    $("menu-settings").insertAdjacentHTML("beforeend", '<h3>Graphics</h3><div class="soundrow"><b>Quality</b><div class="seg" role="group" aria-label="Graphics quality" id="set-gfx">' +
+      Object.keys(L).map((k) => '<button data-gfx="' + k + '" aria-pressed="' + (App.gfx.quality === k) + '">' + L[k].label + "</button>").join("") + "</div>" +
+      '<span class="note">Normal: the plainer look, for slower computers. High: smaller cubes on everything near you and the sun\'s shadows. Ultra: smaller cubes still, further out, sharper shadows and the screen\'s full resolution. All of them keep the textures on the blocks. If the game stutters, go down a level.</span></div>');
+    $("set-gfx").onclick = (e) => { const b = e.target.closest("[data-gfx]"); if (!b) return; App.setQuality(b.dataset.gfx); renderSettings(); };
   }
   App.showMenu = showMenu;
   document.querySelector(".menutabs").addEventListener("click", (e) => { const b = e.target.closest("[data-menu]"); if (b) showMenu(b.dataset.menu); });

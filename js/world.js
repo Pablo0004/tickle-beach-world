@@ -173,6 +173,8 @@
     seabed.position.y = 1; scene.add(seabed);
     App.scene = scene; App.camera = camera; App.renderer = renderer;
     App.voxMaterial = new THREE.MeshLambertMaterial({ vertexColors: true });
+    makeSky();
+    App.applyGfx();
     App.resize();
     initControls(canvas);
   };
@@ -193,8 +195,12 @@
     { n: [0, 0, -1], u: [0, 1, 0], v: [1, 0, 0], b: [0, 0, 0], shade: 0.92 },
   ];
   const AO = [0.55, 0.72, 0.87, 1];
+  const WHITE = [1, 1, 1];
+  const UV = [0, 0];
   function meshChunk(c) {
-    const pos = [], nor = [], col = [], idx = [];
+    const pos = [], nor = [], col = [], idx = [], uvs = [];
+    // the block textures (blocktex.js), unless the graphics settings turn them off
+    const tex = App.blockTile && !(App.gfx && App.gfx.flatBlocks);
     let vc = 0;
     const ox = c.cx * CH, oz = c.cz * CH;
     const solid = (x, y, z) => {
@@ -212,6 +218,7 @@
         const fx = x + f.n[0], fy = y + f.n[1], fz = z + f.n[2];
         if (fy < 0 || solid(fx, fy, fz)) continue;
         const sideTint = t === B.GRASS && f.n[1] !== 1 ? blockLin[B.DIRT] : base;
+        const tile = tex ? App.blockTile(t, f.n[1]) : -1, white = tile === App.TILE_IN_COLOUR, gain = tex ? App.TEX_GAIN : 1;
         const ao = [];
         for (let k = 0; k < 4; k++) {
           const a = k === 1 || k === 2 ? 1 : -1, bb = k >= 2 ? 1 : -1;
@@ -223,11 +230,17 @@
         for (let k = 0; k < 4; k++) {
           const a = k === 1 || k === 2 ? 1 : 0, bb = k >= 2 ? 1 : 0;
           const px = x + f.b[0] + f.u[0] * a + f.v[0] * bb, py = y + f.b[1] + f.u[1] * a + f.v[1] * bb, pz = z + f.b[2] + f.u[2] * a + f.v[2] * bb;
-          const tint = t === B.GRASS && f.n[1] === 0 && py > y + 0.5 ? base : sideTint;
+          const tint = white ? WHITE : t === B.GRASS && f.n[1] === 0 && py > y + 0.5 ? base : sideTint;
           pos.push(px + ox, py, pz + oz);
           nor.push(f.n[0], f.n[1], f.n[2]);
-          const kk = AO[ao[k]] * jit * f.shade;
+          const kk = AO[ao[k]] * jit * f.shade * gain;
           col.push(tint[0] * kk, tint[1] * kk, tint[2] * kk);
+          // where this corner falls on the block's face: across it (u) and up it (v; on the top, along z)
+          if (tex) {
+            const lx = px - x, ly = py - y, lz = pz - z;
+            App.tileUV(tile, f.n[0] ? (f.n[0] > 0 ? 1 - lz : lz) : f.n[2] ? (f.n[2] > 0 ? lx : 1 - lx) : lx, f.n[1] ? lz : ly, UV);
+            uvs.push(UV[0], UV[1]);
+          }
         }
         if (ao[0] + ao[2] >= ao[1] + ao[3]) idx.push(vc, vc + 1, vc + 2, vc, vc + 2, vc + 3);
         else idx.push(vc + 1, vc + 2, vc + 3, vc + 1, vc + 3, vc);
@@ -241,8 +254,9 @@
     g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
     g.setAttribute("normal", new THREE.Int8BufferAttribute(nor, 3));
     g.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
+    if (tex) g.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
     g.setIndex(vc > 65535 ? new THREE.Uint32BufferAttribute(idx, 1) : new THREE.Uint16BufferAttribute(idx, 1));
-    c.mesh = new THREE.Mesh(g, App.voxMaterial);
+    c.mesh = new THREE.Mesh(g, tex ? App.terrainMaterial() : App.voxMaterial);
     scene.add(c.mesh);
   }
   // keep chunk meshes alive around the camera target
@@ -527,5 +541,87 @@
     return k;
   };
 
-  App.render = () => { applyCamera(); if (App.inside && App.renderInside) App.renderInside(renderer, camera); else renderer.render(scene, camera); };
+  // ---------- the sky: a dome round the camera, deeper blue overhead and paler at the horizon ----------
+  // (its colours follow the background colour the day, the night and the weather give the sky)
+  let sky = null;
+  function makeSky() {
+    const mat = new THREE.ShaderMaterial({
+      uniforms: { top: { value: new THREE.Color() }, horizon: { value: new THREE.Color() }, ground: { value: new THREE.Color() } },
+      vertexShader: "varying vec3 vDir; void main() { vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+      fragmentShader: "uniform vec3 top; uniform vec3 horizon; uniform vec3 ground; varying vec3 vDir; void main() { float h = vDir.y; vec3 c = h > 0.0 ? mix(horizon, top, pow(min(1.0, h * 1.6), 0.7)) : mix(horizon, ground, min(1.0, -h * 6.0)); gl_FragColor = vec4(c, 1.0); }",
+      side: THREE.BackSide, depthWrite: false, depthTest: false, fog: false,
+    });
+    sky = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 12), mat);
+    sky.renderOrder = -10; sky.frustumCulled = false;
+    scene.add(sky);
+  }
+  const SKY_DEEP = new THREE.Color(0.08, 0.26, 0.85);
+  function updateSky() {
+    if (!sky) return;
+    const bg = scene.background && scene.background.isColor ? scene.background : null;
+    sky.visible = !!bg;
+    if (!bg) return;
+    const U = sky.material.uniforms;
+    U.horizon.value.copy(bg).lerp(new THREE.Color(1, 1, 1), 0.12);
+    // overhead: a deeper blue by day; at night, dusk or under grey cloud it only darkens a little
+    const blue = bg.b > bg.r * 1.4 ? 0.4 : 0.1;
+    U.top.value.copy(bg).lerp(SKY_DEEP, blue).multiplyScalar(0.85);
+    U.ground.value.copy(bg).multiplyScalar(0.8);
+    sky.position.copy(camera.position);
+    sky.scale.setScalar(camera.far * 0.9);
+  }
+
+  // ---------- the sun's shadows (Menu > Settings > Graphics: High and Ultra) ----------
+  // A shadow map round the middle of the view, moved in whole texels so the shadows do not shimmer. The terrain,
+  // the Tickles and the near copies of the scenery cast and receive them; at night the sun casts none.
+  App.applyGfx = () => {
+    const G = App.gfxLevel ? App.gfxLevel() : { shadows: 0, pixelRatio: 1.5 };
+    renderer.setPixelRatio(Math.min(G.pixelRatio, window.devicePixelRatio || 1));
+    renderer.shadowMap.enabled = !!G.shadows;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    sun.castShadow = !!G.shadows;
+    if (G.shadows) {
+      sun.shadow.mapSize.set(G.shadows, G.shadows);
+      if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; }
+      const R = G.shadows > 2048 ? 60 : 40, C = sun.shadow.camera;
+      C.left = C.bottom = -R; C.right = C.top = R; C.near = 1; C.far = 400; C.updateProjectionMatrix();
+      sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.04;
+      if (!sun.target.parent) scene.add(sun.target);
+    }
+    shadowStamp = 0;
+    for (const o of scene.children) if (o.material) o.material.needsUpdate = true;
+    if (App.resize) App.resize();
+  };
+  let shadowStamp = 0;
+  const SUN = new THREE.Vector3();
+  function updateShadows() {
+    if (!renderer.shadowMap.enabled) return;
+    const day = sun.intensity > 0.3 && !App.inside;
+    sun.castShadow = day;
+    if (!day) return;
+    // the light looks from the sun's side at the middle of the view, snapped to the shadow map's texels
+    SUN.copy(sun.position).normalize();
+    const R = sun.shadow.camera.right, step = (2 * R) / sun.shadow.mapSize.x;
+    const tx = Math.round(cam.target.x / step) * step, tz = Math.round(cam.target.z / step) * step, ty = Math.round(cam.target.y);
+    sun.target.position.set(tx, ty, tz);
+    sun.position.set(tx + SUN.x * 150, ty + SUN.y * 150, tz + SUN.z * 150);
+    sun.target.updateMatrixWorld();
+    // now and then, everything solid near enough casts and receives (new Tickles, new scenery copies, new chunks)
+    const now = performance.now();
+    if (now - shadowStamp > 1000) {
+      shadowStamp = now;
+      scene.traverse((o) => {
+        if (!o.isMesh || o === sky || o === water || o === seabed) return;
+        const m = o.material, solid = m && !m.transparent && !(m.isShaderMaterial) && !(m.isSpriteMaterial);
+        const far = o.isInstancedMesh && o.userData.lod === "lo";
+        o.castShadow = solid && !far; o.receiveShadow = solid;
+      });
+    }
+  }
+  App.render = () => {
+    applyCamera();
+    if (App.inside && App.renderInside) { App.renderInside(renderer, camera); return; }
+    updateSky(); updateShadows();
+    renderer.render(scene, camera);
+  };
 })();
