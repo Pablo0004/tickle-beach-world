@@ -131,6 +131,7 @@
     if (sec === "music") renderMusicMenu();
     if (sec === "credits") renderCredits();
     if (sec === "settings") renderSettings();
+    if (sec === "encyclopedia" && App.renderEncyclopedia) App.renderEncyclopedia();
   }
   // the Settings section
   function renderSettings() {
@@ -1307,7 +1308,7 @@
       if (saved) {
         const merged = App.dedupeSaved(saved);
         if (merged) console.info("Review: merged " + merged + " duplicate designs");
-        Object.assign(st, { T: saved.T, speed: saved.speed == null ? 1 : saved.speed, freeWill: saved.freeWill !== false, uid: saved.uid || 1, latest: saved.latest || null, event: saved.event || null, rel: saved.rel || {}, fav: saved.fav || {}, wallet: saved.wallet || null, popT: saved.T, kit: saved.kit || {} });
+        Object.assign(st, { dex: saved.dex || {}, T: saved.T, speed: saved.speed == null ? 1 : saved.speed, freeWill: saved.freeWill !== false, uid: saved.uid || 1, latest: saved.latest || null, event: saved.event || null, rel: saved.rel || {}, fav: saved.fav || {}, wallet: saved.wallet || null, popT: saved.T, kit: saved.kit || {} });
         Object.assign(st.director, saved.director || {});
         st.log = saved.log || [];
         st.acts.push(...(saved.acts || []));

@@ -73,3 +73,9 @@ mando, ni tarjeta gráfica). Ve tachando lo que veas bien y apunta lo que no.
 - Mira un dragón, un monstruo o una criatura de cerca con Gráficos en Alto y en Ultra: cubos más finos que en Normal.
 - Entra en una mazmorra: los monstruos se balancean al andar, respiran parados y se lanzan al golpear.
 - Comprueba que el juego sigue fluido en tu ordenador con Alto.
+
+## La enciclopedia (punto 1.3)
+
+- Menú > Encyclopedia: las fichas de seres que aún no has visto salen en negro con "???"; acércate a un animal, una criatura o un monstruo y comprueba que sale el aviso y se rellena su ficha.
+- Abre una ficha: modelo en 3D, número y datos. Las secciones de armas, hechizos, reliquias, monturas, etc. están abiertas desde el principio.
+- Cierra el juego y vuelve a entrar: lo visto sigue visto.

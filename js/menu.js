@@ -18,7 +18,7 @@
   for (const el of [panel, dir, map, help]) { body.appendChild(el); el.classList.add("in-menu"); }
   panel.hidden = true;
   const TABS = { tickles: 1, holders: 1, director: 1, review: 1, arena: 1, library: 1 };
-  const SECS = { help: 1, controls: 1, music: 1, settings: 1, credits: 1 };
+  const SECS = { help: 1, controls: 1, music: 1, settings: 1, credits: 1, encyclopedia: 1 };
   let page = null, lastPage = "tickles", returnFocus = null;
   const show = (el) => { for (const x of [panel, dir, map, help]) x.hidden = x !== el; };
   App.gameMenuOpen = (p) => !menu.hidden && (p == null || page === p);

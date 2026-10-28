@@ -2332,6 +2332,7 @@
       assets: st.assets.filter((a) => a.status !== "discarded").map((a) => { const o = Object.assign({}, a); delete o.md; delete o._geo; return o; }),
       props: st.props.map((p) => ({ uid: p.uid, assetId: p.assetId, x: p.x, z: p.z, rot: p.rot })),
       acts: st.acts.filter((a) => a.source !== "core" && a.source !== "onchain"), projects: st.projects, log: st.log.slice(0, 120), event: st.event, kit: st.kit,
+      dex: st.dex || {},
       villages: App.saveVillages(), raidDay: st.raidDay, dragonDay: st.dragonDay, shareDay: st.shareDay,
       plots: App.plotsSave ? App.plotsSave() : null,
       creatures: App.saveCreatures(), tourneyDay: st.tourneyDay, creatureDay: st.creatureDay, dungeons: App.saveDungeons(), settleDay: st.settleDay, fate: App.saveFate(), factions: App.saveFactions ? App.saveFactions() : null, rampage: App.saveRampage ? App.saveRampage() : null, lairs: App.saveLairs ? App.saveLairs() : null, faith: App.saveFaith ? App.saveFaith() : null, mines: App.saveMines ? App.saveMines() : null, guilds: App.saveGuilds ? App.saveGuilds() : null, casinos: App.saveCasinos ? App.saveCasinos() : null, parliament: App.saveParliament ? App.saveParliament() : null, contests: App.saveContests ? App.saveContests() : null, diving: App.saveDiving ? App.saveDiving() : null, seabeasts: App.saveSeaBeasts ? App.saveSeaBeasts() : null, wealth: App.saveWealth ? App.saveWealth() : null, weather: App.saveWeather ? App.saveWeather() : null,

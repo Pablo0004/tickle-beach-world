@@ -1790,6 +1790,8 @@
   }
 
   // ---------- going in and coming out ----------
+  // the monsters in the room on show, for the encyclopedia (a guardian with the floor it guards)
+  App.insideMonsters = () => (cur && cur.mons ? cur.mons.filter((m) => m.holder && !m.dead).map((m) => ({ k: m.mo.k, boss: !!m.mo.boss, floor: m.mo.boss && cur.map && cur.map.floors ? cur.ri : null })) : []);
   App.enter = (T, opt) => {
     if (!T) return;
     const map = App.mapOf(T), C = App.cam;

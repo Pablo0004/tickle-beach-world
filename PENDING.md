@@ -13,7 +13,7 @@ Done on 24 October and published as the game (version 50): 1.0, 1.1 (first perso
 1.2c (diving), 1.4 (the menu); see section 4. The owner has not tested yet: `REVISAR.md` is the checklist for when
 they do. Next, in this order:
 
-1. **1.3 The encyclopedia**: a section of the menu.
+1. ~~1.3 The encyclopedia~~: done 28 October (see below).
 2. **1.5 Wars between holders**: agree how they work with the owner first.
 3. **1.6 Editing homes and a better build mode**: every home inside and out (houses, mansions, castles...), and the
    build mode with removing and a catalogue of objects to place; agree the details with the owner first.
@@ -100,6 +100,16 @@ owner: a tank can be **bought and found**, both. Plan:
   poses (wildlife.js `pose`). Dungeon monsters sway and bob as they walk, breathe when still, lunge into a blow and
   fliers flap (interiors.js, a pivot under each monster). The owner's rule: everything must stay convertible to
   on-chain stroke models (in CLAUDE.md).
+
+- **The encyclopedia (item 1.3, done 28 October, local, not published)**: Menu > Encyclopedia (`js/encyclopedia.js`),
+  Pokedex-style as the owner chose: 143 numbered entries in 15 sections. Beings (animals, water life, birds,
+  creatures, monsters, guardians, dragons, sea beasts) show a dark shape and "???" until first seen near the view
+  (`App.dexScan` every 2 s: animals, lake and pond life, birds, creatures, cave monsters, dragons; inside, the
+  monsters of the room, `App.insideMonsters`; a guardian also when its floor is beaten); a toast announces each new
+  entry. Knowledge (arms, spells, relics, mounts, boats, ores, jobs, guilds, factions) is open from the start. Each
+  entry: a 3D picture of its model (made once, offscreen), number, what it is, where, health, attack, defence, speed,
+  type, strong and weak against, ability, who can tame or use it, price, what it gives. Kept in the save (`st.dex`).
+  Left for later: the units of war (item 1.5) and laws, when they exist; sea beasts have no picture yet.
 
 ## 2. Open questions
 
