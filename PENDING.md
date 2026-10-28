@@ -52,7 +52,8 @@ on the walls make sense. Inspired by the game Imperium." Ideas to agree on with 
   - **The fallen**: they do not recover until the war is over and the supplies have been moved; after a war, at
     least 3 days before the same holder can be attacked again, unless an ally who has not fought that holder
     attacks it (the ally's right to battle is used).
-  - **The winner takes everything** (to be detailed when building: shells, granary, stores...).
+  - **The winner takes everything** (confirmed 28 October: shells, the granary's food, the ores in store, arms, and
+    the loser's houses and plot too; in the game only, never the real tokens).
   - **Battles**: armies in formation along the roads (infantry, spears, mages, healers, tamers, cavalry, griffin
     riders); sieges where there are walls, open battle where not. **Walls, castles, mansions and houses can be
     destroyed** (buildings have health).
