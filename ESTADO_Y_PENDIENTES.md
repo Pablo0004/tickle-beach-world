@@ -8,6 +8,14 @@ Código en GitHub: https://github.com/Pablo0004/tickle-beach-world — la versi�
 
 ## 1. Pendiente, en el orden acordado
 
+**28 de octubre: más detalle en los seres vivos y más movimiento (hecho y probado en local, sin publicar).**
+- **Dragones con cubos finos**: estaban hechos con los cubos más gordos del mundo (al agrandarlos 2,4 veces, casi tres veces los de un Tickle); ahora con la mitad o menos, y se ven las escamas, los cuernos, los ojos y las garras.
+- **Monstruos, criaturas, animales y monturas** siguen ya el ajuste de Gráficos como los edificios (Normal igual que antes; Alto un 35 % más finos; Ultra la mitad), respetando la proporción acordada para no perder fluidez (vista de un pueblo: unos 1,2 millones de triángulos y 9 ms por imagen en Alto).
+- **Dragones que duermen de verdad**: al llegar a su pico pliegan las alas hacia atrás pegadas al lomo, se tumban sobre la roca con la cabeza inclinada, respiran despacio y les sale de vez en cuando una voluta de humo; al despertarse abren las alas a medias, y el paso de una postura a otra es suave.
+- **Monstruos de las mazmorras con vida**: se balancean y botan al andar, respiran cuando están quietos, se lanzan hacia delante al golpear y los voladores aletean.
+- Regla nueva tuya: todo (modelos y texturas) debe poder convertirse en modelos vectoriales como los Tickles para poder subir el juego entero a la cadena; lo cumple (son trazos; el tamaño del cubo solo es la resolución de dibujo). Apuntada en `CLAUDE.md`.
+
+
 **Resumen al 23 de octubre**: la versión 49 está terminada y probada, en vista previa en https://claude.ai/artifact/TK966ZfpzsFS9aPPxwJNo6, y ya está en GitHub, en `main`. Se publica en el juego de siempre cuando des el visto bueno. Hecho además el 22-23 de octubre:
 - **Ventana de inspección** (ver más abajo): clic en cualquier cosa.
 - **Notificaciones**: en Menú > Settings se pueden apagar los avisos de actividades (siguen saliendo las respuestas a lo que haces tú y todo queda en el registro); un clic sobre un aviso lo quita (en los de "Watch", fuera del botón).

@@ -66,3 +66,10 @@ mando, ni tarjeta gráfica). Ve tachando lo que veas bien y apunta lo que no.
 - [ ] "Full card" en la ventana de un Tickle abre el menú en su ficha.
 - [ ] ¿Prefieres que el juego se pause mientras el menú está abierto? Ahora sigue corriendo.
 - [ ] En el móvil: las secciones en una fila arriba.
+
+## Más detalle en los seres vivos (28 de octubre)
+
+- Acércate a un dragón dormido en su pico: alas plegadas sobre el lomo, tumbado, respirando y con humo de vez en cuando. Al despertar abre las alas.
+- Mira un dragón, un monstruo o una criatura de cerca con Gráficos en Alto y en Ultra: cubos más finos que en Normal.
+- Entra en una mazmorra: los monstruos se balancean al andar, respiran parados y se lanzan al golpear.
+- Comprueba que el juego sigue fluido en tu ordenador con Alto.

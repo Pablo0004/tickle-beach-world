@@ -16,12 +16,21 @@
   App.kitStatus = (kind) => st.kit[kind] || "approved"; // the whole world kit is approved for good
   App.kitChecks = {};
   const kitMeshes = new Map();
+  // the living (animals, creatures, monsters, mounts) follow the Graphics setting like the buildings do: their usual
+  // cube on Normal, a smaller one on High and Ultra (gfx.js fine.k, never below fine.min), so detail never costs
+  // more than the setting allows
+  const LIVING = /^(minotaur|ogre|goblin|skeleton|spider|troll|cyclops|medusa|hydra|cerberus|harpy|basilisk|chimera|manticore|golem|mummy|werewolf|wraith|centaur|kobold|lich|salamander|goldtickle|gloomslime|shadebat|brutecap|horse|horseleg|griffinmount|griffinwing)$/;
+  App.liveVoxel = (kind, base) => {
+    const K = TB.KIT[kind], G = App.gfxLevel && App.gfxLevel().fine;
+    if (!G || !(LIVING.test(kind) || (K && /^(Animals|Creatures|Dragons)$/.test(K.group)))) return base;
+    return Math.max(Math.min(base, G.min), Math.round(base * G.k));
+  };
   App.kitMesh = (kind, v) => {
     const key = kind + ":" + v;
     if (!kitMeshes.has(key)) {
       const F = App.frag[TB.kitKey(kind, v)];
       kitMeshes.set(key, F ? Promise.resolve({ md: F.md, geo: F.geo })
-        : App.job("compact", { strokes: TB.KIT[kind].build(v), voxel: TB.KIT[kind].voxel[0], lip: 1.5 }).then((r) => ({ md: r.mesh, geo: App.makeVoxMesh(r.mesh).geometry })));
+        : App.job("compact", { strokes: TB.KIT[kind].build(v), voxel: App.liveVoxel(kind, TB.KIT[kind].voxel[0]), lip: 1.5 }).then((r) => ({ md: r.mesh, geo: App.makeVoxMesh(r.mesh).geometry })));
     }
     return kitMeshes.get(key);
   };

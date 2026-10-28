@@ -151,7 +151,7 @@
   App.loadCreatures = async () => {
     await Promise.all(KINDS.map(async (k) => {
       const K = TB.KIT[k];
-      const r = await App.job("compact", { strokes: K.build(0), voxel: K.voxel[0], lip: 1.5 });
+      const r = await App.job("compact", { strokes: K.build(0), voxel: App.liveVoxel ? App.liveVoxel(k, K.voxel[0]) : K.voxel[0], lip: 1.5 });
       makeGeo(k, r.mesh);
     }));
   };
@@ -161,7 +161,7 @@
     if (geo[k] || loadingGeo.has(k) || !TB.KIT[k] || !SPECIES[k]) return;
     loadingGeo.add(k);
     const K = TB.KIT[k];
-    App.job("compact", { strokes: K.build(K.variants[0]), voxel: K.voxel[0], lip: 1.5 }).then((r) => makeGeo(k, r.mesh)).catch(() => {});
+    App.job("compact", { strokes: K.build(K.variants[0]), voxel: App.liveVoxel ? App.liveVoxel(k, K.voxel[0]) : K.voxel[0], lip: 1.5 }).then((r) => makeGeo(k, r.mesh)).catch(() => {});
   }
   function body(sp, x, z, data, isWild) {
     return { sp, x, z, y: App.genHeight(x, z), h: rnd() * 6.28, t: null, wait: rnd() * 3, wob: rnd() * 6, data, wild: isWild, gone: 0, faint: 0, lx: 0, lz: 0 };

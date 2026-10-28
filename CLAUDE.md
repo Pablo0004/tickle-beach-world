@@ -25,6 +25,10 @@ JavaScript, no build step). The owner talks in Spanish: answer in Spanish. Code,
   change bumps the layout tag (`App.LAYOUT`, with `App.migrateLayout`).
 - The owner's OpenSea API key stays on the owner's machine (`OPENSEA_API_KEY`); never store it.
 
+- Everything must stay convertible to on-chain vector models like the Tickles (the SDF stroke format of the kit), in
+  case the whole game is ever put on the chain: new models are strokes, never meshes or images; finer cubes are only
+  a rendering resolution, and textures must be reproducible from strokes and colours (asked 28 October 2026).
+
 ## Conventions
 
 - JavaScript files are pure ASCII: escape anything else (write `\u00b7`, not the character itself). The file-writing tool may turn escapes into

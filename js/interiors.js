@@ -1205,7 +1205,7 @@
         if (cur.token !== token) return;
         const holder = new THREE.Group(), mesh = App.centeredMesh(mk.md, mk.geo, true);
         mesh.userData.shared = true; mesh.scale.multiplyScalar(mo.scale || 1);
-        holder.add(mesh);
+        const pivot = new THREE.Group(); pivot.add(mesh); holder.add(pivot); st0.body = pivot; st0.bodyScale = 1; st0.seed = Math.random() * 6.28; // (the pivot moves, so the model turns about its feet)
         const tall = new THREE.Box3().setFromObject(mesh).max.y;
         const bar = new THREE.Group(), bg = box(mo.boss ? 3 : 1.6, 0.18, 0.08, 0x330000), fg = box(mo.boss ? 3 : 1.6, 0.18, 0.1, mo.boss ? 0xff7a2f : 0xe8443a);
         bar.add(bg, fg); bar.position.y = tall + (mo.crown ? 1.4 : 0.5); bar.visible = false;
@@ -1605,6 +1605,20 @@
         const hov = m.mo.k === "shadebat" || m.mo.k === "harpy" ? 1.6 + Math.sin(now / 200 + m.x) * 0.3 : m.mo.k === "wraith" ? 0.6 + Math.sin(now / 600 + m.x) * 0.25 : 0;
         m.holder.position.set(m.x, hov + (m.mo.k === "gloomslime" ? Math.abs(Math.sin(now / 250 + m.x)) * 0.15 : 0), m.z);
         if (now - (m.hit || 0) > 4000 && m.hp < m.max && m.floorHP == null) m.hp = Math.min(m.max, m.hp + dt * 10);
+      }
+      // alive, not a statue: a swagger from side to side and a bob in its stride while it moves, slow breathing when
+      // it stands, leaning into a blow, sinking when it falls
+      if (m.body) {
+        const B = m.body, k0 = m.bodyScale, moving = Math.hypot(m.x - (m.px == null ? m.x : m.px), m.z - (m.pz == null ? m.z : m.pz)) > dt * 0.2;
+        m.px = m.x; m.pz = m.z;
+        m.gait = (m.gait || 0) + dt * (moving ? 9 : 0);
+        const flier = m.mo.k === "shadebat" || m.mo.k === "harpy" || m.mo.k === "wraith", br = Math.sin(now / 700 + m.seed);
+        const lunge = m.lungeAt && now - m.lungeAt < 300 ? Math.sin(((now - m.lungeAt) / 300) * Math.PI) : 0;
+        B.rotation.z = moving && !flier ? Math.sin(m.gait) * 0.07 : flier ? Math.sin(now / 180 + m.seed) * 0.12 : 0;
+        B.rotation.x = -0.25 * lunge + (moving ? 0.04 : 0);
+        B.position.y = moving && !flier ? Math.abs(Math.sin(m.gait)) * 0.12 * (m.mo.scale || 1) : 0;
+        B.scale.set(k0 * (1 - 0.012 * br), k0 * (1 + 0.025 * br + (moving ? 0 : 0)), k0 * (1 - 0.012 * br));
+        if (m.dead) B.position.y -= 0.02;
       }
       m.bar.visible = m.hp < m.max;
       m.fg.scale.x = Math.max(0.01, m.hp / m.max); m.fg.position.x = -(m.barW || 1.6) / 2 * (1 - m.hp / m.max);

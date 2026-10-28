@@ -91,6 +91,16 @@ owner: a tank can be **bought and found**, both. Plan:
 - Under the sea: things for your own Tickle to find or catch (pearls, shells), sea creatures in the sea caves, the
   sea floor seen from above through the water (the surface is nearly opaque from above).
 
+- **More detail and more life in the living (28 October, local, not published)**: dragons were the coarsest thing in
+  the world (cube 12 scaled 2.4 times); now cube 8 on Normal and smaller with the Graphics setting. Monsters,
+  creatures, animals and mounts follow the Graphics setting like the buildings (`App.liveVoxel` in sim.js: Normal as
+  before, High x0.65, Ultra x0.5, never below `fine.min`), keeping the agreed proportion (a town view: about 1.2
+  million triangles, 9 ms a frame on High). Dragons asleep on their peak fold their wings back along the body, lie
+  down on the rock with the head bowed, breathe slowly and puff smoke now and then, with smooth changes between
+  poses (wildlife.js `pose`). Dungeon monsters sway and bob as they walk, breathe when still, lunge into a blow and
+  fliers flap (interiors.js, a pivot under each monster). The owner's rule: everything must stay convertible to
+  on-chain stroke models (in CLAUDE.md).
+
 ## 2. Open questions
 
 - **The menu and the clock**: the world keeps running while the menu is open; should it pause? (Asked in

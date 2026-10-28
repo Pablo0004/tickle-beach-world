@@ -72,7 +72,10 @@
   async function loadDragons() {
     const D = TB.dragonParts;
     for (const v of TB.KIT.dragon.variants) {
-      const [b, w] = await Promise.all([App.job("compact", { strokes: D.body(v), voxel: 12, lip: 1.5 }), App.job("compact", { strokes: D.wing(v), voxel: 12, lip: 1.5 })]);
+      // (a cube of 8 on Normal, smaller with the Graphics setting: scaled up 2.4 times the dragon was the coarsest thing
+      // in the world at 12)
+      const dv = App.liveVoxel ? App.liveVoxel("dragon", 8) : 8;
+      const [b, w] = await Promise.all([App.job("compact", { strokes: D.body(v), voxel: dv, lip: 1.5 }), App.job("compact", { strokes: D.wing(v), voxel: dv, lip: 1.5 })]);
       dragonGeo[v] = { body: b.mesh, bodyGeo: App.makeVoxMesh(b.mesh).geometry, wing: w.mesh, wingGeo: App.makeVoxMesh(w.mesh).geometry };
     }
   }
@@ -274,12 +277,26 @@
   function pose(d, mode, dtReal, bank) {
     d.flap += dtReal * (mode === "fly" ? 7 : 1.2);
     const lv = d.live || d.rampage || (d.duelRoar > 0 ? { roar: d.duelRoar } : null);
-    const w = mode === "fly" ? 0.15 + Math.sin(d.flap) * 0.65 : mode === "stand" ? -0.35 + Math.sin(d.flap) * 0.08 + (lv && lv.roar > 0 ? 0.7 : 0) : d.dead ? -0.2 : -0.75;
-    for (const p of d.wings) p.rotation.z = w * p.userData.side; // the mirrored wing turns the other way
+    // the wings: beating in flight; half open and twitching when it stands; asleep on its peak they fold right back
+    // along its flanks, and it settles down low, its head bowed, breathing slowly (a wisp of smoke now and then)
+    const asleep = mode === "rest" && !d.dead;
+    const want = mode === "fly" ? { z: 0.15 + Math.sin(d.flap) * 0.65, y: 0, x: 0 }
+      : mode === "stand" ? { z: -0.35 + Math.sin(d.flap) * 0.08 + (lv && lv.roar > 0 ? 0.7 : 0), y: 0.25, x: 0 }
+      : d.dead ? { z: -0.2, y: 0, x: 0 } : { z: -1.2, y: 1.05, x: 0.25 };
+    const k = mode === "fly" ? 1 : Math.min(1, dtReal * 2.5);
+    d.wz = d.wz == null ? want.z : d.wz + (want.z - d.wz) * k;
+    d.wy = d.wy == null ? want.y : d.wy + (want.y - d.wy) * k;
+    d.wx = d.wx == null ? want.x : d.wx + (want.x - d.wx) * k;
+    for (const p of d.wings) { p.rotation.set(d.wx, d.wy * p.userData.side, d.wz * p.userData.side); } // the mirrored wing turns the other way
+    d.low = (d.low || 0) + ((asleep ? 1 : 0) - (d.low || 0)) * Math.min(1, dtReal * 1.5);
+    const inner = d.group.children[0], breath = Math.sin(d.flap * 0.9);
+    inner.position.y = -1.05 * d.low; // (lying down on the rock, legs folded under it)
+    inner.scale.set(DSCALE, DSCALE * (1 + 0.022 * d.low * breath), DSCALE * (1 + 0.012 * d.low * breath));
+    if (asleep && App.spawnParticle && Math.random() < dtReal * 0.25) { const fx = Math.sin(d.heading), fz = Math.cos(d.heading), m = d.mouth; App.spawnParticle({ kind: "smoke", x: d.x + fx * m.z * 0.95, y: d.y + m.y * 0.75, z: d.z + fz * m.z * 0.95, vx: fx * 0.4, vy: 0.8, vz: fz * 0.4, life: 2.2, age: 0 }); }
     d.group.position.set(d.x, d.y + (mode === "fly" ? Math.sin(d.flap) * 0.25 : 0), d.z);
     d.group.rotation.set(0, d.heading, 0);
-    d.group.children[0].rotation.z = -bank;
-    d.group.children[0].rotation.x = lv && lv.swipe > 0 ? -0.12 : 0;
+    inner.rotation.z = -bank;
+    inner.rotation.x = lv && lv.swipe > 0 ? -0.12 : 0.13 * d.low;
     const ground = App.surfaceAt(d.x, d.z).y;
     d.blob.position.y = ground - d.y + 0.06;
     d.blob.visible = d.y - ground < 12;
@@ -426,7 +443,7 @@
   App.loadWildlife = async () => {
     await Promise.all(KINDS.map(async (k) => {
       const K = TB.KIT[k];
-      const r = await App.job("compact", { strokes: K.build(0), voxel: K.voxel[0], lip: 1.5 });
+      const r = await App.job("compact", { strokes: K.build(0), voxel: App.liveVoxel ? App.liveVoxel(k, K.voxel[0]) : K.voxel[0], lip: 1.5 });
       geo[k] = entryFor(r.mesh);
       const m = new THREE.InstancedMesh(geo[k].geo, App.voxMaterial, CAP);
       m.frustumCulled = false; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.count = 0;
