@@ -86,8 +86,10 @@ on the walls make sense. Inspired by the game Imperium." Ideas to agree on with 
 ### 1.5b Interiors: connected floors (asked 28 October)
 "Moving between the rooms is not practical; make bigger and more varied spaces" (a castle, and likely the
 mansions and big houses). Fixed the same day: rooms 99 and 200+ could not be entered; the ways out are numbered
-1, 2, 3... Still to do: one floor plan with the rooms side by side and doorways between them, bigger and more
-varied rooms.
+1, 2, 3... Done 28 October: in mansions and castles the rooms off the great hall (kitchen, training rooms,
+lounge, strong room or treasury) are built into one ground floor, in a column either side, behind low walls with a
+doorway into each (cut away like a doll's house): all seen at once and walked between; the stairs still go up to
+the bedrooms. Still to do: the same for the other big interiors, and more varied rooms.
 - **Life indoors like the people of a Pokemon town (asked 28 October, for every interior: houses, castles,
   mansions, casinos, the Parliament...)**: done for houses, mansions and castles: awake and not controlled, each
   Tickle takes a place of its own (one per chair, sofa seat or throne; the stove, counter or cauldron; a shelf to

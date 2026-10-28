@@ -100,3 +100,4 @@ mando, ni tarjeta gráfica). Ve tachando lo que veas bien y apunta lo que no.
 - Por la tarde en un castillo o una mansión grande: unos patrullan la muralla, otros están en la armería, muchos dentro de casa; en la hoguera, menos gente y más esparcida.
 - La toalla solo se ve cerca del agua; los snacks y patatas, siempre (también dentro).
 - Un jinete de grifo que sale o entra en una fortaleza pasa volando por encima de la muralla.
+- Entra en una mansión o un castillo: una sola planta con el gran salón en el centro y la cocina, el entrenamiento, el salón y el tesoro a los lados, con tabiques bajos y huecos de puerta. La ficha dice "On this floor: ...". Los dormitorios, por la escalera.

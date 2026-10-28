@@ -126,6 +126,54 @@
     });
     map.living = [hallIdx].concat(list.map((_, i) => map.rooms.length - list.length + i));
   }
+  // one floor plan instead of rooms reached by a mat (asked 28 October): the rooms off the great hall are built
+  // into its floor, in a column either side, behind low walls with a doorway into each (cut away, as in a doll's
+  // house, so you see them all and walk from one to the next); the stairs still go up to the bedrooms
+  const PART_H = 2.2, DOOR_W = 3;
+  function mergeRooms(map, hi, idxs) {
+    const A = map.rooms[hi], subs = idxs.map((i) => map.rooms[i]), gone = new Set(idxs);
+    const cols = [subs.filter((_, k) => k % 2 === 0), subs.filter((_, k) => k % 2 === 1)];
+    const cw = (c) => (c.length ? Math.max(...c.map((r) => r.w)) : 0), cd = (c) => c.reduce((n, r) => n + r.d, 0);
+    const LW = cw(cols[0]), RW = cw(cols[1]), D = Math.max(A.d, cd(cols[0]), cd(cols[1])), W = A.w + LW + RW, hx = (LW - RW) / 2, grow = (D - A.d) / 2;
+    // the hall in the middle, the full depth: what stands at its back moves back, what is at its front comes forward
+    const dropped = A.warps.filter((w) => w.to && w.to.room != null && gone.has(w.to.room));
+    A.items = A.items.filter((it) => !(it.k === "mat" && dropped.some((w) => Math.abs(w.x - it.x) < 0.01 && Math.abs(w.z - it.z) < 0.01)));
+    A.warps = A.warps.filter((w) => !dropped.includes(w));
+    const move = (o) => { o.x += hx; o.z += o.z < 0 ? -grow : grow; };
+    A.items.forEach(move); A.warps.forEach(move);
+    for (const k in A.spots) { const sp = A.spots[k]; if (Array.isArray(sp)) sp.forEach(move); else if (sp && sp.x != null) move(sp); }
+    const parts = [], zones = [{ name: A.name.replace(/ \(1F\)$/, ""), x: hx, z: 0 }];
+    // a straight run of low wall from a to b along x or z, with doorways (centres) left open
+    const run = (x0, z0, x1, z1, doors) => {
+      const alongX = Math.abs(z1 - z0) < 1e-6, a0 = alongX ? Math.min(x0, x1) : Math.min(z0, z1), a1 = alongX ? Math.max(x0, x1) : Math.max(z0, z1);
+      const cuts = doors.map((c) => [c - DOOR_W / 2, c + DOOR_W / 2]).sort((p, q) => p[0] - q[0]);
+      let at = a0;
+      for (const [c0, c1] of cuts.concat([[a1, a1]])) {
+        if (c0 > at + 0.05) { const m = (at + Math.min(c0, a1)) / 2, L = Math.min(c0, a1) - at; parts.push(alongX ? { x: m, z: z0, w: L, d: 0.4 } : { x: x0, z: m, w: 0.4, d: L }); }
+        at = Math.max(at, c1);
+      }
+    };
+    cols.forEach((col, ci) => {
+      const side = ci ? 1 : -1, cwid = ci ? RW : LW, x0 = side < 0 ? -W / 2 : W / 2 - cwid, wallX = side < 0 ? -W / 2 + LW : W / 2 - RW;
+      let zc = -D / 2;
+      const doors = [];
+      col.forEach((r, k) => {
+        const depth = k === col.length - 1 ? D / 2 - zc : r.d, cx = x0 + cwid / 2, cz = zc + depth / 2;
+        // (its things keep their place from its back wall)
+        for (const it of r.items) if (it.k !== "mat") A.items.push(Object.assign({}, it, { x: it.x + cx, z: zc + it.z + r.d / 2 }));
+        zones.push({ name: r.name.replace(/ \(1F\)$/, ""), x: cx, z: cz });
+        doors.push(cz);
+        if (k > 0) run(x0, zc, x0 + cwid, zc, [cx]);
+        zc += depth;
+      });
+      if (col.length) run(wallX, -D / 2, wallX, D / 2, doors);
+    });
+    A.w = W; A.d = D; A.parts = parts; A.zones = zones;
+    A.name = "Ground floor (1F)";
+    map.merged = true;
+    map.living = [hi];
+    for (const i of idxs) { const r = map.rooms[i]; r.merged = true; r.warps = []; }
+  }
   // a mansion: every Tickle of its holder lives in it; a great hall, a dormitory with a bed for each, a strong room
   function mansionMap(T) {
     const map = richMap(T, 2), n = App.residentsOf(T.sc).length, v = App.villages[T.sc.village];
@@ -139,6 +187,8 @@
     }
     // the room the bunks freed: a kitchen, a training room and a lounge off the great hall
     addRooms(map, 0, [(b) => kitchenRoom(v.style, b), (b) => trainingRoom(v.style, b), (b) => loungeRoom(v.style, b)]);
+    // all on one floor: the kitchen, the training room, the lounge and the strong room round the great hall
+    mergeRooms(map, 0, [map.rooms.length - 3, map.rooms.length - 2, map.rooms.length - 1].concat(map.rooms[2] && /^Strong room/.test(map.rooms[2].name) ? [2] : []));
     map.title = v.name;
     return map;
   }
@@ -197,6 +247,8 @@
     const out = { title: v.name, rooms, perDorm: PER_DORM, firstDorm: 1, maxEat: 24 };
     // what the bunks leave room for: kitchens, training rooms and lounges off the hall
     addRooms(out, 0, [(b) => kitchenRoom(c, b), (b) => trainingRoom(c, b), (b) => loungeRoom(c, b), (b) => trainingRoom(c, b)]);
+    // all on one floor round the throne hall: two training rooms, the kitchen, the lounge and the treasury
+    mergeRooms(out, 0, [out.rooms.length - 5].concat([0, 1, 2, 3].map((i) => out.rooms.length - 4 + i))); // (the treasury, then the four rooms just added)
     A.note = v.name + ": " + App.placeKindText(v) + ". " + dorms + " tower dormitor" + (dorms === 1 ? "y" : "ies") + ", a bed for every one of them.";
     return out;
   }
@@ -845,8 +897,9 @@
       else if (it.k === "window" || it.k === "picture") add(it.x, it.z + (it.z < 0 ? 1.5 : -1.5), it.z < 0 ? Math.PI : 0, "look");
       else if (it.k === "dummy" || it.k === "weightrack") add(it.x + fx * 1.6, it.z + fz * 1.6, r + Math.PI, "train");
     }
-    const clear = (x, z) => inside(x, z) && items.every((it) => Math.hypot(it.x - x, it.z - z) > 1.7) && out.every((q) => Math.hypot(q.x - x, q.z - z) > 1.3);
-    for (let k = 0; k < 60; k++) {
+    const nearPart = (x, z) => (R.parts || []).some((P) => Math.abs(x - P.x) < P.w / 2 + 1 && Math.abs(z - P.z) < P.d / 2 + 1);
+    const clear = (x, z) => inside(x, z) && !nearPart(x, z) && !nearPart(x - 1.5, z) && items.every((it) => Math.hypot(it.x - x, it.z - z) > 1.7) && out.every((q) => Math.hypot(q.x - x, q.z - z) > 1.3);
+    for (let k = 0; k < (R.parts ? 160 : 60); k++) {
       const x = (hash2(k, Math.round(R.w * 10), 951) - 0.5) * (R.w - 3), z = (hash2(k, Math.round(R.d * 10), 953) - 0.5) * (R.d - 3);
       if (k % 3 === 0) { if (clear(x, z) && clear(x + CHAT_GAP, z)) { add(x, z, Math.PI / 2, "chat", 1); add(x + CHAT_GAP, z, -Math.PI / 2, "chat", 2); } }
       else if (clear(x, z) && clear(x + 3, z)) add(x, z, Math.PI / 2, "walk");
@@ -900,7 +953,7 @@
       });
       // (lunch, and the first half hour of the morning for breakfast, round the table as before; the rest of the time each in a place of its own)
       const S0 = up.length ? App.planStep(up[0], st.T).step : null, meal = !!S0 && (S0.k === "lunch" || (S0.k === "morning" && m - S0.s < 30));
-      if (meal) for (const id of up.slice(0, map.maxEat || 99)) out.push({ id, pose: "eat" }); else placeAwake(map.rooms[ri], up.slice(0, 14), out); void awake;
+      if (meal) for (const id of up.slice(0, map.maxEat || 99)) out.push({ id, pose: "eat" }); else placeAwake(map.rooms[ri], up.slice(0, map.merged ? 30 : 14), out); void awake;
     }
     if (T.kind === "hall" && ri === 0 && !(T.sc && T.sc.mansion)) {
       const v = App.villages[T.sc.village];
@@ -942,7 +995,7 @@
         if (Math.min(map.rooms.length - 1, Math.floor((on / shift) * map.rooms.length)) === ri) out.push({ id, pose: "guard", j });
       });
     }
-    return out.slice(0, map.big ? 16 : 14);
+    return out.slice(0, map.big ? 16 : map.merged ? 30 : 14);
   }
 
   // ---------- drawing a room on black ----------
@@ -992,6 +1045,8 @@
       const wb = box(R.w + 1.2, R.h, 0.6, R.wall); wb.position.set(0, R.h / 2, -R.d / 2 - 0.3); g.add(wb);
       for (const s of [-1, 1]) { const w = box(0.6, R.h, R.d, R.wall); w.position.set(s * (R.w / 2 + 0.3), R.h / 2, 0); g.add(w); const t = box(0.66, 0.6, R.d, R.trim); t.position.set(s * (R.w / 2 + 0.27), 0.3, 0); g.add(t); }
       const tb = box(R.w + 1.2, 0.6, 0.66, R.trim); tb.position.set(0, 0.3, -R.d / 2 - 0.27); g.add(tb);
+      // the low walls between the rooms of one floor plan, a moulding along the top
+      for (const P of R.parts || []) { const b = box(P.w, PART_H, P.d, R.wall); b.position.set(P.x, PART_H / 2, P.z); g.add(b); const cap = box(P.w + 0.12, 0.18, P.d + 0.12, R.trim); cap.position.set(P.x, PART_H + 0.09, P.z); g.add(cap); }
     }
     if (R.dark && !R.maze) {
       // rough rock: a few boulders along the walls
@@ -1799,7 +1854,7 @@
     if (cur) cur.who = who;
     const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
     el.hidden = false;
-    el.innerHTML = '<div class="rh-title">' + esc(map.title) + '</div><div class="rh-room">' + esc(R.name) + ((map.floors || map.rooms.length) > 1 ? " &middot; " + (map.floors ? "floor " : "room ") + (ri + 1) + " of " + (map.floors || map.rooms.length) : "") + "</div>" +
+    el.innerHTML = '<div class="rh-title">' + esc(map.title) + '</div><div class="rh-room">' + esc(R.name) + (() => { const live = map.floors ? null : map.rooms.filter((r) => !r.merged), n = map.floors || live.length, k = map.floors ? ri + 1 : live.indexOf(R) + 1; return n > 1 ? " &middot; " + (map.floors ? "floor " : "room ") + k + " of " + n : ""; })() + (R.zones ? '</div><div class="rh-note">On this floor: ' + esc(R.zones.map((z) => z.name).filter((x, i, A) => A.indexOf(x) === i).join(", ")) : "") + "</div>" +
       (R.note ? '<div class="rh-note">' + esc(R.note) + "</div>" : "") +
       (R.boss ? '<div class="rh-note"><b>Guardian:</b> ' + esc(R.boss.name) + (cur && cur.mons && cur.mons.some((m) => m.mo.boss && m.dead) ? " (beaten! it will rise again)" : "") +
         (map.floors && st.guardians ? (st.guardians[ri] ? " \u00b7 first beaten by " + (st.guardians[ri].chosen ? "the Maker's Chosen" : esc(App.placeName(st.guardians[ri].village, st.guardians[ri].vname))) : " \u00b7 never beaten" + (App.guardianNeed ? " (a party needs about " + Math.round(App.guardianNeed(ri)) + " strength)" : "")) : "") + "</div>" : "") +
@@ -1922,7 +1977,7 @@
     fade(() => {
       cur = { map, ri: 0, worldCam: { x: C.target.x, z: C.target.z, r: C.radius, theta: C.theta, phi: C.phi }, focus: { x: 0, z: 0 }, watch: opt && opt.watch, followed: opt && opt.floor };
       C.follow = null; C.fly = null;
-      C.radius = map.maze ? (opt ? 26 : 30) : T.kind === "casino" ? 52 : T.kind === "parliament" ? 50 : 20; C.phi = map.maze ? (opt ? 0.8 : 0.75) : 0.95; C.theta = 0;
+      C.radius = map.maze ? (opt ? 26 : 30) : T.kind === "casino" ? 52 : T.kind === "parliament" ? 50 : map.merged ? Math.min(58, 18 + map.rooms[0].w * 0.5) : 20; C.phi = map.maze ? (opt ? 0.8 : 0.75) : 0.95; C.theta = 0;
       App.inside = cur;
       build(map, (opt && opt.floor) || 0);
       // in an Underworld you arrive at the foot of the cave you came down (or, watching a party, right where it is)
