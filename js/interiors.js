@@ -76,17 +76,69 @@
     }
     R.spots.beds = out; R.spots.bed = out[0];
   }
+  // bunks: two Tickles to a bunk, so a dormitory takes half the room it did; spots.beds lists the lower then the
+  // upper bed of each bunk (the upper ones marked up)
+  const BUNK_UP = (401 - 118) / 160;
+  function bunksFor(R, n, c, x0, perRow, dx) {
+    const out = [], bunks = Math.ceil(n / 2);
+    for (let k = 0; k < bunks; k++) {
+      const row = Math.floor(k / perRow), col = k % perRow, x = x0 + col * (dx || 3.4), z = back(R, 2.2 + row * 5.4);
+      R.items.push({ k: "bunkbed", v: c, x, z });
+      out.push({ x, z: z - 0.2 });
+      if (out.length < n) out.push({ x, z: z - 0.2, up: true });
+    }
+    R.spots.beds = out; R.spots.bed = out[0];
+  }
+  // the other rooms of a big house: a kitchen, a training room, a lounge (what is left once the bunks take half)
+  function kitchenRoom(c, back2) {
+    const K = room("Kitchen (1F)", 18, 12, { floor: ["#d8c8a8", "#c8b898"], wall: "#fff4d6" });
+    K.items.push({ k: "counter", x: -4, z: back(K, 1.2) }, { k: "counter", x: 4, z: back(K, 1.2) }, { k: "cauldron", x: -K.w / 2 + 2, z: 1 }, { k: "stove", x: K.w / 2 - 1.6, z: back(K, 1.6) },
+      { k: "table", v: 1, x: 1, z: 2 }, { k: "chair", x: 1, z: 3.6, rot: Math.PI }, { k: "chair", x: 1, z: 0.4 }, { k: "barrel", x: K.w / 2 - 1.3, z: 2.5 }, { k: "sacks", x: K.w / 2 - 1.6, z: 0.3 }, { k: "shelf", x: -K.w / 2 + 1.2, z: back(K, 3.2), rot: Math.PI / 2 }, { k: "mat", x: 0, z: K.d / 2 - 1 });
+    K.warps.push({ id: 0, x: 0, z: K.d / 2 - 1, kind: "mat", label: "Back to the hall", to: back2 });
+    K.spots.table = { x: 1, z: 3.5, face: Math.PI };
+    return K;
+  }
+  function trainingRoom(c, back2) {
+    const T = room("Training room (1F)", 20, 14, { floor: ["#b8a888", "#a89878"], wall: "#e8e0d0" });
+    T.items.push({ k: "dummy", x: -5, z: back(T, 2) }, { k: "dummy", x: -1.5, z: back(T, 2) }, { k: "dummy", x: 2, z: back(T, 2) }, { k: "weightrack", x: T.w / 2 - 2.4, z: 1, rot: -Math.PI / 2 },
+      { k: "rug", v: c, x: -2, z: 2 }, { k: "banner", v: c, x: 6, z: back(T, 0.2), y: 0.6 }, { k: "chest", v: 1, x: -T.w / 2 + 1.6, z: 2, rot: Math.PI / 2 }, { k: "torch", x: -T.w / 2 + 0.3, z: -2, y: 2.4, rot: Math.PI / 2 }, { k: "mat", x: 0, z: T.d / 2 - 1 });
+    T.warps.push({ id: 0, x: 0, z: T.d / 2 - 1, kind: "mat", label: "Back to the hall", to: back2 });
+    T.spots.table = { x: -2, z: 0.5, face: 0 };
+    return T;
+  }
+  function loungeRoom(c, back2) {
+    const L = room("Lounge (1F)", 18, 13, { floor: ["#c79a62", "#b58850"], wall: "#fff8e8" });
+    L.items.push({ k: "sofa", v: c, x: -3, z: back(L, 1.6) }, { k: "sofa", v: c, x: 3.5, z: back(L, 1.6) }, { k: "rug", v: c, x: 0, z: 0.5 }, { k: "table", v: 0, x: 0, z: 0.8 }, { k: "shelf", x: L.w / 2 - 1, z: 0, rot: -Math.PI / 2 },
+      { k: "plant", x: -L.w / 2 + 1.2, z: L.d / 2 - 2 }, { k: "picture", x: 0, z: back(L, 0.2), y: 2.2 }, { k: "window", x: -6, z: back(L, 0.15) }, { k: "window", x: 6, z: back(L, 0.15) }, { k: "lantern", x: L.w / 2 - 1.4, z: L.d / 2 - 2, light: true }, { k: "mat", x: 0, z: L.d / 2 - 1 });
+    L.warps.push({ id: 0, x: 0, z: L.d / 2 - 1, kind: "mat", label: "Back to the hall", to: back2 });
+    L.spots.table = { x: -3, z: back(L, 1.6) + 1.2, face: Math.PI };
+    return L;
+  }
+  // more rooms off a hall: each with a doormat in the hall leading to it, along the side walls near the front
+  function addRooms(map, hallIdx, list) {
+    const A = map.rooms[hallIdx];
+    list.forEach((mk, i) => {
+      const idx = map.rooms.length, wid = 200 + i, x = (i % 2 ? 1 : -1) * (A.w / 2 - 2.2), z = A.d / 2 - 3 - Math.floor(i / 2) * 3;
+      const R = mk({ room: hallIdx, warp: wid });
+      map.rooms.push(R);
+      A.warps.push({ id: wid, x, z, kind: "mat", label: R.name.replace(/ \(1F\)$/, ""), to: { room: idx, warp: 0 } });
+      A.items.push({ k: "mat", x, z });
+    });
+    map.living = [hallIdx].concat(list.map((_, i) => map.rooms.length - list.length + i));
+  }
   // a mansion: every Tickle of its holder lives in it; a great hall, a dormitory with a bed for each, a strong room
   function mansionMap(T) {
     const map = richMap(T, 2), n = App.residentsOf(T.sc).length, v = App.villages[T.sc.village];
     if (n > 2) {
-      const rows = Math.ceil(n / 6), B = map.rooms[1];
+      const rows = Math.ceil(Math.ceil(n / 2) / 5), B = map.rooms[1];
       B.name = "Bedrooms (2F)"; B.w = 20; B.d = 6 + rows * 5.4;
       B.items = B.items.filter((it) => it.k !== "bed" && it.k !== "stairs" && it.k !== "window" && it.k !== "picture" && it.k !== "shelf");
-      B.items.push({ k: "bed", v: v.style, x: -7.2, z: back(B, 2.2) }, { k: "stairs", x: B.w / 2 - 2, z: B.d / 2 - 2 }, { k: "window", x: 0, z: back(B, 0.15) }, { k: "picture", x: 5, z: back(B, 0.2), y: 2.2 });
+      B.items.push({ k: "stairs", x: B.w / 2 - 2, z: B.d / 2 - 2 }, { k: "window", x: 0, z: back(B, 0.15) }, { k: "picture", x: 5, z: back(B, 0.2), y: 2.2 });
       B.warps[0].x = B.w / 2 - 2; B.warps[0].z = B.d / 2 - 2;
-      bedsFor(B, n, v.style, -7.2, 6);
+      bunksFor(B, n, v.style, -6.8, 5);
     }
+    // the room the bunks freed: a kitchen, a training room and a lounge off the great hall
+    addRooms(map, 0, [(b) => kitchenRoom(v.style, b), (b) => trainingRoom(v.style, b), (b) => loungeRoom(v.style, b)]);
     map.title = v.name;
     return map;
   }
@@ -114,7 +166,7 @@
   }
   // a castle (or a great palace) for all of a holder's Tickles: the throne hall with its long tables, a dormitory in
   // every tower with a bed for each (48 to a tower), and the treasury
-  const PER_DORM = 48;
+  const PER_DORM = 80; // (bunks: 40 bunks, 80 Tickles to a tower)
   function castleMap(T) {
     const s = T.sc, v = App.villages[s.village], c = v.style, ids = App.residentsOf(s), n = Math.max(1, ids.length), dorms = Math.ceil(n / PER_DORM), keep = s.type.startsWith("castle");
     const A = room(keep ? "Throne hall (1F)" : "Great hall (1F)", 34, 24, { h: 9, floor: keep ? ["#9a948a", "#8a847a"] : ["#d8c8a8", "#c8b898"], wall: keep ? "#b0aa9e" : "#fff8e8", trim: keep ? "#6e665a" : "#a0703a" });
@@ -126,10 +178,10 @@
     A.warps.push({ id: 0, x: 0, z: A.d / 2 - 1, kind: "mat", label: "Outside", to: { outside: true } });
     const rooms = [A];
     for (let d = 0; d < dorms; d++) {
-      const nb = Math.min(PER_DORM, n - d * PER_DORM), perRow = 8, rows = Math.ceil(nb / perRow), x0 = -((perRow - 1) * 2.9) / 2;
-      const R = room("Tower dormitory " + (d + 1), perRow * 2.9 + 6, 8 + rows * 5.4, { floor: keep ? ["#8a847a", "#7e786e"] : ["#d8b98a", "#c9a978"], wall: keep ? "#b0aa9e" : "#fff4d6" });
-      R.items.push({ k: "bed", v: c, x: x0, z: back(R, 2.2) }, { k: "stairs", x: R.w / 2 - 2, z: R.d / 2 - 2 }, { k: "torch", x: -R.w / 2 + 0.3, z: 0, y: 2.4, rot: Math.PI / 2 }, { k: "torch", x: R.w / 2 - 0.3, z: 0, y: 2.4, rot: -Math.PI / 2 });
-      bedsFor(R, nb, c, x0, perRow);
+      const nb = Math.min(PER_DORM, n - d * PER_DORM), perRow = 8, rows = Math.ceil(Math.ceil(nb / 2) / perRow), x0 = -((perRow - 1) * 3.4) / 2;
+      const R = room("Tower dormitory " + (d + 1), perRow * 3.4 + 6, 8 + rows * 5.4, { floor: keep ? ["#8a847a", "#7e786e"] : ["#d8b98a", "#c9a978"], wall: keep ? "#b0aa9e" : "#fff4d6" });
+      R.items.push({ k: "stairs", x: R.w / 2 - 2, z: R.d / 2 - 2 }, { k: "torch", x: -R.w / 2 + 0.3, z: 0, y: 2.4, rot: Math.PI / 2 }, { k: "torch", x: R.w / 2 - 0.3, z: 0, y: 2.4, rot: -Math.PI / 2 });
+      bunksFor(R, nb, c, x0, perRow);
       R.warps.push({ id: 0, x: R.w / 2 - 2, z: R.d / 2 - 2, kind: "stairs", label: "Down to the hall", to: { room: 0, warp: d + 1 } });
       // the stairs up to the towers, along both side walls of the hall
       const sx = (d % 2 ? 1 : -1) * (A.w / 2 - 2), sz = back(A, 3 + Math.floor(d / 2) * 4);
@@ -142,8 +194,11 @@
     Tr.warps.push({ id: 0, x: 0, z: Tr.d / 2 - 1, kind: "mat", label: "Back to the hall", to: { room: 0, warp: 99 } });
     A.warps.push({ id: 99, x: A.w / 2 - 4, z: A.d / 2 - 1.2, kind: "mat", label: "The treasury", to: { room: rooms.length, warp: 0 } });
     rooms.push(Tr);
+    const out = { title: v.name, rooms, perDorm: PER_DORM, firstDorm: 1, maxEat: 24 };
+    // what the bunks leave room for: kitchens, training rooms and lounges off the hall
+    addRooms(out, 0, [(b) => kitchenRoom(c, b), (b) => trainingRoom(c, b), (b) => loungeRoom(c, b), (b) => trainingRoom(c, b)]);
     A.note = v.name + ": " + App.placeKindText(v) + ". " + dorms + " tower dormitor" + (dorms === 1 ? "y" : "ies") + ", a bed for every one of them.";
-    return { title: v.name, rooms, perDorm: PER_DORM, firstDorm: 1, maxEat: 24 };
+    return out;
   }
   // the prison (prison.js): a guard room under the blockhouse, the canteen below it, and the cell blocks one after another
   // further down, twelve cells to a block, a bed and an iron gate to each
@@ -795,7 +850,7 @@
       App.residentsOf(T.sc).forEach((id, k) => {
         if (!insideNow(id) || (App.isListed && App.isListed(id))) return;
         const step = App.planStep(id, st.T).step, asleep = step.k === "sleep" || App.isKO(id);
-        const where = asleep ? (map.perDorm ? map.firstDorm + Math.floor(k / map.perDorm) : bedRoom) : 0;
+        const where = asleep ? (map.perDorm ? map.firstDorm + Math.floor(k / map.perDorm) : bedRoom) : map.living ? map.living[k % map.living.length] : 0;
         if (ri !== where || (!asleep && map.maxEat && ++awake > map.maxEat)) return;
         out.push({ id, pose: asleep ? "sleep" : step.k === "shelter" ? "cower" : "eat" });
       });
@@ -1015,7 +1070,7 @@
       if (o.pose === "sleep") {
         // lying on its back, head on the pillow just short of the headboard, feet toward the foot of the bed
         const bj = R.spots.beds && R.spots.beds[j], b = bj || R.spots.bed || R.spots.sleep || { x: 0, z: 0 }, inBed = !!(bj || R.spots.bed), h = F.height || 3;
-        x = b.x + (bj || !j ? 0 : 1.4 * j); rot = 0; F.pivot.rotation.x = -1.45; F.pivot.position.y = inBed ? 0.85 : 0.35; fig.bed = b;
+        x = b.x + (bj || !j ? 0 : 1.4 * j); rot = 0; F.pivot.rotation.x = -1.45; F.pivot.position.y = (inBed ? 0.85 : 0.35) + (b.up ? BUNK_UP : 0); fig.bed = b;
         z = inBed ? Math.min(b.z + 0.2 + BED_HALF - 0.1, b.z + 0.2 - BED_HEAD + h) : b.z + 0.4;
       }
       else if (o.pose === "eat") { const sp = R.spots.table || { x: 0, z: 1.5, face: Math.PI }; x = sp.x + j * 1.6; z = sp.z; rot = sp.face; }
@@ -1052,7 +1107,7 @@
       if (o.pose === "sleep") {
         holder.updateMatrixWorld(true);
         const bx = new THREE.Box3().setFromObject(F.pivot), b = fig.bed && (R.spots.beds || R.spots.bed) ? fig.bed : null;
-        F.pivot.position.y += (b ? BED_TOP : 0.03) - bx.min.y;
+        F.pivot.position.y += (b ? BED_TOP + (b.up ? BUNK_UP : 0) : 0.03) - bx.min.y;
         if (b) { const head = b.z + 0.2 - BED_HEAD + 0.05, foot = b.z + 0.2 + BED_HALF + 0.3; let dz = 0; if (bx.min.z < head) dz = head - bx.min.z; else if (bx.max.z > foot) dz = Math.max(head - bx.min.z, foot - bx.max.z); holder.position.z += dz; }
       }
       g.add(holder);

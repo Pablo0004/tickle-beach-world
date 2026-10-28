@@ -497,9 +497,92 @@
     return st;
   }
 
+  // ---------- for the big houses: bunks, a kitchen, a training room, a lounge ----------
+  // a bunk bed: two beds one over the other on four posts, a ladder at the foot, a rail along the top one
+  function bunkbed(v) {
+    const st = [], blanket = C(CLANS[v % CLANS.length].color), blanket2 = C(CLANS[(v + 3) % CLANS.length].color);
+    st.push(S("cube", [0, 0, 55], [150, 250, 35], { color: wood(), round: 0.2 }));
+    st.push(S("cube", [0, 0, 338], [150, 250, 30], { color: wood(), round: 0.2 }));
+    st.push(S("joint", [150, 245, 300], [16, 16, 300], { color: dark(), mirror: true, offsX: 150 }));
+    st.push(S("joint", [150, -245, 300], [16, 16, 300], { color: dark(), mirror: true, offsX: 150 }));
+    st.push(S("cube", [0, -248, 470], [160, 14, 70], { color: dark(), round: 0.2 }));
+    st.push(S("cube", [0, 20, 100], [140, 230, 18], { color: C("#ffffff"), round: 0.4, layer: 1 }));
+    st.push(S("cube", [0, 70, 118], [142, 170, 8], { color: blanket, round: 0.3, layer: 1 }));
+    st.push(S("sphere", [0, -170, 128], [100, 45, 25], { color: C("#fff4d6"), layer: 1 }));
+    st.push(S("cube", [0, 20, 383], [140, 230, 18], { color: C("#ffffff"), round: 0.4, layer: 2 }));
+    st.push(S("cube", [0, 70, 401], [142, 170, 8], { color: blanket2, round: 0.3, layer: 2 }));
+    st.push(S("sphere", [0, -170, 411], [100, 45, 25], { color: C("#fff4d6"), layer: 2 }));
+    st.push(S("cube", [-158, 40, 450], [8, 160, 10], { color: dark(), layer: 3 }));
+    st.push(S("joint", [172, 150, 200], [8, 8, 200], { color: wood(), layer: 3 }));
+    st.push(S("joint", [172, 230, 200], [8, 8, 200], { color: wood(), layer: 3 }));
+    for (const z of [90, 170, 250, 330]) st.push(S("cube", [172, 190, z], [7, 42, 7], { color: wood(), layer: 3 }));
+    return st;
+  }
+  // a training dummy: a post, a straw body with a target painted on it, two stick arms
+  function dummy() {
+    const st = [], straw = C("#e8c35a"), red = C("#e8443a");
+    st.push(S("joint", [0, 0, 200], [18, 18, 200], { color: dark() }));
+    st.push(S("cylinder", [0, 0, 20], [80, 80, 20], { color: wood() }));
+    st.push(S("sphere", [0, 0, 330], [80, 60, 110], { color: straw, layer: 1 }));
+    st.push(S("sphere", [0, 0, 470], [55, 50, 55], { color: straw, layer: 1 }));
+    st.push(S("joint", [0, 0, 380], [150, 10, 10], { color: dark(), rot: [0, 1.5708, 0], layer: 1 }));
+    st.push(S("cylinder", [0, 58, 340], [40, 40, 6], { color: red, rot: [1.5708, 0, 0], hole: 0.5, layer: 2 }));
+    st.push(S("cylinder", [0, 60, 340], [12, 12, 6], { color: red, rot: [1.5708, 0, 0], layer: 2 }));
+    return st;
+  }
+  // a rack of dumbbells and a bench
+  function weightrack() {
+    const st = [], iron = C("#4a4a52");
+    st.push(S("cube", [0, -60, 150], [200, 20, 150], { color: wood(), round: 0.1 }));
+    st.push(S("cube", [0, 40, 70], [180, 40, 12], { color: dark() }));
+    for (const z of [90, 200]) for (const x of [-120, 0, 120]) { st.push(S("joint", [x, -40, z], [10, 10, 34], { color: iron, rot: [0, 1.5708, 0], layer: 1 })); st.push(S("cylinder", [x, -40, z], [26, 26, 10], { color: iron, rot: [0, 1.5708, 0], mirror: true, offsX: 30, layer: 1 })); }
+    st.push(S("cube", [0, 170, 80], [60, 140, 14], { color: C("#8a5a30"), round: 0.3, layer: 2 }));
+    st.push(S("joint", [0, 170, 40], [10, 10, 40], { color: dark(), layer: 2 }));
+    return st;
+  }
+  // a cook's cauldron on a fire of logs
+  function cauldron() {
+    const st = [], iron = C("#3a3a42"), soup = C("#e8a33a"), flame = C("#ff7a2f");
+    st.push(S("sphere", [0, 0, 150], [110, 110, 90], { color: iron }));
+    st.push(S("cube", [0, 0, 225], [100, 100, 30], { m: "sub", color: iron }));
+    st.push(S("cylinder", [0, 0, 205], [92, 92, 8], { color: soup, layer: 1 }));
+    st.push(S("joint", [0, 0, 30], [60, 12, 12], { color: dark(), rot: [0, 1.5708, 0.6], layer: 1 }));
+    st.push(S("joint", [0, 0, 30], [60, 12, 12], { color: dark(), rot: [0, 1.5708, -0.6], layer: 1 }));
+    st.push(S("sphere", [0, 0, 55], [45, 45, 40], { color: flame, layer: 2 }));
+    st.push(S("sphere", [20, 10, 80], [25, 25, 30], { color: C("#ffd23f"), layer: 2 }));
+    return st;
+  }
+  // a kitchen counter: a long block with a top, drawers and a few pots and loaves on it
+  function counter() {
+    const st = [], top = C("#d8c8a8");
+    st.push(S("cube", [0, 0, 110], [300, 70, 110], { color: wood(), round: 0.05 }));
+    st.push(S("cube", [0, 0, 228], [310, 78, 10], { color: top }));
+    for (const x of [-200, 0, 200]) st.push(S("cube", [x, 72, 150], [80, 4, 40], { m: "rep", color: dark() }));
+    st.push(S("cylinder", [-180, 0, 270], [40, 40, 35], { color: C("#c8c8c8"), layer: 1 }));
+    st.push(S("sphere", [60, 0, 255], [55, 35, 25], { color: C("#c87a3a"), layer: 1 }));
+    st.push(S("sphere", [180, 10, 250], [40, 30, 20], { color: C("#e8c35a"), layer: 1 }));
+    return st;
+  }
+  // a sofa with cushions in the clan's colour
+  function sofa(v) {
+    const st = [], cl = C(CLANS[v % CLANS.length].color);
+    st.push(S("cube", [0, 0, 70], [240, 90, 70], { color: dark(), round: 0.2 }));
+    st.push(S("cube", [0, -80, 170], [240, 20, 100], { color: dark(), round: 0.2 }));
+    st.push(S("cube", [230, 0, 130], [20, 90, 70], { color: dark(), round: 0.3, mirror: true, offsX: 230 }));
+    st.push(S("cube", [110, 10, 150], [100, 70, 18], { color: cl, round: 0.5, mirror: true, offsX: 110, layer: 1 }));
+    st.push(S("cube", [110, -55, 215], [90, 18, 60], { color: cl, round: 0.5, mirror: true, offsX: 110, layer: 1 }));
+    return st;
+  }
+
   const I = { group: "Interiors" }, clanV = CLANS.map((_, i) => i);
   Object.assign(TB.KIT, {
     bed: Object.assign({ name: "Bed", variants: clanV, build: bed, voxel: [8], variantLabel: (v) => CLANS[v].species + " blanket" }, I),
+    bunkbed: Object.assign({ name: "Bunk Bed", variants: clanV, build: bunkbed, voxel: [8], variantLabel: (v) => CLANS[v].species + " blankets" }, I),
+    dummy: Object.assign({ name: "Training Dummy", variants: [0], build: dummy, voxel: [8] }, I),
+    weightrack: Object.assign({ name: "Weight Rack", variants: [0], build: weightrack, voxel: [7] }, I),
+    cauldron: Object.assign({ name: "Cauldron", variants: [0], build: cauldron, voxel: [7] }, I),
+    counter: Object.assign({ name: "Kitchen Counter", variants: [0], build: counter, voxel: [8] }, I),
+    sofa: Object.assign({ name: "Sofa", variants: clanV, build: sofa, voxel: [8], variantLabel: (v) => CLANS[v].species + " cushions" }, I),
     table: Object.assign({ name: "Table", variants: [0, 1], build: table, voxel: [8], variantLabel: (v) => (v ? "laid for breakfast" : "bare") }, I),
     chair: Object.assign({ name: "Chair", variants: [0], build: chair, voxel: [8] }, I),
     rug: Object.assign({ name: "Rug", variants: clanV, build: rug, voxel: [8], variantLabel: (v) => CLANS[v].species + " colours" }, I),
