@@ -62,6 +62,13 @@
       const M = CAT.mount[o.m];
       return { tier: o.m, kind: M.kind, mul: M.mul, fly: !!M.fly, scale: M.scale, coat: o.m === 1 ? 0 : o.m === 2 ? o.coat || 1 : 3, name: M.short, seat: M.fly ? 2.45 : 2.2 * M.scale };
     }
+    // the fortresses and the great estates keep griffins in their roosts for their riders (asked 28 October: more
+    // griffins): about a fifth of their armed Tickles fly, in war and on their watch over the walls
+    const hv = App.villageOfToken(id);
+    if (hv && (hv.walls || hv.kind === "grand") && hash2(id, 881, 3) < 0.22 && App.combatRole && App.combatRole(id) === "warrior") {
+      const Gm = CAT.mount.find((m) => m && m.fly);
+      if (Gm) return { tier: "roost", kind: "griffin", mul: Gm.mul, fly: true, scale: Gm.scale, coat: 3, name: "a griffin of " + hv.name + "'s roost", seat: 2.45, roost: true };
+    }
     const c = App.leadCreature && App.leadCreature(id), R = c && App.MOUNT_MONSTERS && App.MOUNT_MONSTERS[c.sp];
     if (R) return { tier: "c:" + c.sp, kind: "monster", sp: c.sp, mul: R.mul, fly: false, scale: R.s, coat: 0, dz: R.dz, biped: !!R.biped, seat: R.back * R.s * 0.85 * S, pet: true, nick: c.nick || App.CREATURES[c.sp].name, name: (c.nick ? c.nick + " the " : "its ") + App.CREATURES[c.sp].name };
     const b = beastOf(id);

@@ -1259,6 +1259,9 @@
       if (st.T >= a.until || App.isKO(t.id)) { t.pos.x = a.back.x; t.pos.z = a.back.z; t.action = null; if (rnd() < 0.4) say(t, "All quiet out there.", 2); animate(t, false, dtReal); return; }
       const q = App.wallPos(a.ww, st.T - a.start);
       t.pos.x = q.x; t.pos.z = q.z; t.heading = turn(t.heading, q.h, dtReal * 6);
+      // a griffin rider keeps its watch in the air, over the top of the wall
+      const GM = App.mountOf ? App.mountOf(t.id) : null;
+      if (GM && GM.fly && App.mountRide && App.mountRide(t, { path: null }, 100) && t.riding) { t.riding.alt = 4; t.flyY = (App.wallDeckY(t.pos.x, t.pos.z) || App.genHeight(t.pos.x, t.pos.z)) + 4 + Math.sin(st.T * 0.4 + t.id) * 0.8; }
       animate(t, true, dtReal);
       return;
     }

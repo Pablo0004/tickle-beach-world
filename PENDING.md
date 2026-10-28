@@ -120,7 +120,9 @@ front of its place's stable or in the yard before it.
 
 ### 1.5f More griffins (asked 28 October)
 "I love seeing Tickles flying on them": more griffin riders, and they attack and defend mounted on them (in a war
-they already fly over the walls and strike the defences; to grow: more of them, and a part in other fights).
+they already fly over the walls and strike the defences; to grow: more of them, and a part in other fights). Done 28 October: the fortresses and the
+great estates keep griffins in their roosts: about a fifth of their armed Tickles ride one (339 griffin riders in
+all, from 62); they fly in war (griffin riders) and keep their watch on the walls in the air, over the top.
 
 ### 1.5c Carried things in the inventory (asked 28 October)
 The rings, boards, balls and other things a Tickle holds make no sense most of the time (training with a swim
