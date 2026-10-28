@@ -826,6 +826,47 @@
     const p = App.planPos(id, st.T);
     return !!p.inside && !App.isDead(id);
   }
+  // ---------- life indoors, like the people of a Pokemon town ----------
+  // Awake and not being moved by you, each Tickle takes a place of its own in the room: a chair, a sofa seat or the
+  // throne (one each), the stove, the counter or the cauldron, a shelf to read at, a window or a picture to look
+  // at, a training dummy; two by two, a chat in a clear stretch of floor; whoever is left strolls up and down. The
+  // places change every hour.
+  function lifeSpots(R) {
+    if (R._life) return R._life;
+    const out = [], items = R.items || [], inside = (x, z) => Math.abs(x) < R.w / 2 - 0.9 && Math.abs(z) < R.d / 2 - 0.9;
+    const add = (x, z, rot, act, pair) => { if (inside(x, z)) out.push({ x, z, rot, act, pair }); };
+    for (const it of items) {
+      const r = it.rot || 0, fx = Math.sin(r), fz = Math.cos(r);
+      if (it.k === "chair" || it.k === "throne") add(it.x, it.z, r, "sit");
+      else if (it.k === "sofa") for (const d of [-0.8, 0.8]) add(it.x + Math.cos(r) * d, it.z - Math.sin(r) * d, r, "sit");
+      else if (it.k === "stove" || it.k === "counter" || it.k === "cauldron") add(it.x + fx * 1.5, it.z + fz * 1.5, r + Math.PI, "cook");
+      else if (it.k === "shelf") add(it.x + fx * 1.3, it.z + fz * 1.3, r + Math.PI, "read");
+      else if (it.k === "window" || it.k === "picture") add(it.x, it.z + (it.z < 0 ? 1.5 : -1.5), it.z < 0 ? Math.PI : 0, "look");
+      else if (it.k === "dummy" || it.k === "weightrack") add(it.x + fx * 1.6, it.z + fz * 1.6, r + Math.PI, "train");
+    }
+    const clear = (x, z) => inside(x, z) && items.every((it) => Math.hypot(it.x - x, it.z - z) > 1.7) && out.every((q) => Math.hypot(q.x - x, q.z - z) > 1.3);
+    for (let k = 0; k < 60; k++) {
+      const x = (hash2(k, Math.round(R.w * 10), 951) - 0.5) * (R.w - 3), z = (hash2(k, Math.round(R.d * 10), 953) - 0.5) * (R.d - 3);
+      if (k % 3 === 0) { if (clear(x, z) && clear(x + 1.4, z)) { add(x, z, Math.PI / 2, "chat", 1); add(x + 1.4, z, -Math.PI / 2, "chat", 2); } }
+      else if (clear(x, z) && clear(x + 3, z)) add(x, z, Math.PI / 2, "walk");
+    }
+    return (R._life = out);
+  }
+  const LIFE_POSE = { sit: "sitidle", cook: "eat", read: "read", look: "look", train: "train", chat: "chat", walk: "stroll" };
+  function placeAwake(R, ids, out) {
+    if (!ids.length) return;
+    const hour = Math.floor(st.T / 60), spots = lifeSpots(R).slice().sort((a, b) => hash2(Math.round(a.x * 7 + a.z * 13), hour, 957) - hash2(Math.round(b.x * 7 + b.z * 13), hour, 957));
+    // the chats go two at a time: a pair is only used when two are left for it
+    const order = ids.slice().sort((a, b) => hash2(a, hour, 959) - hash2(b, hour, 959));
+    let i = 0;
+    for (const sp of spots) {
+      if (i >= order.length) break;
+      if (sp.act === "chat") { if (sp.pair !== 1) continue; const mate = spots.find((q) => q.act === "chat" && q.pair === 2 && Math.abs(q.z - sp.z) < 0.01 && Math.abs(q.x - sp.x - 1.4) < 0.01); if (!mate || i + 1 >= order.length) continue; out.push({ id: order[i++], pose: "chat", at: { x: sp.x, z: sp.z, rot: sp.rot } }, { id: order[i++], pose: "chat", at: { x: mate.x, z: mate.z, rot: mate.rot } }); continue; }
+      out.push({ id: order[i++], pose: LIFE_POSE[sp.act], at: { x: sp.x, z: sp.z, rot: sp.rot }, walk: sp.act === "walk" ? { ax: sp.x, az: sp.z, bx: sp.x + 3, bz: sp.z } : null });
+    }
+    // more people than places: they stroll about the middle of the room
+    for (; i < order.length; i++) { const x = (hash2(order[i], hour, 961) - 0.5) * (R.w - 4), z = (hash2(order[i], hour, 963) - 0.5) * (R.d - 4); out.push({ id: order[i], pose: "stroll", at: { x, z, rot: 0 }, walk: { ax: x, az: z, bx: -x * 0.5, bz: z } }); }
+  }
   function occupants(map, ri) {
     const T = map.target, out = [], day = Math.floor(st.T / DAY), m = st.T - day * DAY;
     if (T.kind === "casino") return App.casinoOccupants ? App.casinoOccupants(T.casino, ri).slice(0, 40) : [];
@@ -847,13 +888,18 @@
       // (in a castle each Tickle sleeps in the dormitory of its tower; only so many fit round the tables at once)
       const bedRoom = Math.max(0, map.rooms.findIndex((R) => R.spots.beds || R.spots.bed));
       let awake = 0;
+      const up = [];
       App.residentsOf(T.sc).forEach((id, k) => {
         if (!insideNow(id) || (App.isListed && App.isListed(id))) return;
         const step = App.planStep(id, st.T).step, asleep = step.k === "sleep" || App.isKO(id);
         const where = asleep ? (map.perDorm ? map.firstDorm + Math.floor(k / map.perDorm) : bedRoom) : map.living ? map.living[k % map.living.length] : 0;
-        if (ri !== where || (!asleep && map.maxEat && ++awake > map.maxEat)) return;
-        out.push({ id, pose: asleep ? "sleep" : step.k === "shelter" ? "cower" : "eat" });
+        if (ri !== where) return;
+        if (asleep || step.k === "shelter") out.push({ id, pose: asleep ? "sleep" : "cower" });
+        else up.push(id);
       });
+      // (lunch, and the first half hour of the morning for breakfast, round the table as before; the rest of the time each in a place of its own)
+      const S0 = up.length ? App.planStep(up[0], st.T).step : null, meal = !!S0 && (S0.k === "lunch" || (S0.k === "morning" && m - S0.s < 30));
+      if (meal) for (const id of up.slice(0, map.maxEat || 99)) out.push({ id, pose: "eat" }); else placeAwake(map.rooms[ri], up.slice(0, 14), out); void awake;
     }
     if (T.kind === "hall" && ri === 0 && !(T.sc && T.sc.mansion)) {
       const v = App.villages[T.sc.village];
@@ -895,7 +941,7 @@
         if (Math.min(map.rooms.length - 1, Math.floor((on / shift) * map.rooms.length)) === ri) out.push({ id, pose: "guard", j });
       });
     }
-    return out.slice(0, map.big ? 16 : 8);
+    return out.slice(0, map.big ? 16 : 14);
   }
 
   // ---------- drawing a room on black ----------
@@ -1102,6 +1148,8 @@
         fig.x = x; fig.z = z;
       }
       holder.position.set(x, 0, z); holder.rotation.y = rot;
+      if (o.walk) fig.walk = o.walk;
+      if (o.pose === "sitidle") F.pivot.position.y = 0.35; // (up on the seat)
       // a sleeper is fitted to its own shape (Tickles are round): lying on top of the mattress (or the floor),
       // its head just short of the headboard
       if (o.pose === "sleep") {
@@ -1694,7 +1742,7 @@
     if (f.pose === "sleep") { if (f.lieY == null) f.lieY = f.F.pivot.position.y; f.F.pivot.position.y = f.lieY + Math.abs(Math.sin(now / 900 + f.id)) * 0.04; /* breathing, from where it was laid */ if (A) { A.R.rotation.z = 0.5; A.L.rotation.z = -0.5; } return; }
     if (!A) return;
     A.R.rotation.z = 0; A.L.rotation.z = 0;
-    if (f.pose !== "dig" && f.pose !== "ko") { f.F.pivot.rotation.x = 0; f.F.pivot.position.y = 0; }
+    if (f.pose !== "dig" && f.pose !== "ko" && f.pose !== "sitidle") { f.F.pivot.rotation.x = 0; f.F.pivot.position.y = 0; }
     if (f.pose === "eat") { A.R.rotation.x = -1.1 + s * 0.35; A.L.rotation.x = -0.3; }
     else if (f.pose === "dig") { A.R.rotation.x = A.L.rotation.x = -1.6 + Math.sin(now / 200 + f.id) * 0.9; f.F.pivot.rotation.x = 0.2 + Math.max(0, Math.sin(now / 200 + f.id)) * 0.2; }
     else if (f.pose === "melee" || f.pose === "fight") {
@@ -1709,6 +1757,24 @@
       A.R.rotation.x = -1.8 - k * 0.9; A.L.rotation.x = -1.2 - k * 1.2; A.R.rotation.z = 0.2; A.L.rotation.z = -0.2;
       f.F.pivot.position.y = k * 0.15;
     } else if (f.pose === "guard") { A.R.rotation.x = -0.6; A.L.rotation.x = f.shield ? -0.8 : -0.1; }
+    else if (f.pose === "sitidle") { const c = (now / 4000 + f.id * 0.13) % 1; A.R.rotation.x = c < 0.1 ? -1.4 : -0.5; A.L.rotation.x = -0.5; f.F.pivot.position.y = 0.35; }
+    else if (f.pose === "read") { A.R.rotation.x = A.L.rotation.x = -1.3 + Math.sin(now / 1500 + f.id) * 0.08; A.R.rotation.z = -0.25; A.L.rotation.z = 0.25; }
+    else if (f.pose === "look") { A.R.rotation.x = -0.15; A.L.rotation.x = (now / 5000 + f.id * 0.3) % 1 < 0.12 ? -2.2 : -0.15; }
+    else if (f.pose === "train") { const k = (now / 700 + f.id * 0.3) % 1; A.R.rotation.x = k < 0.3 ? -2.4 + k * 6 : -0.6; A.L.rotation.x = -0.9; f.F.pivot.rotation.x = k < 0.3 ? 0.12 : 0; }
+    else if (f.pose === "chat") { const k = Math.sin(now / 420 + f.id); A.R.rotation.x = k > 0.4 ? -1.2 - k * 0.4 : -0.3; A.L.rotation.x = k < -0.6 ? -0.9 : -0.2; f.F.pivot.position.y = Math.max(0, k) * 0.03; }
+    else if (f.pose === "stroll") {
+      // up and down its stretch of floor, slowly, turning at each end
+      const W = f.walk, L = W ? Math.hypot(W.bx - W.ax, W.bz - W.az) : 0;
+      if (W && L > 0.1) {
+        const per = (L / 0.9) * 2 + 3, u = ((now / 1000 + f.id * 1.7) % per) / per, seg = per / 2, tt = u * per;
+        const go = tt < seg - 1.5 ? tt / (seg - 1.5) : tt < seg ? 1 : tt < per - 1.5 ? 1 - (tt - seg) / (seg - 1.5) : 0, moving = (tt < seg - 1.5) || (tt >= seg && tt < per - 1.5);
+        f.holder.position.x = W.ax + (W.bx - W.ax) * go; f.holder.position.z = W.az + (W.bz - W.az) * go;
+        const dir = tt < seg ? Math.atan2(W.bx - W.ax, W.bz - W.az) : Math.atan2(W.ax - W.bx, W.az - W.bz);
+        f.holder.rotation.y += (dir - f.holder.rotation.y) * 0.1;
+        A.R.rotation.x = moving ? Math.sin(now / 180 + f.id) * 0.5 : -0.1; A.L.rotation.x = moving ? -Math.sin(now / 180 + f.id) * 0.5 : -0.1;
+        f.F.pivot.position.y = moving ? Math.abs(Math.sin(now / 180 + f.id)) * 0.06 : 0;
+      }
+    }
     else if (f.pose === "cower") { A.R.rotation.x = A.L.rotation.x = -2.7; f.F.pivot.position.y = -0.2; }
     else if (f.pose === "seat") { const c = (now / 3000 + f.id * 0.137) % 1; A.R.rotation.x = c < 0.08 ? -2.7 : -0.25; A.L.rotation.x = -0.25; f.F.pivot.position.y = -0.15; } // a minister in its seat, a paw up now and then
     else if (f.pose === "cards") { const c = (now / 2400 + f.id * 0.17) % 1; A.R.rotation.x = c < 0.15 ? -1.6 : -1.05; A.L.rotation.x = -1.05; }
@@ -1743,7 +1809,7 @@
         const slots = ri === 0 ? '<div class="rh-note"><b>Slot machines:</b> ' + Math.min((Cs.spectators || []).length, 51) + ' guests playing <button class="btn primary" style="font-size:11.5px;padding:2px 10px" data-cslot="1">Play a machine</button></div>' : "";
         return slots + tour + (tabs.length ? '<div class="rh-note"><b>The tables</b> (click one to watch it, or to play):</div><div class="rh-warps">' + tabs.map((t) => '<button class="btn" style="font-size:11.5px;padding:3px 9px" data-ctable="' + t.key + '">' + esc(t.def.tour ? "Tournament " + (t.n + 1) : App.CASINO_GAMES[t.kind] + (t.kind !== "bingo" ? " " + (t.n + 1) : "")) + " \u00b7 " + t.seats.filter(Boolean).length + "/" + t.seats.length + "</button>").join("") + "</div>" : "");
       })() : "") +
-      '<div class="rh-note">' + (map.target.kind === "casino" ? (who.length ? (() => { const g = who.filter((o) => !o.staff).length, d = who.filter((o) => o.staff).length; return g + (g === 1 ? " guest" : " guests") + (d ? " and " + d + (d === 1 ? " dealer" : " dealers") : "") + " in here."; })() : (() => { const m = st.T % 1440; return m >= 19 * 60 && m < 23 * 60 + 30 ? "Nobody in this room right now." : "Nobody in here right now: the casino opens at 19:00."; })()) : who.length ? esc(who.slice(0, 10).map((o) => App.nameOf(o.id) + " (" + (o.pose === "fight" ? roleWord(o.id) : { sleep: "asleep", eat: "having a meal", dig: "mining", cower: "hiding", seat: "minister", guard: "on guard, Warriors' Guild", stand: App.guildRankName ? App.guildRankName(o.id) : "member" }[o.pose]) + ")").join(", ") + (who.length > 10 ? " and " + (who.length - 10) + " more" : "")) : "Nobody in here right now.") + "</div>" +
+      '<div class="rh-note">' + (map.target.kind === "casino" ? (who.length ? (() => { const g = who.filter((o) => !o.staff).length, d = who.filter((o) => o.staff).length; return g + (g === 1 ? " guest" : " guests") + (d ? " and " + d + (d === 1 ? " dealer" : " dealers") : "") + " in here."; })() : (() => { const m = st.T % 1440; return m >= 19 * 60 && m < 23 * 60 + 30 ? "Nobody in this room right now." : "Nobody in here right now: the casino opens at 19:00."; })()) : who.length ? esc(who.slice(0, 10).map((o) => App.nameOf(o.id) + " (" + (o.pose === "fight" ? roleWord(o.id) : { sleep: "asleep", eat: "having a meal", dig: "mining", cower: "hiding", seat: "minister", sitidle: "sitting", read: "reading", look: "looking out", train: "training", chat: "chatting", stroll: "strolling", guard: "on guard, Warriors' Guild", stand: App.guildRankName ? App.guildRankName(o.id) : "member" }[o.pose]) + ")").join(", ") + (who.length > 10 ? " and " + (who.length - 10) + " more" : "")) : "Nobody in here right now.") + "</div>" +
       (map.floors && App.liveParties ? (() => { const L = App.liveParties(); return L.length ? '<div class="rh-note"><b>Fighting down here now</b> (click to watch):</div><div class="rh-warps">' + L.slice(0, 5).map((x) => '<button class="btn" style="font-size:11.5px;padding:3px 9px" data-watch="' + esc(x.key) + '">' + esc(App.partyName(x.p)) + " \u00b7 B" + (x.S.f + 1) + "F" + (x.S.kind === "guardian" ? " \u2694 " + esc(GUARDIANS[x.S.f].name) : "") + "</button>").join("") + (L.length > 5 ? '<span class="note" style="align-self:center">and ' + (L.length - 5) + " more parties</span>" : "") + "</div>" : ""; })() : "") +
       (map.floors ? '<div class="rh-warps"><button class="btn" data-floor="up" ' + (ri === 0 ? "disabled" : "") + ' title="One floor up">&#9650;</button><select id="floorSel" aria-label="Go to floor">' +
         Array.from({ length: map.floors }, (_, f) => { const n = App.villages.filter((v) => ((st.depth && st.depth[v.i]) || 0) >= f).length; return '<option value="' + f + '"' + (f === ri ? " selected" : "") + ">B" + (f + 1) + "F \u00b7 " + esc(GUARDIANS[f].name) + (f === 0 ? "" : n ? " \u00b7 reached by " + n + " village" + (n === 1 ? "" : "s") : " \u00b7 nobody has been here") + "</option>"; }).join("") +

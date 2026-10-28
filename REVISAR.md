@@ -91,3 +91,7 @@ mando, ni tarjeta gráfica). Ve tachando lo que veas bien y apunta lo que no.
 - Estrellas: en el panel de guerras sale ★★☆ y el porcentaje destruido; al ganar estrellas sale un aviso. Con 3 estrellas el ganador se queda el sitio; con 2 todo menos el sitio; con 1 la mitad.
 - Arqueros en la muralla: en un asedio, los defensores con arco, los magos y los domadores suben arriba junto a la puerta y disparan; las torres también disparan flechas.
 - Tras romper la puerta, las trampas cogen a los primeros que entran (sale en el registro).
+
+## Vida en los interiores
+
+- Entra en una mansión o un castillo fuera de las comidas: cada Tickle en un sitio (sentados uno por silla o sofá, leyendo en la estantería, mirando por la ventana, entrenando, charlando en parejas, paseando); no en fila. La ficha de la sala dice qué hace cada uno.

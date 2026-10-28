@@ -88,6 +88,11 @@ on the walls make sense. Inspired by the game Imperium." Ideas to agree on with 
 mansions and big houses). Fixed the same day: rooms 99 and 200+ could not be entered; the ways out are numbered
 1, 2, 3... Still to do: one floor plan with the rooms side by side and doorways between them, bigger and more
 varied rooms.
+- **Life indoors like the people of a Pokemon town (asked 28 October, for every interior: houses, castles,
+  mansions, casinos, the Parliament...)**: done for houses, mansions and castles: awake and not controlled, each
+  Tickle takes a place of its own (one per chair, sofa seat or throne; the stove, counter or cauldron; a shelf to
+  read at; a window or picture; a training dummy; chats two by two; the rest stroll up and down), changing every
+  hour; lunch and breakfast still round the table. Still to do: the casinos, the Parliament and the other interiors.
 
 ### 1.5d Clearer results in every kind of fight (asked 28 October)
 Wars, the arenas' tournaments, the dungeons, the duels, sea beasts and dragons: say plainly who won, by how much
