@@ -130,8 +130,9 @@
 
   // ---------- ruins and rebuilding ----------
   App.isRuined = (s) => !!(s && s.ruined);
-  App.ruin = (s, cause) => {
-    if (!s || s.ruined || !s.building || !st.ruins || s.warren || s.castle || s.wall) return; // a warren is a hill, a castle and its walls are stone: nothing to burn down
+  App.ruin = (s, cause, war) => {
+    // a warren is a hill, a castle and its walls are stone: nothing to burn down; only a war brings them down (war.js)
+    if (!s || s.ruined || !s.building || !st.ruins || s.warren || ((s.castle || s.wall) && !war)) return;
     s.orig = s.type; s.ruined = true; s.type = "ruins_0";
     st.ruins[s.idx] = { orig: s.orig, progress: 0, since: st.T, village: s.village != null ? s.village : App.nearestVillage(s.x, s.z).i, cause };
     App.sceneryDirty = true;

@@ -60,6 +60,30 @@ on the walls make sense. Inspired by the game Imperium." Ideas to agree on with 
   - **Fortresses more like Imperium**: guards patrolling on the walls (already), armouries inside the walls,
     catapults, and health for every building.
 
+- **Built so far (28 October, js/war.js)**: health for every building (inspect window), armouries (93: fortresses and
+  great estates) and catapults (60, inside the fortress walls; the arm swings and the stones knock out), bigger
+  castle gates whose two leaves open by day, shut at night (they open for the household) and shut fast in a war
+  (they block the way until broken); declaration from rivalries (relation 15 or less), the ally's right to battle,
+  allies joining, armies of up to 50 with a general, units and formations (column, line, cavalry in the centre,
+  square, on the walls), the march in column along the roads, siege (ram and the attacker's catapults against
+  the gate, then the castle) and open battle (houses burn, the hall is taken), the fallen out until the convoy
+  of supplies arrives, loot (food, ores, shells, arms to the armoury, the place held with daily tribute, a war
+  of liberation), truce after 5 days, 3 days of peace, the war panel (Menu > World), the War section of the
+  encyclopedia. Test hook: `App.debugWar(a, b)`.
+- **Open question (28 October)**: the owner asked whether a Clash of Clans style battle would be simpler; the
+  options are with the owner before going on.
+
+### 1.5b Interiors: connected floors (asked 28 October)
+"Moving between the rooms is not practical; make bigger and more varied spaces" (a castle, and likely the
+mansions and big houses). Fixed the same day: rooms 99 and 200+ could not be entered; the ways out are numbered
+1, 2, 3... Still to do: one floor plan with the rooms side by side and doorways between them, bigger and more
+varied rooms.
+
+### 1.5c Carried things in the inventory (asked 28 October)
+The rings, boards, balls and other things a Tickle holds make no sense most of the time (training with a swim
+ring in hand). They belong in its inventory with its arms and belongings, and come out only when they are used
+(the swim ring or the board when swimming or surfing).
+
 ### 1.6 Editing homes and a better build mode (asked 16 and 24 October)
 
 "Not only the mansions: mansions, castles, houses... I also want to improve the option to build in the mode that

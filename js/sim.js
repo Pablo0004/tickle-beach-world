@@ -634,6 +634,7 @@
   const LOOT = { id: "loot", name: "Grab food", verb: "is grabbing food from the granary", needs: { hunger: 6 }, capacity: 99, minutes: 6, where: "self", source: "core", status: "core" };
   const CHANT = { id: "chant", name: "Revival ritual", verb: "is chanting round the altar", needs: { social: 14, fun: 4 }, capacity: 99, minutes: 8, where: "self", anim: "chant", source: "core", status: "core" };
   const WATCH_ARENA = { id: "watch_arena", name: "Tournament", verb: "is waiting for a turn in the arena", needs: { fun: 10, social: 6 }, capacity: 99, minutes: 5, where: "self", source: "core", status: "core", anim: "sitWatch" };
+  const WAR_SHELTER = { id: "shelter", name: "Keep indoors", verb: "is keeping indoors while the battle is on", needs: {}, capacity: 9, minutes: 30, where: "home", source: "core", status: "core" };
   const SHELTER = { id: "shelter", name: "Hide from the dragon", verb: "is hiding at home from the dragon", needs: {}, capacity: 9, minutes: 30, where: "home", source: "core", status: "core" };
   const WATCH = { id: "watch", name: "Keep watch", verb: "is watching the sky for the dragon", needs: {}, capacity: 99, minutes: 4, where: "self", source: "core", status: "core" };
   // meals come out of the village granary; an empty granary means a poor meal
@@ -785,6 +786,8 @@
     if ((step.k === "contest" || step.k === "contestWatch") && App.contestBrain && App.contestBrain(t, step)) return;
     // down to the water to fight a sea beast (seabeasts.js)
     if (step.k === "seadefend" && App.seaBrain && App.seaBrain(t, step)) return;
+    // at war: mustering, marching in column, fighting at the front, or carrying the spoils home (war.js)
+    if (step.k === "war" && App.warBrain && App.warBrain(t, step)) return;
     const ownTickle = st.wallet && App.isMine(t.id);
     if (st.mode === "manual" && !st.freeWill && (ownTickle || !st.wallet)) { t.action = { kind: "idle", until: st.T + 10 }; return; }
     if (step.k === "dive" && App.diveBrain && App.diveBrain(t, step)) return;
@@ -863,8 +866,8 @@
       return startDo(t, { act: App.PRAY, ref: "pray" + t.id, spot: { x: t.pos.x, z: t.pos.z }, exact: true, face: { x: step.p.cx, z: step.p.cz } }, false, st.T + 8);
     }
     if (step.k === "shelter" || step.k === "rainshelter") {
-      if (Math.hypot(t.home.x - t.pos.x, t.home.z - t.pos.z) > 1.5) return startTravel(t, t.home, "home to hide from the dragon");
-      return startDo(t, { act: SHELTER, ref: "home" + t.id, spot: t.home }, false, Math.floor(st.T / 1440) * 1440 + step.e);
+      if (Math.hypot(t.home.x - t.pos.x, t.home.z - t.pos.z) > 1.5) return startTravel(t, t.home, step.warShelter ? "home: there is a battle" : step.k === "rainshelter" ? "home out of the weather" : "home to hide from the dragon");
+      return startDo(t, { act: step.warShelter ? WAR_SHELTER : SHELTER, ref: "home" + t.id, spot: t.home }, false, Math.floor(st.T / 1440) * 1440 + step.e);
     }
     if (App.FACTION_STEPS && App.FACTION_STEPS[step.k]) {
       const r = App.factionBrain(t, step);
@@ -958,8 +961,11 @@
     const k = s0.scale || 1, c = Math.cos(s0.rot || 0), sn = Math.sin(s0.rot || 0);
     if (s0.type.startsWith("gatehouse")) {
       // the two towers either side of the arch
-      const off = (300 / 160) * k, hw = (140 / 160) * k, hd = (150 / 160) * k;
-      return [{ x: s0.x + c * off, z: s0.z - sn * off, c, s: sn, hx: hw, hz: hd, sc: s0 }, { x: s0.x - c * off, z: s0.z + sn * off, c, s: sn, hx: hw, hz: hd, sc: s0 }];
+      const off = (380 / 160) * k, hw = (140 / 160) * k, hd = (150 / 160) * k;
+      const both = [{ x: s0.x + c * off, z: s0.z - sn * off, c, s: sn, hx: hw, hz: hd, sc: s0 }, { x: s0.x - c * off, z: s0.z + sn * off, c, s: sn, hx: hw, hz: hd, sc: s0 }];
+      // the great gate shut fast in a war closes the arch too (war.js)
+      if (App.gateShut && App.gateShut(s0)) both.push({ x: s0.x, z: s0.z, c, s: sn, hx: off - hw, hz: 0.6, sc: s0 });
+      return both;
     }
     // the base of the building: its cubes in the first two blocks up (so the eaves and the roof do not count, and
     // the walls do, to the edge)
@@ -988,7 +994,7 @@
   function buildBlocks() {
     bcells.clear();
     for (const s0 of App.sceneryAll || []) {
-      if (!s0.building || s0.gone || s0.y != null && s0.y > App.genHeight(s0.x, s0.z) + 0.5 || NO_BLOCK.test(s0.type)) continue;
+      if (!s0.building || s0.gone || s0.y != null && s0.y > App.genHeight(s0.x, s0.z) + 0.5 || NO_BLOCK.test(s0.type) || (s0.ruined && s0.wall)) continue; // (a wall broken in a war is a gap)
       const fps = footprintsOf(s0);
       if (!fps) continue;
       for (const f of fps) {
@@ -1257,6 +1263,7 @@
     if (a.kind === "dive") return App.stepDive(t, a, dm, dtReal);
     if (a.kind === "fp") return App.stepFP(t, a, dm, dtReal);
     if (a.kind === "seafight") return App.stepSeaFight(t, a, dm, dtReal);
+    if (a.kind === "warmarch" || a.kind === "warfight") return App.stepWar(t, a, dm, dtReal);
     if (a.kind === "forge") return App.stepForge(t, a, dm, dtReal);
     if (a.kind === "sail") return App.stepSail(t, a, dm, dtReal);
     if (a.kind === "command") return stepCommand(t, a, dm, dtReal);
@@ -1887,6 +1894,7 @@
       App.contestTick && App.contestTick();
       App.diveTick && App.diveTick();
       App.seaTick && App.seaTick();
+      App.warTick && App.warTick();
       App.wealthTick && App.wealthTick();
       App.weatherTick && App.weatherTick();
       App.ferryTick && App.ferryTick();
@@ -2335,7 +2343,7 @@
       dex: st.dex || {},
       villages: App.saveVillages(), raidDay: st.raidDay, dragonDay: st.dragonDay, shareDay: st.shareDay,
       plots: App.plotsSave ? App.plotsSave() : null,
-      creatures: App.saveCreatures(), tourneyDay: st.tourneyDay, creatureDay: st.creatureDay, dungeons: App.saveDungeons(), settleDay: st.settleDay, fate: App.saveFate(), factions: App.saveFactions ? App.saveFactions() : null, rampage: App.saveRampage ? App.saveRampage() : null, lairs: App.saveLairs ? App.saveLairs() : null, faith: App.saveFaith ? App.saveFaith() : null, mines: App.saveMines ? App.saveMines() : null, guilds: App.saveGuilds ? App.saveGuilds() : null, casinos: App.saveCasinos ? App.saveCasinos() : null, parliament: App.saveParliament ? App.saveParliament() : null, contests: App.saveContests ? App.saveContests() : null, diving: App.saveDiving ? App.saveDiving() : null, seabeasts: App.saveSeaBeasts ? App.saveSeaBeasts() : null, wealth: App.saveWealth ? App.saveWealth() : null, weather: App.saveWeather ? App.saveWeather() : null,
+      creatures: App.saveCreatures(), tourneyDay: st.tourneyDay, creatureDay: st.creatureDay, dungeons: App.saveDungeons(), settleDay: st.settleDay, fate: App.saveFate(), factions: App.saveFactions ? App.saveFactions() : null, rampage: App.saveRampage ? App.saveRampage() : null, lairs: App.saveLairs ? App.saveLairs() : null, faith: App.saveFaith ? App.saveFaith() : null, mines: App.saveMines ? App.saveMines() : null, guilds: App.saveGuilds ? App.saveGuilds() : null, casinos: App.saveCasinos ? App.saveCasinos() : null, parliament: App.saveParliament ? App.saveParliament() : null, contests: App.saveContests ? App.saveContests() : null, diving: App.saveDiving ? App.saveDiving() : null, seabeasts: App.saveSeaBeasts ? App.saveSeaBeasts() : null, war: App.saveWar ? App.saveWar() : null, wealth: App.saveWealth ? App.saveWealth() : null, weather: App.saveWeather ? App.saveWeather() : null,
     };
   };
   App.restoreNeeds = (s) => { try { const f = unb64f(s); if (f.length === App.pop.needs.length) App.pop.needs.set(f); } catch (e) { /* ignore */ } };

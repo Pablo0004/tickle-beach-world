@@ -283,3 +283,10 @@ Código en GitHub: https://github.com/Pablo0004/tickle-beach-world — la versi�
 - El nombre del creador no se usa en el juego (solo "P.M.").
 - Los Tickles del jugador nunca son personal de nada; solo el jugador los controla.
 - Antes de compactar la conversación: actualizar este archivo.
+
+## Guerras (punto 1.5), en curso (28 de octubre)
+- Hecho (js/war.js): vida de todos los edificios (se ve al inspeccionar); armerías (93, en fortalezas y grandes fincas) y catapultas (60, dentro de las murallas; el brazo se mueve y las piedras dejan KO); puertas de castillo más grandes con dos hojas que se abren de día, se cierran de noche (se abren para los de casa) y en guerra (bloquean el paso hasta que las rompen).
+- La guerra: declaración por rivalidad (relación 15 o menos), derecho a batallar del aliado, aliados que se suman, ejércitos de hasta 50 con un general, unidades y formaciones (columna, línea, caballería al centro, cuadrado, en la muralla), marcha en columna por los caminos, asedio (ariete y catapultas del atacante contra la puerta y luego el castillo) y batalla abierta (arden casas, se toma la sede), caídos fuera hasta que llega el convoy de suministros, botín (comida, minerales, conchas, armas a la armería, el sitio pasa a estar en manos del ganador con tributo diario; guerra de liberación), tregua a los 5 días, 3 días de paz, panel de guerras (Menú > World) y sección War en la enciclopedia.
+- Pregunta abierta: el dueño preguntó si sería más fácil una batalla al estilo Clash of Clans; le he dado opciones antes de seguir.
+- Arreglado: en el castillo no se podía entrar en las salas 99 y 200-203; ahora las salidas se numeran 1, 2, 3...
+- Apuntado para después: plantas conectadas (salas una al lado de otra, con puertas, más grandes y variadas) y los objetos que llevan en la mano al inventario (solo se sacan cuando toca).

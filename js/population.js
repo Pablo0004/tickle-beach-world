@@ -447,6 +447,9 @@
     // a sea beast off a dock or a beach nearby: the armed, the mages and the tamers go down to fight it (seabeasts.js)
     const sb = App.seaDefendStep && App.seaDefendStep(id, day);
     if (sb) steps = overlay(steps, sb);
+    // at war: the day's march and battle, the spoils carried home, or indoors while a battle is on (war.js)
+    const wr = App.warStep && App.warStep(id, day);
+    if (wr) steps = overlay(steps, wr);
     // the weather: shelter at home from a storm (or heavy rain, or a tornado close by), run inland from a tsunami (weather.js)
     const wx = App.weatherStep && App.weatherStep(id, day, steps);
     if (wx) for (const w of wx) steps = overlay(steps, w);

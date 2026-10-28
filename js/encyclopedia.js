@@ -65,6 +65,13 @@
     for (const k in App.JOB_INFO || {}) add("Jobs", { id: "job:" + k, name: App.JOB_INFO[k].title, what: "A Tickle who " + App.JOB_INFO[k].verb.replace(/^is /, "is ") + ".", where: [].concat(App.JOB_INFO[k].place).join(", "), open: true });
     for (const k in App.GUILDS || {}) add("Guilds", { id: "guild:" + k, name: App.GUILDS[k].name, what: App.GUILDS[k].text || "One of the six guilds, with a hall in every region's Guild Quarter; ranks from Novice to Grandmaster.", where: "the Guild Quarters", open: true });
     for (const k in App.FACTIONS || {}) add("Factions", { id: "faction:" + k, name: App.FACTIONS[k].name || cap(k), what: App.FACTIONS[k].text || App.FACTIONS[k].what || "", open: true });
+    // war (war.js): the units of an army, its formations, and what a fortress fights with
+    const WU = App.WAR_UNITS || {}, WF = App.WAR_FORMATIONS || {}, UM = { cavalry: ["horse", 2], griffin: ["griffinmount", 0] };
+    for (const k in WU) add("War", { id: "unit:" + k, model: UM[k] || null, name: WU[k].name, what: WU[k].what + " Strength x" + WU[k].p.toFixed(1) + " in battle.", where: "every holder's army: up to fifty soldiers, led by a general", open: true });
+    for (const k in WF) add("War", { id: "formation:" + k, name: "Formation: " + WF[k].name, what: WF[k].what, where: "on the march and in battle", open: true });
+    add("War", { id: "war:armoury", model: ["armoury", 0], name: "Armoury", what: "Keeps the arms taken in wars; in a war it arms that many more of the place's people.", where: "inside the walls of the fortresses and in the great estates", hp: 900, open: true });
+    add("War", { id: "war:catapult", model: ["catapult", 0], name: "Catapult", what: "Throws stones over the walls at the besiegers.", where: "inside the walls of the fortresses, between the gates", hp: 300, open: true });
+    add("War", { id: "war:gate", model: ["gatehouse", 0], name: "Castle Gate", what: "Its great gate opens by day and shuts at night and in a war; besiegers must break it to go in.", where: "the walls of the fortresses", hp: 3000, open: true });
     return E;
   }
   const entries = () => ENTRIES || (ENTRIES = build());

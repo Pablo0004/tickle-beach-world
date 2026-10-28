@@ -606,14 +606,14 @@
     const day = Math.floor(st.T / DAY), m = st.T - day * DAY;
     const all = [];
     for (const id in st.tamed) for (const c of st.tamed[id]) all.push(c);
-    const sig = all.length + "|" + Object.keys(st.tourneys).map((k) => k + st.tourneys[k].done + st.tourneys[k].matches.length).join(",") + "|" + Math.floor(m / 30) + "|" + JSON.stringify(st.delves || {}) + "|" + Object.values(st.contests || {}).map((c) => c.key + c.done + c.entrants.length).join(",") + "|" + (st.wallet || "");
+    const sig = all.length + "|" + Object.keys(st.tourneys).map((k) => k + st.tourneys[k].done + st.tourneys[k].matches.length).join(",") + "|" + Math.floor(m / 30) + "|" + JSON.stringify(st.delves || {}) + "|" + Object.values(st.contests || {}).map((c) => c.key + c.done + c.entrants.length).join(",") + "|" + (st.wallet || "") + "|" + (App.warSig ? App.warSig() : "");
     if (!force && sig === arenaSig) return;
     arenaSig = sig;
     const top = all.slice().sort((a, b) => b.lvl - a.lvl || (b.wins || 0) - (a.wins || 0)).slice(0, 10);
     const count = {};
     for (const c of all) count[c.sp] = (count[c.sp] || 0) + 1;
     const tamers = Object.keys(st.tamed).filter((id) => st.tamed[id].length).length;
-    let h = (App.faithHTML ? App.faithHTML() : "") + (App.minesHTML ? App.minesHTML() : "") + (App.dungeonsHTML ? App.dungeonsHTML() : "") + (App.guildsHTML ? App.guildsHTML() : "") + (App.wealthHTML ? App.wealthHTML() : "") + (App.weatherHTML ? App.weatherHTML() : "") + (App.parliamentHTML ? App.parliamentHTML() : "") + (App.casinosHTML ? App.casinosHTML() : "") + (App.contestsHTML ? App.contestsHTML() : "") + (App.divingHTML ? App.divingHTML() : "") + (App.seaHTML ? App.seaHTML() : "") + (App.factionsHTML ? App.factionsHTML() : "") + '<div class="card"><h2>Creature Arena</h2><p class="note">Seven fantasy creatures live wild across the map. ' + tamers.toLocaleString() + " tamers have " + all.length.toLocaleString() +
+    let h = (App.warHTML ? App.warHTML() : "") + (App.faithHTML ? App.faithHTML() : "") + (App.minesHTML ? App.minesHTML() : "") + (App.dungeonsHTML ? App.dungeonsHTML() : "") + (App.guildsHTML ? App.guildsHTML() : "") + (App.wealthHTML ? App.wealthHTML() : "") + (App.weatherHTML ? App.weatherHTML() : "") + (App.parliamentHTML ? App.parliamentHTML() : "") + (App.casinosHTML ? App.casinosHTML() : "") + (App.contestsHTML ? App.contestsHTML() : "") + (App.divingHTML ? App.divingHTML() : "") + (App.seaHTML ? App.seaHTML() : "") + (App.factionsHTML ? App.factionsHTML() : "") + '<div class="card"><h2>Creature Arena</h2><p class="note">Seven fantasy creatures live wild across the map. ' + tamers.toLocaleString() + " tamers have " + all.length.toLocaleString() +
       " of them. Every evening from " + App.clock(day * DAY + T0).short + " each region's eight strongest tamers meet at its arena." + (App.tamedMonsters ? " Tamers also win over monsters in the Great Underworld, the mines and at the cave mouths (never a guardian): " + App.tamedMonsters().toLocaleString() + " tamed so far, walking about with their tamers." : "") + "</p></div>";
     h += '<div class="card"><h3>Tonight\'s tournaments</h3><div class="kv">';
     for (const ar of App.arenas || []) {

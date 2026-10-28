@@ -533,16 +533,117 @@
     st.push(S("joint", [0, 0, 990], [7, 7, 110], { color: roof, layer: 1 }));
     return st;
   }
-  // the gate in the wall: two square towers over an arch, the portcullis raised, a banner over it
+  // the gate in the wall: two square towers either side of a wide arch, a great gate under the arch (its two leaves are
+  // drawn apart, gateleaf, so they can swing open and shut), the portcullis raised into the arch, a banner over it
   function gatehouse(clan) {
-    const st = [], stone = C("#9a948a"), stone2 = C("#b0aa9e"), dark = C("#2a2420"), roof = C(CLANS[clan].color);
-    st.push(S("cube", [300, 0, 480], [140, 175, 480], { color: stone2, mirror: true, offsX: 300 }));
-    st.push(S("cube", [0, 0, 760], [180, 165, 200], { color: stone }));
-    st.push(S("cylinder", [0, 0, 560], [160, 160, 130], { m: "sub", color: stone, rot: [1.5708, 0, 0] }));
-    for (const x of [-100, 0, 100]) st.push(S("cube", [x, 0, 880], [8, 8, 70], { color: dark, layer: 1 }));
-    for (const x of [230, 370]) st.push(S("cube", [x, 0, 1000], [40, 150, 40], { color: stone, mirror: true, offsX: x, layer: 1 }));
-    st.push(S("cube", [0, 125, 760], [60, 6, 120], { color: roof, layer: 2 }));
-    st.push(S("cube", [0, -125, 760], [60, 6, 120], { color: roof, layer: 2 }));
+    const st = [], stone = C("#9a948a"), stone2 = C("#b0aa9e"), dark = C("#2a2420"), roof = C(CLANS[clan].color), iron = C("#3a3a3a");
+    st.push(S("cube", [380, 0, 560], [140, 175, 560], { color: stone2, mirror: true, offsX: 380 }));
+    st.push(S("cube", [0, 0, 880], [260, 165, 220], { color: stone }));
+    st.push(S("cylinder", [0, 0, 640], [240, 240, 180], { m: "sub", color: stone, rot: [1.5708, 0, 0] }));
+    // the portcullis, raised: its teeth hang out of the top of the arch
+    for (const x of [-150, -50, 50, 150]) st.push(S("joint", [x, 0, 850], [9, 9, 50], { color: dark, cone: 0.6, layer: 1 }));
+    st.push(S("cube", [0, 0, 878], [180, 10, 8], { color: iron, layer: 1 }));
+    for (const x of [310, 450]) st.push(S("cube", [x, 0, 1160], [40, 150, 40], { color: stone, mirror: true, offsX: x, layer: 2 }));
+    st.push(S("cube", [0, 0, 1140], [270, 160, 20], { color: stone2, layer: 2 }));
+    st.push(S("cube", [0, 125, 880], [70, 6, 140], { color: roof, layer: 3 }));
+    st.push(S("cube", [0, -125, 880], [70, 6, 140], { color: roof, layer: 3 }));
+    return st;
+  }
+  // one leaf of the great gate, hung from its hinge at x = 0 (variant 0 reaches to -x, the right-hand leaf seen from
+  // inside; variant 1 to +x): planks, two iron bands with studs, a ring to pull it by, the top following the arch
+  function gateleaf(side) {
+    const st = [], sx = side ? 1 : -1, wood = C("#7a4a24"), wood2 = C("#5e381a"), iron = C("#3a3a3a"), stud = C("#9a9a9a");
+    st.push(S("cube", [sx * 118, 0, 330], [116, 16, 330], { color: wood }));
+    st.push(S("cube", [sx * 178, 0, 700], [58, 16, 44], { color: wood }));
+    for (const x of [40, 120, 200]) st.push(S("cube", [sx * x, -18, 330], [3, 3, 320], { color: wood2, layer: 1 }));
+    for (const z of [140, 520]) st.push(S("cube", [sx * 118, -20, z], [114, 4, 16], { color: iron, layer: 2 }));
+    for (const x of [30, 90, 150, 210]) for (const z of [140, 520]) st.push(S("sphere", [sx * x, -26, z], [9, 6, 9], { color: stud, layer: 3 }));
+    st.push(S("cylinder", [sx * 200, -28, 330], [26, 26, 5], { color: iron, rot: [1.5708, 0, 0], hole: 0.7, layer: 4 }));
+    st.push(S("cube", [sx * 200, -24, 360], [8, 6, 10], { color: iron, layer: 4 }));
+    return st;
+  }
+  // the armoury inside a fortress's walls: a stone hall with a slate roof, a great door under a shield, racks of
+  // spears and swords either side of it, a stack of shields and a barrel of arrows
+  function armoury(clan) {
+    const st = [], stone = C("#8e887e"), stone2 = C("#a8a296"), slate = C("#4a4a5a"), wood = C("#7a4a24"), dark = C("#2a2018"), steel = C("#c8d0d8"), iron = C("#4a4a4a"), ban = C(CLANS[clan].color), gold = C("#ffd23f");
+    // layer 0: the hall, its plinth, the door and two barred windows
+    st.push(S("cube", [0, 0, 24], [420, 270, 24], { color: stone2, round: 0.15 }));
+    st.push(S("cube", [0, 0, 300], [390, 240, 260], { color: stone, round: 0.03 }));
+    st.push(S("cube", [0, 236, 170], [95, 14, 150], { m: "rep", color: stone }));
+    st.push(S("cube", [0, 242, 165], [85, 8, 142], { color: dark, round: 0.25 }));
+    st.push(S("cube", [250, 238, 330], [42, 10, 60], { m: "rep", color: dark, mirror: true, offsX: 250 }));
+    // layer 1: the slate roof and the battlements along its eaves
+    st.push(S("cube", [0, 0, 660], [410, 255, 110], { color: slate, cone: 1, layer: 1 }));
+    st.push(S("cube", [0, 0, 568], [405, 250, 12], { color: stone2, layer: 1 }));
+    // layer 2: the shield over the door, in the house's colour, and the bars across the windows
+    st.push(S("cylinder", [0, 252, 395], [70, 70, 8], { color: ban, rot: [1.5708, 0, 0], layer: 2 }));
+    st.push(S("cube", [0, 260, 395], [12, 4, 50], { color: gold, layer: 2 }));
+    st.push(S("cube", [250, 250, 330], [4, 4, 58], { color: iron, mirror: true, offsX: 250, layer: 2 }));
+    // layer 3: the weapon racks: a frame each side of the door, spears up and swords hung on it
+    st.push(S("cube", [200, 300, 150], [70, 10, 8], { color: wood, mirror: true, offsX: 200, layer: 3 }));
+    st.push(S("cube", [200, 300, 60], [70, 10, 8], { color: wood, mirror: true, offsX: 200, layer: 3 }));
+    for (const x of [150, 200, 250]) st.push(S("joint", [x, 304, 190], [5, 5, 190], { color: wood, mirror: true, offsX: x, layer: 3 }));
+    // layer 4: the steel: spear heads and sword blades on the racks
+    for (const x of [150, 200, 250]) st.push(S("joint", [x, 304, 395], [9, 9, 22], { color: steel, cone: 1, mirror: true, offsX: x, layer: 4 }));
+    st.push(S("cube", [175, 312, 105], [4, 8, 70], { color: steel, mirror: true, offsX: 175, layer: 4 }));
+    st.push(S("cube", [225, 312, 105], [4, 8, 70], { color: steel, mirror: true, offsX: 225, layer: 4 }));
+    // layer 5: a stack of round shields leaning on the wall, and a barrel of arrows
+    for (const [x, c] of [[-360, "#e8443a"], [-330, "#2f8fe0"], [-300, "#3cbf6c"]]) st.push(S("cylinder", [x, 270, 70], [60, 60, 7], { color: C(c), rot: [1.35, 0, 0], layer: 5 }));
+    st.push(S("cylinder", [360, 290, 60], [42, 42, 60], { color: wood, layer: 5 }));
+    for (const x of [345, 360, 375]) st.push(S("joint", [x, 290, 160], [3, 3, 50], { color: C("#c79a62"), layer: 6 }));
+    st.push(S("cube", [360, 290, 214], [30, 10, 8], { color: C("#f0f0f0"), layer: 6 }));
+    return st;
+  }
+  // a catapult: a wheeled timber frame, two uprights with the axle across (the throwing arm is drawn apart,
+  // catapultarm, so it can swing)
+  function catapult() {
+    const st = [], wood = C("#8a5a30"), wood2 = C("#6b4422"), iron = C("#4a4a4a");
+    // layer 0: the frame (two rails and the cross beams)
+    st.push(S("cube", [110, 0, 80], [16, 260, 18], { color: wood, mirror: true, offsX: 110 }));
+    st.push(S("cube", [0, 230, 80], [126, 16, 16], { color: wood }));
+    st.push(S("cube", [0, -230, 80], [126, 16, 16], { color: wood }));
+    // layer 1: four wheels with iron rims
+    st.push(S("cylinder", [140, 170, 62], [60, 60, 12], { color: wood2, rot: [0, 1.5708, 0], mirror: true, offsX: 140, layer: 1 }));
+    st.push(S("cylinder", [140, -170, 62], [60, 60, 12], { color: wood2, rot: [0, 1.5708, 0], mirror: true, offsX: 140, layer: 1 }));
+    st.push(S("cylinder", [156, 170, 62], [62, 62, 4], { color: iron, rot: [0, 1.5708, 0], mirror: true, offsX: 156, layer: 2 }));
+    st.push(S("cylinder", [156, -170, 62], [62, 62, 4], { color: iron, rot: [0, 1.5708, 0], mirror: true, offsX: 156, layer: 2 }));
+    // layer 3: the two A-frame uprights and the axle on top; the stop beam the arm strikes
+    st.push(S("joint", [110, -40, 220], [12, 12, 150], { color: wood, rot: dir(0, 0.35, 1), mirror: true, offsX: 110, layer: 3 }));
+    st.push(S("joint", [110, 60, 220], [12, 12, 150], { color: wood, rot: dir(0, -0.35, 1), mirror: true, offsX: 110, layer: 3 }));
+    st.push(S("cylinder", [0, 10, 360], [12, 12, 130], { color: iron, rot: [0, 1.5708, 0], layer: 3 }));
+    st.push(S("cube", [0, 150, 300], [110, 14, 14], { color: wood2, layer: 3 }));
+    return st;
+  }
+  // the catapult's throwing arm, hung from the axle at the origin: the long end back (-y) with the bucket and its
+  // stone, the counterweight box under the short end
+  function catapultarm() {
+    const st = [], wood = C("#8a5a30"), wood2 = C("#6b4422"), iron = C("#4a4a4a"), rock = C("#8a8a8a");
+    st.push(S("joint", [0, -100, 0], [14, 14, 200], { color: wood2, rot: dir(0, 1, 0) }));
+    st.push(S("cube", [0, 95, -60], [70, 55, 70], { color: wood2, round: 0.1 }));
+    st.push(S("sphere", [0, -300, 20], [46, 46, 24], { color: wood, layer: 1 }));
+    st.push(S("sphere", [0, -300, 56], [38, 38, 36], { color: rock, layer: 1 }));
+    st.push(S("cube", [0, 95, -30], [74, 59, 6], { color: iron, layer: 2 }));
+    st.push(S("cube", [0, 95, -90], [74, 59, 6], { color: iron, layer: 2 }));
+    return st;
+  }
+  // a battering ram: a log with an iron head, slung on chains under a roof on wheels, the front (+y) at the gate
+  function ram() {
+    const st = [], wood = C("#8a5a30"), wood2 = C("#6b4422"), iron = C("#4a4a4a"), hide = C("#a0703a"), log = C("#7a4a24");
+    // layer 0: the frame and the four corner posts
+    st.push(S("cube", [120, 0, 70], [14, 280, 16], { color: wood, mirror: true, offsX: 120 }));
+    st.push(S("joint", [120, 240, 210], [12, 12, 150], { color: wood, mirror: true, offsX: 120 }));
+    st.push(S("joint", [120, -240, 210], [12, 12, 150], { color: wood, mirror: true, offsX: 120 }));
+    // layer 1: the pitched roof of hides
+    st.push(S("cube", [0, 0, 420], [160, 290, 70], { color: hide, cone: 1, layer: 1 }));
+    st.push(S("cube", [0, 0, 356], [150, 285, 8], { color: wood2, layer: 1 }));
+    // layer 2: wheels
+    st.push(S("cylinder", [145, 190, 55], [55, 55, 12], { color: wood2, rot: [0, 1.5708, 0], mirror: true, offsX: 145, layer: 2 }));
+    st.push(S("cylinder", [145, -190, 55], [55, 55, 12], { color: wood2, rot: [0, 1.5708, 0], mirror: true, offsX: 145, layer: 2 }));
+    // layer 3: the log, its iron head and the chains it hangs from
+    st.push(S("joint", [0, 40, 200], [36, 36, 300], { color: log, rot: dir(0, 1, 0), layer: 3 }));
+    st.push(S("joint", [0, 350, 200], [44, 44, 30], { color: iron, cone: 0.5, rot: dir(0, 1, 0), layer: 3 }));
+    st.push(S("joint", [0, 150, 280], [4, 4, 70], { color: iron, layer: 4 }));
+    st.push(S("joint", [0, -100, 280], [4, 4, 70], { color: iron, layer: 4 }));
     return st;
   }
 
@@ -775,6 +876,11 @@
     wall: { name: "Castle Wall", group: "Village", variants: [0], build: wall, voxel: [16, 36], lazy: true },
     walltower: { name: "Wall Tower", group: "Village", variants: [0], build: walltower, voxel: [16, 36], lazy: true },
     gatehouse: { name: "Castle Gate", group: "Village", variants: clanV, build: gatehouse, voxel: [16, 36], lazy: true, variantLabel: (v) => CLANS[v].species + " banner" },
+    gateleaf: { name: "Castle Gate Leaf", group: "Village", variants: [0, 1], build: gateleaf, voxel: [10], variantLabel: (v) => (v ? "left" : "right") },
+    armoury: { name: "Armoury", group: "Village", variants: clanV, build: armoury, voxel: [12, 30], lazy: true, variantLabel: (v) => CLANS[v].species + " shield" },
+    catapult: { name: "Catapult", group: "Village", variants: [0], build: catapult, voxel: [8, 20], lazy: true },
+    catapultarm: { name: "Catapult Arm", group: "Village", variants: [0], build: catapultarm, voxel: [7] },
+    ram: { name: "Battering Ram", group: "Village", variants: [0], build: ram, voxel: [8] },
     mlodge: { name: "Log Lodge (Camping mansion)", group: "Village", variants: clanV, build: mlodge, voxel: [22, 48], lazy: true, variantLabel: (v) => CLANS[v].species + " roof" },
     mfarm: { name: "Country House (Duck Pond mansion)", group: "Village", variants: clanV, build: mfarm, voxel: [22, 48], lazy: true, variantLabel: (v) => CLANS[v].species + " roof" },
     mkeep: { name: "Stone Keep (Waterfall mansion)", group: "Village", variants: clanV, build: mkeep, voxel: [22, 48], lazy: true, variantLabel: (v) => CLANS[v].species + " roofs" },

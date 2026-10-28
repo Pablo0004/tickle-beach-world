@@ -79,3 +79,12 @@ mando, ni tarjeta gráfica). Ve tachando lo que veas bien y apunta lo que no.
 - Menú > Encyclopedia: las fichas de seres que aún no has visto salen en negro con "???"; acércate a un animal, una criatura o un monstruo y comprueba que sale el aviso y se rellena su ficha.
 - Abre una ficha: modelo en 3D, número y datos. Las secciones de armas, hechizos, reliquias, monturas, etc. están abiertas desde el principio.
 - Cierra el juego y vuelve a entrar: lo visto sigue visto.
+
+## Guerras (punto 1.5)
+
+- Ve a una fortaleza: dentro de la muralla hay una armería y catapultas. Inspecciona un edificio: sale su vida.
+- Las puertas grandes del castillo: abiertas de día, cerradas de noche (se abren cuando llega alguien de la casa).
+- Menú > World > Wars: las guerras en curso, sus ejércitos, formaciones, la puerta y el castillo; pulsa una para ir.
+- Mira una guerra de cerca: la columna marchando por el camino (caballería delante, ariete en cabeza, catapultas detrás), el asedio en la puerta, las catapultas de la muralla disparando, los caídos que se van a casa.
+- Al acabar: el convoy lleva el botín; los caídos se levantan cuando llega; el sitio vencido sale "held by" el ganador.
+- En el castillo: entra en todas las salas (tesoro, cocina, entrenamiento, salón); los botones van numerados 1, 2, 3...

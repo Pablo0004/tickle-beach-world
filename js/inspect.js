@@ -135,6 +135,7 @@
     out.text = "<p>" + esc(SCN[kind] || (F ? "A piece of the on-chain floors, set into the world." : "Part of the scenery.")) + (movable ? " The hand can pick it up and throw it; broken, it grows back later." : "") + "</p>";
     if (App.isBroken && App.isBroken(s)) out.chips.push("Broken: it will grow back");
     if (s.ruined) out.chips.push("In ruins: being rebuilt");
+    if (App.warSceneryInfo) App.warSceneryInfo(s, out); // its health, and what a war has to do with it (war.js)
     return out;
   }
   function propInfo(p) {

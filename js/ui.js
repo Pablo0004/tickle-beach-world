@@ -634,6 +634,7 @@
     if (a.kind === "dive") return App.diveActionText(t);
     if (a.kind === "fp") return App.fpText(t);
     if (a.kind === "seafight") return App.seaActionText(t);
+    if (a.kind === "warmarch" || a.kind === "warfight") return App.warActionText(t);
     if (a.kind === "forge") return "Hammering at the anvil (Blacksmiths' Guild)";
     if (a.kind === "sail") return "Out sailing its own boat";
     if (!a.act) return "Busy";
@@ -1336,6 +1337,7 @@
       App.initSeaBeasts && App.initSeaBeasts(saved && saved.seabeasts);
       App.initWealth && App.initWealth(saved && saved.wealth);
       App.initWeather && App.initWeather(saved && saved.weather);
+      App.initWar && App.initWar(saved && saved.war);
       // buildings moved by hand in an earlier session take their doors (and their residents) with them again
       for (const k in st.moved || {}) { const s = App.sceneryAll[+k]; if (s && s.building && App.syncBuilding) App.syncBuilding(s); }
       if (saved) st.settleDay = saved.settleDay;
@@ -1441,6 +1443,7 @@
     App.updateContests && App.updateContests(dt); // the stage, the circuit, the podium near you; the scoreboard
     App.updateDiving && App.updateDiving(dt); // what lies on the bottom at the dive sites near you
     App.updateSeaBeasts && App.updateSeaBeasts(); // a sea beast risen near you
+    App.updateWar && App.updateWar(dt); // the great gates, a siege's catapults near you
     App.updateWealth && App.updateWealth(dt); // mounts, private boats, the Blacksmiths' Guild near you
     App.updateBirds && App.updateBirds(dt); // songbirds in the trees near you
     App.updateWeather && App.updateWeather(dt); // rain, clouds, lightning, a tornado or a tsunami near you

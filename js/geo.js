@@ -241,7 +241,7 @@
   };
   // the walls: stretches about eight blocks long, thick enough to walk along the top; a gatehouse whose towers reach
   // 3.85 blocks either side of its arch
-  const WALL_SCALE = 1.4, WALL_LEN = (980 / 160) * WALL_SCALE, GATE_HALF = 3.85, WALL_TOP = (535 / 160) * WALL_SCALE, WALL_HW = (150 / 160) * WALL_SCALE;
+  const WALL_SCALE = 1.4, WALL_LEN = (980 / 160) * WALL_SCALE, GATE_HALF = 4.55, WALL_TOP = (535 / 160) * WALL_SCALE, WALL_HW = (150 / 160) * WALL_SCALE;
   App.MANSION_KINDS = Object.values(MANSION_KIND);
   const mansionsOf = (n) => Math.max(1, Math.floor(n / GRAND));
   const housesOf = (n) => (n >= PAIR ? 2 : 1); // a town household's houses
@@ -1245,6 +1245,33 @@
           placedAt.push(at);
           const H = build("m" + k, at.x, at.z, k ? faceTo(at.x, at.z, v.x, v.z) : v.hall.rot, grand ? MANSION_KIND[v.floor] : "townhouse", members, grand ? MANSION_DOOR : 2.7, grand ? { scale: MANSION_SCALE } : null);
           if (!k) { v.hall.sc = H.sc; v.hall.door = { x: H.x, z: H.z }; }
+        });
+      }
+      // a fortress (and a great estate) keeps its arms in an armoury; a fortress's catapults stand inside its walls,
+      // between the gates, ready to throw over them (war.js)
+      if (FORTS[v.cls] || v.cls === "grand") {
+        const W0 = v.walls, keepClear = (x, z, d) => App.gridNear("scenery", x, z, d + 12).every((o) => !o.building || Math.hypot(o.x - x, o.z - z) > d + (o.castle ? 14 : o.house && v.cls === "grand" ? 8 : o.wall ? 1 : 3));
+        const okAt = (x, z, d) => !nearRoad(x, z, d) && !inField(x, z, d) && flatAt(x, z, SMALL, 1.5) && noLake(x, z, 6) && keepClear(x, z, d) &&
+          Math.hypot(x - v.granary.x, z - v.granary.z) > d + 4 && Math.hypot(x - v.altar.x, z - v.altar.z) > d + 3 && Math.hypot(x - v.x, z - v.z) > d + 8 &&
+          (!W0 || Math.hypot(x - W0.x, z - W0.z) < W0.r - d - 2);
+        const mx = W0 ? W0.x : v.x, mz = W0 ? W0.z : v.z, far0 = W0 ? W0.r * 0.62 : 26;
+        for (let k = 0; k < 40; k++) {
+          const a = hash2(v.i, k, 1301) * 6.283, r = far0 * (0.75 + hash2(v.i, k, 1303) * 0.45), x = mx + Math.cos(a) * r, z = mz + Math.sin(a) * r;
+          if (!okAt(x, z, 4.5)) continue;
+          v.armoury = tsc(key + "/armoury", "armoury_" + v.style, x, z, faceTo(x, z, v.x, v.z), { building: true, armoury: true, village: v.i });
+          break;
+        }
+        v.catapults = [];
+        if (W0) W0.gates.forEach((g, i) => {
+          const g2 = i + 1 < W0.gates.length ? W0.gates[i + 1] : W0.gates[0] + Math.PI * 2;
+          for (const f of [0.5, 0.35, 0.65]) {
+            const a = g + (g2 - g) * f, x = W0.x + Math.cos(a) * (W0.r - 6.5), z = W0.z + Math.sin(a) * (W0.r - 6.5);
+            if (!okAt(x, z, 2.2)) continue;
+            // facing out over the wall
+            const s0 = tsc(key + "/cat" + i, "catapult_0", x, z, Math.atan2(Math.cos(a), Math.sin(a)), { building: true, catapult: true, village: v.i });
+            if (s0) v.catapults.push(s0);
+            break;
+          }
         });
       }
       homesInOrder(v);
