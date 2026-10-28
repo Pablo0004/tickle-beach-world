@@ -47,6 +47,18 @@ on the walls make sense. Inspired by the game Imperium." Ideas to agree on with 
 - a war panel (who is at war, armies, sieges, with Watch), and the war in the inspect window and the
   encyclopedia.
 
+- **Agreed with the owner (28 October)**:
+  - **Who declares war**: the rivalries between places (raids, thefts) end in war on their own.
+  - **The fallen**: they do not recover until the war is over and the supplies have been moved; after a war, at
+    least 3 days before the same holder can be attacked again, unless an ally who has not fought that holder
+    attacks it (the ally's right to battle is used).
+  - **The winner takes everything** (to be detailed when building: shells, granary, stores...).
+  - **Battles**: armies in formation along the roads (infantry, spears, mages, healers, tamers, cavalry, griffin
+    riders); sieges where there are walls, open battle where not. **Walls, castles, mansions and houses can be
+    destroyed** (buildings have health).
+  - **Fortresses more like Imperium**: guards patrolling on the walls (already), armouries inside the walls,
+    catapults, and health for every building.
+
 ### 1.6 Editing homes and a better build mode (asked 16 and 24 October)
 
 "Not only the mansions: mansions, castles, houses... I also want to improve the option to build in the mode that
