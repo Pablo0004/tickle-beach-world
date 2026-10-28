@@ -2353,12 +2353,12 @@
       cam: { x: App.cam.target.x, z: App.cam.target.z, r: App.cam.radius, theta: App.cam.theta, phi: App.cam.phi },
       edits: App.exportEdits(), needs: b64f(App.pop.needs), rel: st.rel, fav: st.fav, moved: st.moved,
       assets: st.assets.filter((a) => a.status !== "discarded").map((a) => { const o = Object.assign({}, a); delete o.md; delete o._geo; return o; }),
-      props: st.props.map((p) => ({ uid: p.uid, assetId: p.assetId, x: p.x, z: p.z, rot: p.rot })),
+      props: st.props.map((p) => ({ uid: p.uid, assetId: p.assetId, kit: p.kit, x: p.x, z: p.z, rot: p.rot })),
       acts: st.acts.filter((a) => a.source !== "core" && a.source !== "onchain"), projects: st.projects, log: st.log.slice(0, 120), event: st.event, kit: st.kit,
       dex: st.dex || {},
       villages: App.saveVillages(), raidDay: st.raidDay, dragonDay: st.dragonDay, shareDay: st.shareDay,
       plots: App.plotsSave ? App.plotsSave() : null,
-      creatures: App.saveCreatures(), tourneyDay: st.tourneyDay, creatureDay: st.creatureDay, dungeons: App.saveDungeons(), settleDay: st.settleDay, fate: App.saveFate(), factions: App.saveFactions ? App.saveFactions() : null, rampage: App.saveRampage ? App.saveRampage() : null, lairs: App.saveLairs ? App.saveLairs() : null, faith: App.saveFaith ? App.saveFaith() : null, mines: App.saveMines ? App.saveMines() : null, guilds: App.saveGuilds ? App.saveGuilds() : null, casinos: App.saveCasinos ? App.saveCasinos() : null, parliament: App.saveParliament ? App.saveParliament() : null, contests: App.saveContests ? App.saveContests() : null, diving: App.saveDiving ? App.saveDiving() : null, seabeasts: App.saveSeaBeasts ? App.saveSeaBeasts() : null, war: App.saveWar ? App.saveWar() : null, wealth: App.saveWealth ? App.saveWealth() : null, weather: App.saveWeather ? App.saveWeather() : null,
+      creatures: App.saveCreatures(), tourneyDay: st.tourneyDay, creatureDay: st.creatureDay, dungeons: App.saveDungeons(), settleDay: st.settleDay, fate: App.saveFate(), factions: App.saveFactions ? App.saveFactions() : null, rampage: App.saveRampage ? App.saveRampage() : null, lairs: App.saveLairs ? App.saveLairs() : null, faith: App.saveFaith ? App.saveFaith() : null, mines: App.saveMines ? App.saveMines() : null, guilds: App.saveGuilds ? App.saveGuilds() : null, casinos: App.saveCasinos ? App.saveCasinos() : null, parliament: App.saveParliament ? App.saveParliament() : null, contests: App.saveContests ? App.saveContests() : null, diving: App.saveDiving ? App.saveDiving() : null, seabeasts: App.saveSeaBeasts ? App.saveSeaBeasts() : null, war: App.saveWar ? App.saveWar() : null, build: App.saveBuild ? App.saveBuild() : null, wealth: App.saveWealth ? App.saveWealth() : null, weather: App.saveWeather ? App.saveWeather() : null,
     };
   };
   App.restoreNeeds = (s) => { try { const f = unb64f(s); if (f.length === App.pop.needs.length) App.pop.needs.set(f); } catch (e) { /* ignore */ } };

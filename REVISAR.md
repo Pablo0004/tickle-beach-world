@@ -105,3 +105,9 @@ mando, ni tarjeta gráfica). Ve tachando lo que veas bien y apunta lo que no.
 - Al acabar una guerra, incursión, ataque de dragón, bestia marina, torneo o una expedición a la Gran Mazmorra que estés viendo: sale una tarjeta arriba con el resultado (quién ganó, marcador o estrellas, qué se llevan). Se cierra sola o con un clic.
 - De noche, las criaturas domadas esperan en el establo de su poblado o fortaleza, no en la puerta de casa.
 - Más grifos: en castillos y grandes fincas, algunos guerreros vuelan en grifo; en la guardia de la muralla patrullan volando por encima.
+
+## Modo construcción (1.6)
+
+- En "I'm in control": Build con sus modos (uno, línea, muro, rellenar, vaciar: dos clics), el bloque fantasma (rojo donde no se puede), todos los bloques.
+- Place object: elige grupo y objeto, ves el fantasma, R lo gira. Move: coges un objeto y lo dejas en otro sitio. Remove: lo quitas. Undo o Ctrl+Z deshace.
+- Prueba en tu terreno (se queda), en el de otro poseedor (no deja) y en terreno neutro (aviso; el Parlamento lo vota en su sesión de la tarde y, si lo rechaza, desaparece).

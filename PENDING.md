@@ -160,6 +160,16 @@ owner before building:
   - **Build mode**: all of it: remove and undo, the catalogue of objects in groups with a preview, turning and
     moving, more block types, fill and clear an area, lines and walls, a ghost of the block before it goes down.
   - **Oxygen (1.6b)**: the tank refills on its own at the surface, like the breath.
+- **Built so far (28 October, js/build.js)**: the build mode's half. Who may build where (`App.editRight`: own plot,
+  another holder's plot refused, neutral land provisional until the Parliament votes on it: `App.pendingEdits`,
+  `App.decideEdit`, on the Parliament's agenda as "the works on neutral land"); Build in five modes (one block, a
+  line, a wall of a chosen height, fill an area, clear an area; two clicks for all but one, 30 by 30 at most) with a
+  green ghost (red where it is not allowed); every block type in the swatches; Place object from a catalogue in
+  groups (the kit's furniture, village things and fences, stalls, dungeon and mine things, contest and diving
+  things, the sea, farming, landscape; and the approved designs), a ghost of the model, R turns it; Move (pick an
+  object up, set it down, R turns it); Remove; Undo (button and Ctrl+Z) for all of it. Kit objects are saved with
+  the game (props with `kit`). Still to do: editing homes (inside: furniture, floors, walls; outside: colours,
+  extras, enlarging).
 
 ### 1.6b Oxygen tanks (asked 24 October, decided with the owner; not started)
 

@@ -211,7 +211,8 @@
   // ---------- dock ----------
   document.querySelectorAll("[data-tool]").forEach((b) => b.addEventListener("click", () => setTool(b.dataset.tool)));
   const HINTS = { select: "Click a Tickle or an object to inspect it.", order: "Select one of your Tickles, then click the ground to send it, another Tickle to chat, or an object to use it.",
-    build: "Click a block face to add a block.", dig: "Click a block to remove it.", place: "Pick an approved object, then click open ground." };
+    build: "Click a block face to add a block (a line, a wall or an area: click where it starts, then where it ends). Only on your own land; on neutral land the Parliament decides.", dig: "Click a block to remove it (Clear an area: two clicks).",
+    place: "Pick a group and an object, then click open ground (R turns it).", move: "Click a placed object to pick it up, then click where it goes (R turns it).", remove: "Click a placed object to take it away. Ctrl+Z undoes." };
   function setTool(t) {
     ui.tool = t;
     document.querySelectorAll("[data-tool]").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.tool === t)));
@@ -219,11 +220,12 @@
     $("placeRow").hidden = t !== "place";
     $("toolHint").textContent = HINTS[t];
     if (t === "place") fillPlaceSel();
+    if (App.buildToolChanged) App.buildToolChanged(t); // (build.js: the modes, the catalogue, the ghost)
   }
   function fillSwatches() {
     const box = $("swatches");
     box.innerHTML = "";
-    for (const k of [1, 2, 4, 5, 6, 7, 8, 9, 10, 13, 11, 14]) {
+    for (const k of Object.keys(App.BLOCK_INFO).map(Number).filter((k) => k > 0 && App.BLOCK_INFO[k].css)) {
       const b = document.createElement("button");
       b.style.background = App.BLOCK_INFO[k].css;
       b.title = App.BLOCK_INFO[k].name;
@@ -265,6 +267,8 @@
     if (v) { const d = v.point.distanceTo(r.origin); if (d < hd) { hd = d; hit = { type: "voxel", v }; } }
     const manual = st.mode === "manual";
     const selT = st.tickles.find((t) => t.id === ui.sel);
+    // the build mode's tools (build.js): who may build where, the modes, the catalogue, move, remove, undo
+    if (manual && App.buildClick && ["build", "dig", "place", "move", "remove"].includes(ui.tool) && App.buildClick(hit)) return;
     if (manual && ui.tool === "build" && hit && hit.type === "voxel") {
       const { x, y, z, n } = hit.v;
       if (App.getBlock(x + n[0], y + n[1], z + n[2]) === 0) App.setBlock(x + n[0], y + n[1], z + n[2], ui.block);
@@ -1356,6 +1360,7 @@
       App.initWealth && App.initWealth(saved && saved.wealth);
       App.initWeather && App.initWeather(saved && saved.weather);
       App.initWar && App.initWar(saved && saved.war);
+      App.initBuild && App.initBuild(saved && saved.build);
       // buildings moved by hand in an earlier session take their doors (and their residents) with them again
       for (const k in st.moved || {}) { const s = App.sceneryAll[+k]; if (s && s.building && App.syncBuilding) App.syncBuilding(s); }
       if (saved) st.settleDay = saved.settleDay;
@@ -1390,7 +1395,7 @@
       if (saved && saved.assets) {
         setLoad(0.65, "Rebuilding designed objects\u2026");
         for (const a of saved.assets) { const res = await App.job("compact", { strokes: a.strokes, voxel: 8 }); a.md = res.mesh; st.assets.push(a); }
-        for (const p of saved.props || []) { const a = App.assetById(p.assetId); if (a) App.placeProp(a, p.x, p.z, p.rot, p); }
+        for (const p of saved.props || []) { if (App.restoreProp) App.restoreProp(p); else { const a = App.assetById(p.assetId); if (a) App.placeProp(a, p.x, p.z, p.rot, p); } }
       }
       // where to start: saved camera, the wallet's first Tickle, or token #1
       let start = null;

@@ -136,6 +136,8 @@
     if (on.length && (r < 0.3 || !off.length)) items.push({ kind: "repeal", law: on[Math.floor(hash2(day, 913, 3) * on.length)] });
     else if (off.length) items.push({ kind: "law", law: off[Math.floor(hash2(day, 915, 3) * off.length)] });
     for (const d of directorItems().slice(0, 2)) items.push({ kind: "director", type: d.type, id: d.obj.id, name: d.name, what: d.what });
+    // the works done on neutral land (build.js): they stay only if the chamber passes them
+    for (const e of App.pendingEdits ? App.pendingEdits().slice(0, 2) : []) items.push({ kind: "edit", id: e.id, what: e.what });
     // who proposes each: a minister of one of the bigger blocs
     shareSeats();
     for (const it of items) { const g = blocs[Math.floor(hash2(day, items.indexOf(it), 917) * Math.min(8, blocs.length))]; it.by = g && g.ministers[0] != null ? g.ministers[0] : null; }
@@ -170,6 +172,7 @@
     return { yes, no, passed: yes > no };
   }
   function apply(it, res, day) {
+    if (it.kind === "edit") { if (App.decideEdit) App.decideEdit(it.id, res.passed); return; }
     if (it.kind === "law") { if (res.passed) st.parl.laws[it.law] = day; }
     else if (it.kind === "repeal") { if (res.passed) delete st.parl.laws[it.law]; }
     else {
