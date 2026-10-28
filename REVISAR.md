@@ -88,3 +88,6 @@ mando, ni tarjeta gráfica). Ve tachando lo que veas bien y apunta lo que no.
 - Mira una guerra de cerca: la columna marchando por el camino (caballería delante, ariete en cabeza, catapultas detrás), el asedio en la puerta, las catapultas de la muralla disparando, los caídos que se van a casa.
 - Al acabar: el convoy lleva el botín; los caídos se levantan cuando llega; el sitio vencido sale "held by" el ganador.
 - En el castillo: entra en todas las salas (tesoro, cocina, entrenamiento, salón); los botones van numerados 1, 2, 3...
+- Estrellas: en el panel de guerras sale ★★☆ y el porcentaje destruido; al ganar estrellas sale un aviso. Con 3 estrellas el ganador se queda el sitio; con 2 todo menos el sitio; con 1 la mitad.
+- Arqueros en la muralla: en un asedio, los defensores con arco, los magos y los domadores suben arriba junto a la puerta y disparan; las torres también disparan flechas.
+- Tras romper la puerta, las trampas cogen a los primeros que entran (sale en el registro).

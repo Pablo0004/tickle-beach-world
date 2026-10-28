@@ -162,6 +162,7 @@
     for (const k in st.ruins) (byV[st.ruins[k].village] = byV[st.ruins[k].village] || []).push(+k);
     for (const vi in byV) {
       const v = App.villages[vi], list = byV[vi].sort((a, b) => st.ruins[a].since - st.ruins[b].since);
+      if (App.warAt && App.warAt(+vi)) continue; // (nothing is rebuilt while the war goes on)
       const day = Math.floor(T1 / DAY), hrs = overlap(T0, T1, day * DAY + 14 * 60, day * DAY + 17 * 60 + 30) / 60;
       if (!hrs) continue;
       const crew = Math.max(2, Math.round(((v.crew ? v.crew.farm + v.crew.gather : 8)) * 0.45));

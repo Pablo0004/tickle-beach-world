@@ -71,6 +71,9 @@
     for (const k in WF) add("War", { id: "formation:" + k, name: "Formation: " + WF[k].name, what: WF[k].what, where: "on the march and in battle", open: true });
     add("War", { id: "war:armoury", model: ["armoury", 0], name: "Armoury", what: "Keeps the arms taken in wars; in a war it arms that many more of the place's people.", where: "inside the walls of the fortresses and in the great estates", hp: 900, open: true });
     add("War", { id: "war:catapult", model: ["catapult", 0], name: "Catapult", what: "Throws stones over the walls at the besiegers.", where: "inside the walls of the fortresses, between the gates", hp: 300, open: true });
+    add("War", { id: "war:tower", model: ["walltower", 0], name: "Wall Tower", what: "Its archers shoot at the attackers who come near the walls.", where: "along the walls of the fortresses", hp: 2500, open: true });
+    add("War", { id: "war:traps", name: "Traps", what: "Hidden behind the gate: they catch the first attackers through when it breaks.", where: "behind the gates of the fortresses", open: true });
+    add("War", { id: "war:stars", name: "Stars", what: "A battle is scored as in Clash of Clans: one star when half the place is destroyed (every building but the stretches of wall), one for its castle or hall, one for all of it. Three stars win at once; two at the end of a day of battle; after five days one star still wins. Loot: three stars, everything and the place; two, everything but the place; one, half the granary, ores and shells.", where: "every war", open: true });
     add("War", { id: "war:gate", model: ["gatehouse", 0], name: "Castle Gate", what: "Its great gate opens by day and shuts at night and in a war; besiegers must break it to go in.", where: "the walls of the fortresses", hp: 3000, open: true });
     return E;
   }

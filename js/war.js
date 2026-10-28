@@ -31,6 +31,7 @@
   const UNITS = (App.WAR_UNITS = {
     infantry: { name: "Infantry", p: 1, what: "Swords and axes: the body of every army." },
     spear: { name: "Spearmen", p: 1.1, what: "Long spears that keep the cavalry off." },
+    archer: { name: "Archers", p: 1.0, what: "Bows: they shoot from behind the line, and from the top of the walls in a siege." },
     cavalry: { name: "Cavalry", p: 1.5, what: "Armed Tickles on horses and riding beasts; they charge first." },
     griffin: { name: "Griffin riders", p: 1.6, what: "Fly over the column and strike from above." },
     mage: { name: "Mages", p: 1.3, what: "Cast their spells from the back ranks." },
@@ -52,10 +53,11 @@
     if (role === "healer") return "healer";
     if (role === "tamer") return "tamer";
     const g = App.gearOf ? App.gearOf(id) : null;
-    return g && g.weapon === "spear" ? "spear" : "infantry";
+    if (g && g.weapon === "spear") return "spear";
+    return hash2(id, 621, 3) < 0.35 ? "archer" : "infantry"; // about a third of the foot soldiers carry bows
   }
-  const RANGED = new Set(["mage", "healer", "tamer"]);
-  const ORDER = ["cavalry", "infantry", "spear", "tamer", "mage", "healer", "griffin"]; // the column, head to tail
+  const RANGED = new Set(["mage", "healer", "tamer", "archer"]);
+  const ORDER = ["cavalry", "infantry", "spear", "archer", "tamer", "mage", "healer", "griffin"]; // the column, head to tail
 
   // ---------- who can go to war ----------
   const isWarren = (v) => !!(v.hall && v.hall.sc && /^warren/.test(v.hall.sc.type));
@@ -66,6 +68,7 @@
   const pairKey = (p, q) => (p < q ? p + "|" + q : q + "|" + p);
   const lordOf = (v) => { const L = W() && W().lords[v.ident]; if (!L) return null; const o = App.villages.find((x) => x.ident === L); return o || null; };
   App.lordOf = lordOf;
+  App.warAt = (vi) => !!(W() && W().wars.some((w) => w.status === "on" && w.b === vi));
   App.heldBy = (v) => lordOf(v);
   const atWar = (vi) => W().wars.some((w) => w.status !== "over" && (w.A.concat(w.B)).some((c) => c.vi === vi));
   const inPeace = (p, q) => (W().peace[pairKey(p.ident, q.ident)] || 0) > st.T;
@@ -101,14 +104,66 @@
     if (ids.length < o.length * 0.7) return "square";
     return "line";
   }
+  function unitPower(w, s, id, f, gen) {
+    const u = w.unit[id] || "infantry";
+    return UNITS[u].p * (1 + App.levelOf(id) * 0.04) * (App.heroPower ? App.heroPower(id) : 1) * (f === "cavalry" && (u === "cavalry" || u === "griffin") ? 1.2 : 1) *
+      (f === "line" ? 1.05 : 1) * (gen != null && !w.fallen[gen] && !App.isKO(gen) ? 1.1 : 1);
+  }
   function power(w, s, ids) {
     const f = formationOf(w, s), gen = w[s][0] && w[s][0].general;
     let p = 0;
-    for (const id of ids) {
-      const u = w.unit[id] || "infantry";
-      p += UNITS[u].p * (1 + App.levelOf(id) * 0.04) * (App.heroPower ? App.heroPower(id) : 1) * (f === "cavalry" && (u === "cavalry" || u === "griffin") ? 1.2 : 1);
+    for (const id of ids) p += unitPower(w, s, id, f, gen);
+    return p;
+  }
+
+  // ---------- as in Clash of Clans: what each unit goes for, the destruction and the stars ----------
+  // The cavalry, the griffin riders and the mages go for the defences first (catapults, wall towers, the armoury);
+  // swords, spears and tamers for whatever is nearest; the healers mend. The griffins fly over the walls. A battle
+  // is scored by how much of the place is destroyed (every building but the stretches of wall): one star at half,
+  // one for the castle or hall, one for all of it. Three stars end the war at once; two at the end of a day of
+  // battle; after five days one star is still a win, none a truce. The loot goes by the stars.
+  const PREFER = { cavalry: "defense", griffin: "defense", mage: "defense", infantry: "any", spear: "any", archer: "any", tamer: "any", healer: null };
+  const BUILD_SHARE = { infantry: 0.5, spear: 0.3, cavalry: 0.6, griffin: 0.9, mage: 0.4, archer: 0.2, tamer: 0.4, healer: 0 };
+  const isDefense = (b) => /^(catapult|walltower|armoury)_/.test(b.type);
+  const towersOf = (v) => (App.sceneryAll || []).filter((b) => b.tkey && b.tkey.startsWith(v.key + "/t") && /^walltower_/.test(b.type));
+  function bldsOf(w) {
+    if (!w.blds) {
+      const B = App.villages[w.b];
+      w.blds = (App.sceneryAll || []).filter((b) => b.building && !b.ruined && !/^wall_/.test(b.type) && ((b.tkey && b.tkey.startsWith(B.key + "/")) || b.village === B.i)).map((b) => b.idx);
     }
-    return p * (f === "line" ? 1.05 : 1) * (gen != null && !w.fallen[gen] && !App.isKO(gen) ? 1.1 : 1);
+    return w.blds.map((i) => App.sceneryAll[i]).filter(Boolean);
+  }
+  function starsOf(w) {
+    const L = bldsOf(w), down = L.filter((b) => b.ruined).length, pct = L.length ? down / L.length : 0, H = hallOf(w.b);
+    return { pct, stars: (pct >= 0.5 ? 1 : 0) + (H && H.ruined ? 1 : 0) + (pct >= 0.999 ? 1 : 0), down, of: L.length };
+  }
+  App.warStars = (w) => starsOf(w);
+  const starText = (n) => "\u2605".repeat(n) + "\u2606".repeat(3 - n);
+  function targetFor(w, u, from) {
+    const pref = PREFER[u];
+    if (!pref) return null;
+    const shut = w.siege && !gateDown(w) && u !== "griffin";
+    const list = bldsOf(w).filter((b) => !b.ruined && (!shut || b.idx === w.gate));
+    if (!list.length) return null;
+    const fx = from ? from.x : w.front.x, fz = from ? from.z : w.front.z;
+    const near0 = (arr) => { let best = null, bd = 1e9; for (const b of arr) { const d = Math.hypot(b.x - fx, b.z - fz); if (d < bd) { bd = d; best = b; } } return best; };
+    return (pref === "defense" && near0(list.filter(isDefense))) || near0(list);
+  }
+  function destroyed(w, b) {
+    const B = App.villages[w.b];
+    if (b.idx === w.gate) {
+      // the traps behind the gate catch the first ones through
+      const a = standing(w, "A"), n = Math.min(a.length, 2 + Math.floor(hash2(w.days, w.b, 617) * 3));
+      for (let k = 0; k < n; k++) fall(w, "A", a[Math.floor(hash2(k, Math.floor(st.T), 619) * a.length)]);
+      App.log("war", "The gate of " + B.name + " is broken!", "The attackers pour in; the traps behind it catch " + n + " of them.", { war: w.id });
+    }
+    const S = starsOf(w);
+    if (S.stars > (w.starsSeen || 0)) {
+      w.starsSeen = S.stars;
+      App.log("war", starText(S.stars) + " " + App.villages[w.a].name + " has " + S.stars + " star" + (S.stars > 1 ? "s" : "") + " against " + B.name + ".", Math.round(S.pct * 100) + "% of " + B.name + " destroyed" + (hallOf(w.b) && hallOf(w.b).ruined ? ", its " + (w.siege ? "castle" : "hall") + " included" : "") + ".", { war: w.id });
+      if (near(B.x, B.z, 300)) App.toast && App.toast(starText(S.stars) + " " + Math.round(S.pct * 100) + "% of " + B.name);
+    }
+    if (S.pct >= 0.999) finish(w, "A", "Three stars: " + B.name + " has been destroyed from end to end.");
   }
 
   // ---------- the health of buildings ----------
@@ -240,7 +295,6 @@
     if (a.length < w.start.A * 0.25 || !a.length) return finish(w, "B", App.villages[w.a].name + "'s army was broken and fell back.");
     const pa = power(w, "A", a), pb = power(w, "B", b), B = App.villages[w.b], fB = formationOf(w, "B");
     const cats = (B.catapults || []).filter((c) => !c.ruined).length, live = isLive(w);
-    let toMen = pa;
     const cause = "in the war between " + App.villages[w.a].name + " and " + B.name;
     // the siege engines: the defenders' catapults aim at them first; the ram batters the gate, the attackers'
     // catapults throw at the gate and then at the castle (near you, the stones you see do this instead)
@@ -248,30 +302,25 @@
     let catsMen = live ? 0 : cats * 0.8;
     if (!live) for (let i = 0; i < cats; i++) if (engs.length && hash2(Math.floor(w.lt), i, 611) < 0.12) { hitEngine(w, engs[Math.floor(hash2(Math.floor(w.lt), i, 613) * engs.length)], 25); catsMen -= 0.8; }
     const ram = engs.find((e) => e.k === "ram" && e.hp > 0), acats = live ? 0 : engs.filter((e) => e.k === "cat" && e.hp > 0).length;
-    if (w.siege && !gateDown(w)) { if (ram) App.damageBuilding(gateOf(w), 25, cause); if (acats) App.damageBuilding(gateOf(w), acats * 15, cause); }
-    else if (w.siege && acats && hallOf(w.b) && App.damageBuilding(hallOf(w.b), acats * 15, cause)) return finish(w, "A", "The castle of " + B.name + " has fallen.");
-    let pbHit = pb * (fB === "walls" ? 1.5 : 1);
-    if (w.siege && !gateDown(w)) {
-      // while the gate stands nobody fights through it: the attackers' swords and spears batter it, their mages and
-      // tamers shoot at the walls; only the defenders up on the walls (and the stones they throw down) reach them
-      const ra = a.filter((id) => RANGED.has(w.unit[id])), rb = b.filter((id) => RANGED.has(w.unit[id]));
-      const melee = power(w, "A", a.filter((id) => !RANGED.has(w.unit[id])));
-      toMen = power(w, "A", ra) * 0.8;
-      App.damageBuilding(gateOf(w), melee * 2.4, cause);
-      pbHit = power(w, "B", rb) * 1.3 + (pb - power(w, "B", rb)) * 0.25;
+    const shut = w.siege && !gateDown(w), hits = new Map(), hit = (b, d) => { if (b && d > 0) hits.set(b, (hits.get(b) || 0) + d); };
+    if (shut) { if (ram) hit(gateOf(w), 25); hit(gateOf(w), acats * 15); }
+    else if (acats) hit(targetFor(w, "cavalry"), acats * 15);
+    // every attacker sends part of its strength at the buildings it prefers, the rest at the defenders
+    const fA = formationOf(w, "A"), genA = w.A[0] && w.A[0].general;
+    let toMen = 0;
+    for (const id of a) {
+      const u = w.unit[id] || "infantry", p = unitPower(w, "A", id, fA, genA);
+      // behind a standing gate the swords and spears batter it, the mages and tamers shoot at the walls, the griffins fly over
+      let share = shut ? (u === "griffin" ? 0.9 : RANGED.has(u) ? 0 : 1) : BUILD_SHARE[u];
+      if (!b.length) share = u === "healer" ? 0 : 1;
+      toMen += p * (1 - share) * (shut ? 0.8 : 1);
+      if (share > 0) hit(shut && u !== "griffin" ? gateOf(w) : targetFor(w, u), p * share * (shut ? 2.4 : 3));
     }
-    else if (w.siege || b.length < w.start.B * 0.25) {
-      // through the gate, or the defenders broken: on to the castle or the hall; the houses burn
-      const H = hallOf(w.b);
-      toMen = b.length ? pa * 0.5 : 0;
-      if (H && App.damageBuilding(H, (pa - toMen) * 3, cause)) return finish(w, "A", (w.siege ? "The castle of " : "The hall of ") + B.name + " has fallen.");
-      if (!w.siege && st.T >= (w.nextBurn || 0)) {
-        w.nextBurn = st.T + 8;
-        const hs = B.houses.filter((h) => h.sc && !h.sc.ruined && h.sc !== H);
-        const h = hs.length ? pickOne(hs, Math.floor(st.T)) : null;
-        if (h) { App.ruin(h.sc, cause, true); w.burned++; }
-      }
-    }
+    for (const [bd, d] of hits) { if (App.damageBuilding(bd, d, cause)) destroyed(w, bd); if (w.status !== "on") return; }
+    // the defenders: up on the walls while the gate stands (the rest throw stones down), and the wall towers shoot
+    const rb = b.filter((id) => RANGED.has(w.unit[id])), pRb = power(w, "B", rb);
+    let pbHit = shut ? pRb * 1.3 + (pb - pRb) * 0.25 : pb;
+    if (!live && w.siege) pbHit += towersOf(B).filter((t) => !t.ruined && Math.hypot(t.x - w.front.x, t.z - w.front.z) < 45).length * 0.6;
     w.dB += toMen; w.dA += pbHit + Math.max(0, catsMen);
     const heal = (s, ids) => ids.filter((id) => w.unit[id] === "healer").length * 0.35;
     w.dA = Math.max(0, w.dA - heal("A", a)) * (formationOf(w, "A") === "square" ? 0.85 : 1);
@@ -288,10 +337,12 @@
     // supplies: every soldier eats from its own granary for the day's march and battle
     for (const c of w.A.concat(w.B)) { const v = App.villages[c.vi]; v.food = Math.max(0, v.food - c.ids.length * 0.5); }
     const a = standing(w, "A").length, b = standing(w, "B").length;
+    const S = starsOf(w);
+    if (S.stars >= 2) return finish(w, "A", starText(S.stars) + " " + Math.round(S.pct * 100) + "% of " + App.villages[w.b].name + " destroyed by nightfall.");
     if (!w.siege && b < w.start.B * 0.1) return finish(w, "A", "Hardly anyone of " + App.villages[w.b].name + " is left on their feet.");
-    if (w.days >= MAXDAYS) return truce(w);
+    if (w.days >= MAXDAYS) return S.stars ? finish(w, "A", starText(S.stars) + " After " + MAXDAYS + " days, " + Math.round(S.pct * 100) + "% of " + App.villages[w.b].name + " destroyed.") : truce(w);
     App.log("war", "The " + ordinal(w.days) + " day of the war between " + App.villages[w.a].name + " and " + App.villages[w.b].name + " is over.",
-      a + " of " + w.start.A + " attackers and " + b + " of " + w.start.B + " defenders are still on their feet." + (w.siege ? gateDown(w) ? " The gate is broken; the castle holds (" + hpText(hallOf(w.b)) + ")." : " The gate holds (" + hpText(gateOf(w)) + ")." : "") + " They fight again tomorrow.", { war: w.id });
+      starText(S.stars) + " " + Math.round(S.pct * 100) + "% destroyed. " + a + " of " + w.start.A + " attackers and " + b + " of " + w.start.B + " defenders are still on their feet." + (w.siege ? gateDown(w) ? " The gate is broken; the castle holds (" + hpText(hallOf(w.b)) + ")." : " The gate holds (" + hpText(gateOf(w)) + ")." : "") + " They fight again tomorrow.", { war: w.id });
     planDay(w, w.bt.day + 1);
   }
   const ordinal = (n) => ["first", "second", "third", "fourth", "fifth", "sixth"][n - 1] || n + "th";
@@ -301,7 +352,8 @@
   function finish(w, s, why) {
     if (w.status !== "on") return;
     const win = s === "A" ? w.a : w.b, lose = s === "A" ? w.b : w.a, V = App.villages[win], L = App.villages[lose];
-    w.status = "convoy"; w.winner = win; w.loser = lose; w.why2 = why; w.endT = st.T;
+    w.status = "convoy"; w.winner = win; w.loser = lose; w.why2 = why; w.endT = st.T; w.side = s;
+    w.stars = s === "A" ? Math.max(1, starsOf(w).stars) : 0;
     if (w.bt) w.bt.done = true;
     for (const c of w.A) for (const d of w.B) W().peace[pairKey(c.ident, d.ident)] = st.T + PEACE;
     setRel(V.clan, L.clan, 25);
@@ -323,22 +375,25 @@
     App.log("war", "Truce between " + App.villages[w.a].name + " and " + App.villages[w.b].name + ".", "After " + MAXDAYS + " days nobody has won. The armies go home with their supplies; the fallen recover within the hour.", { war: w.id });
   }
   function recover(w, mins) { for (const id in w.fallen) if (App.pop.ko[id] > 1e7) App.pop.ko[id] = st.T + (mins || 20); for (const id in w.fallen) App.invalidatePlan(+id); }
+  // the loot, by the stars: three, everything and the place itself; two, everything but the place; one, half of the
+  // granary, the ores and the shells. Defenders who beat the attack off take half the attackers' granary and ores,
+  // and the arms of the attackers who fell.
   function deliver(w) {
-    const V = App.villages[w.winner], L = App.villages[w.loser];
+    const V = App.villages[w.winner], L = App.villages[w.loser], A = w.side === "A", S = w.stars || 0, share = A && S >= 2 ? 1 : 0.5;
     w.status = "over";
-    const loot = { food: Math.round(L.food), shells: 0, arms: 0, ores: 0 };
-    V.food += L.food; L.food = 0;
-    // the ores in store
-    if (App.oreOf) { const a = App.oreOf(L), b = App.oreOf(V); for (const k in a) { if (typeof a[k] === "number" && a[k] > 0) { b[k] = (b[k] || 0) + a[k]; loot.ores += k === "tools" ? 0 : a[k]; a[k] = 0; } } }
-    // the shells of the loser's Tickles, shared out among the winner's
-    if (App.shellsOf && App.pay) {
-      for (const id of L.residents) { const n = App.shellsOf(id); if (n > 0) { loot.shells += n; App.pay(id, -n); } }
-      const share = Math.floor(loot.shells / Math.max(1, V.residents.length));
-      for (const id of V.residents) App.pay(id, share);
+    const loot = { food: Math.round(L.food * share), shells: 0, arms: 0, ores: 0, place: A && S >= 3 };
+    V.food += L.food * share; L.food -= L.food * share;
+    if (App.oreOf) { const a = App.oreOf(L), b = App.oreOf(V); for (const k in a) { if (typeof a[k] === "number" && a[k] > 0) { const n = k === "tools" ? (share === 1 ? a[k] : 0) : a[k] * share; b[k] = (b[k] || 0) + n; loot.ores += k === "tools" ? 0 : n; a[k] -= n; } } }
+    loot.ores = Math.round(loot.ores);
+    if (A && App.shellsOf && App.pay) {
+      for (const id of L.residents) { const n = Math.floor(App.shellsOf(id) * share); if (n > 0) { loot.shells += n; App.pay(id, -n); } }
+      const each = Math.floor(loot.shells / Math.max(1, V.residents.length));
+      for (const id of V.residents) App.pay(id, each);
     }
-    // their arms, into the winner's armoury (a Tickle left without them can buy new ones at the smithy)
+    // arms, into the winner's armoury (a Tickle left without them can buy new ones at the smithy)
     st.gear = st.gear || {};
-    for (const id of L.residents) {
+    const disarm = A ? (S >= 2 ? L.residents : []) : Object.keys(w.fallen).map(Number).filter((id) => w.fallen[id] === "A");
+    for (const id of disarm) {
       if (App.heroOf && App.heroOf(id)) continue;
       const g = App.gearOf ? App.gearOf(id) : null;
       if (!g || g.mage || g.weapon === "staff") continue;
@@ -346,15 +401,18 @@
       loot.arms++;
     }
     W().stock[V.ident] = (W().stock[V.ident] || 0) + loot.arms;
-    if (W().stock[L.ident]) { W().stock[V.ident] += W().stock[L.ident]; loot.arms += W().stock[L.ident]; W().stock[L.ident] = 0; }
-    // the place itself, houses and plot, and whatever the loser held
-    const lords = W().lords;
-    delete lords[V.ident];
-    for (const k in lords) if (lords[k] === L.ident) lords[k] = V.ident;
-    lords[L.ident] = V.ident;
+    if (A && S >= 2 && W().stock[L.ident]) { W().stock[V.ident] += W().stock[L.ident]; loot.arms += W().stock[L.ident]; W().stock[L.ident] = 0; }
+    // three stars: the place itself, houses and plot, and whatever the loser held
+    if (loot.place) {
+      const lords = W().lords;
+      delete lords[V.ident];
+      for (const k in lords) if (lords[k] === L.ident) lords[k] = V.ident;
+      lords[L.ident] = V.ident;
+    } else if (A && lordOf(V) === L) delete W().lords[V.ident]; // a held place that wins any war against its lord is free again
     w.loot = loot;
     recover(w, 20);
-    App.log("war", "The supplies have been moved from " + L.name + " to " + V.name + ".", "Taken: " + loot.food + " food, " + loot.shells + " shells, " + loot.ores + " ore and " + loot.arms + " sets of arms for the armoury of " + V.name + ". " + L.name + ", its houses and its plot are now held by " + App.clanName(V.clan) + ", and pay it tribute every morning. The fallen of the war are on their feet again.", { war: w.id });
+    App.log("war", "The supplies have been moved from " + L.name + " to " + V.name + (A ? " (" + starText(S) + ")." : "."), "Taken: " + loot.food + " food, " + loot.shells + " shells, " + loot.ores + " ore and " + loot.arms + " sets of arms for the armoury of " + V.name + ". " +
+      (loot.place ? L.name + ", its houses and its plot are now held by " + App.clanName(V.clan) + ", and pay it tribute every morning. " : "") + "The fallen of the war are on their feet again.", { war: w.id });
     for (const id of L.residents.concat(V.residents)) App.invalidatePlan(id);
   }
   // every morning a held place sends the lord half of what its granary has to spare, and resents it a little more
@@ -442,9 +500,9 @@
     const nx = -F.uz, nz = F.ux;
     if (s === "B" && w.siege) {
       const V = App.villages[w.b];
-      if (!gateDown(w) && (u === "mage" || u === "healer" || u === "tamer") && V.walls) {
-        // up on the walls either side of the gate
-        const W0 = V.walls, ga = Math.atan2(F.gz - W0.z, F.gx - W0.x), j = Math.floor(k / 2), side = k % 2 ? 1 : -1, off = (6.2 + j * 1.5) / W0.r;
+      if (!gateDown(w) && RANGED.has(u) && V.walls) {
+        // up on the walls either side of the gate: archers, mages and tamers along the top, a pace apart
+        const W0 = V.walls, ga = Math.atan2(F.gz - W0.z, F.gx - W0.x), kr = wallRank(w, id), j = Math.floor(kr / 2), side = kr % 2 ? 1 : -1, off = (6.2 + j * 1.3) / W0.r;
         return { x: W0.x + Math.cos(ga + side * off) * W0.r, z: W0.z + Math.sin(ga + side * off) * W0.r, h: Math.atan2(-F.ux, -F.uz) };
       }
       const at = gateDown(w) ? hallDoor(w) : { x: F.gx + F.ux * 4.5, z: F.gz + F.uz * 4.5 }, files = 6, r = Math.floor(k / files), f = (k % files) - (files - 1) / 2;
@@ -455,6 +513,12 @@
     if (s === "A" && (w.siege ? gateDown(w) : standing(w, "B").length < w.start.B * 0.25)) at = hallDoor(w);
     const gap = s === "A" && w.siege && !gateDown(w) ? 2 : 5;
     return { x: at.x + F.ux * dir * (gap + r * 1.6) + nx * f * 1.25, z: at.z + F.uz * dir * (gap + r * 1.6) + nz * f * 1.25, h: Math.atan2(F.ux * -dir, F.uz * -dir) };
+  }
+  function wallRank(w, id) {
+    const key = "wall" + w.days;
+    w._ord = w._ord || {};
+    if (!w._ord[key]) w._ord[key] = new Map(sideIds(w, "B").filter((x) => RANGED.has(w.unit[x])).sort((a, b) => a - b).map((x, i) => [x, i]));
+    return w._ord[key].get(id) || 0;
   }
   function hallDoor(w) { const v = App.villages[w.b], d = v.hall.door || v.hall; return { x: d.x - w.front.ux * 3, z: d.z - w.front.uz * 3 }; }
   // on the march: four abreast along the road, so far behind the head as its rank
@@ -488,6 +552,14 @@
     }
     if (s === "A" && st.T < bt.arrive) { t.action = { kind: "warmarch", war: w.id, started: st.T }; if (rnd() < 0.2) App.say(t, ["Forward, march!", "Left, right, left!", "To " + App.villages[w.b].name + "!"][Math.floor(rnd() * 3)], 2); return true; }
     const p = slotOf(w, s, t.id);
+    if (s === "B" && w.siege && !gateDown(w) && RANGED.has(w.unit[t.id]) && App.wallDeckY && App.wallDeckY(p.x, p.z) != null) {
+      // up the stairs of the gate towers and along the top of the wall to its place
+      const W0 = App.villages[w.b].walls, F = w.front, inGate = { x: F.gx + F.ux * 4, z: F.gz + F.uz * 4 };
+      if (Math.hypot(p.x - t.pos.x, p.z - t.pos.z) > 1 && Math.hypot(inGate.x - t.pos.x, inGate.z - t.pos.z) > 3 && App.wallDeckY(t.pos.x, t.pos.z) == null) { App.startTravel(t, { x: inGate.x, z: inGate.z, label: "to the walls" }, "up to the walls"); return true; }
+      t.pos.x = p.x; t.pos.z = p.z; t.heading = p.h; void W0;
+      t.action = { kind: "warfight", war: w.id, side: s, next: st.T + rnd() * 1.5, started: st.T, onWall: true };
+      return true;
+    }
     if (Math.hypot(p.x - t.pos.x, p.z - t.pos.z) > 12) { App.startTravel(t, { x: p.x, z: p.z, label: s === "A" ? "to the front" : "to the defences" }, s === "A" ? "to the front" : "to defend " + App.villages[w.b].name); return true; }
     t.action = { kind: "warfight", war: w.id, side: s, next: st.T + rnd() * 1.5, started: st.T };
     return true;
@@ -529,7 +601,11 @@
     const foe = !ranged && w.siege && !gateDown(w) ? null : foesNear(w, t, a.side, ranged ? 22 : 9);
     let target = p, walking = false;
     a.engaged = false;
+    // with no foe at hand, an attacker goes for the building it prefers and sets about it
+    const bld = a.side === "A" ? (w.siege && !gateDown(w) && u !== "griffin" ? gateOf(w) : targetFor(w, u, t.pos)) : null;
+    if (!foe && bld && !ranged) { const d = Math.hypot(bld.x - t.pos.x, bld.z - t.pos.z), R0 = bld.castle ? 9 : bld.gate ? 3.2 : 3; if (d > R0) target = { x: bld.x + (t.pos.x - bld.x) / d * R0, z: bld.z + (t.pos.z - bld.z) / d * R0 }; else target = null; }
     if (foe && !ranged) { const d = Math.hypot(foe.pos.x - t.pos.x, foe.pos.z - t.pos.z); if (d > 1.3) target = { x: foe.pos.x + (t.pos.x - foe.pos.x) / d * 1.2, z: foe.pos.z + (t.pos.z - foe.pos.z) / d * 1.2 }; else target = null; a.engaged = true; }
+    if (a.onWall) { target = null; if (gateDown(w)) { t.action = null; App.animateTickle(t, false, dtReal); return; } }
     if (target && Math.hypot(target.x - t.pos.x, target.z - t.pos.z) > 0.4) {
       const dx = target.x - t.pos.x, dz = target.z - t.pos.z, d = Math.hypot(dx, dz), stp = Math.min(d, App.WALK_SPEED * dm * (u === "cavalry" ? 1.9 : 1.15));
       t.pos.x += (dx / d) * stp; t.pos.z += (dz / d) * stp; t.heading = Math.atan2(dx, dz); walking = stp > 1e-4;
@@ -540,23 +616,25 @@
     if (st.T >= a.next && dm > 0 && App.FX) {
       a.next = st.T + 1.2 + rnd() * 1.2;
       const from = { x: t.pos.x + Math.sin(t.heading) * 0.6, y: t.pos.y + 2.2, z: t.pos.z + Math.cos(t.heading) * 0.6 };
-      const gate = a.side === "A" && w.siege && !gateDown(w) ? gateOf(w) : null, H = a.side === "A" && (gateDown(w) || (!w.siege && standing(w, "B").length < w.start.B * 0.25)) ? hallOf(w.b) : null;
-      const bld = gate || H;
+      const gate = bld && bld.idx === w.gate ? bld : null;
       if (ranged && (foe || bld)) {
         const to = foe ? { x: foe.pos.x, y: foe.pos.y + 1.2, z: foe.pos.z } : { x: bld.x, y: App.genHeight(bld.x, bld.z) + 3, z: bld.z };
         const school = u === "healer" ? "light" : u === "mage" ? (App.mageSchool(t.id) || "arcane") : "arcane";
-        if (u === "healer") { const mate = st.tickles.find((o) => o !== t && sideOf(w, o.id) === a.side && !App.isKO(o.id) && Math.hypot(o.pos.x - t.pos.x, o.pos.z - t.pos.z) < 10); if (mate) App.FX.heal(App.scene, { x: mate.pos.x, y: mate.pos.y + 1, z: mate.pos.z }); }
+        if (u === "archer") {
+          const tt = foe;
+          App.spawnParticle && App.spawnParticle({ kind: "stone", x0: from.x, y0: from.y + (a.onWall ? 0.4 : 0), z0: from.z, x1: to.x, y1: to.y, z1: to.z, arc: a.onWall ? 0.8 : 1.6, age: 0, life: 0.45, onHit: () => { if (tt && a.side === "B" && !w.fallen[tt.id] && rnd() < 0.12) fall(w, "A", tt.id); } });
+        } else if (u === "healer") { const mate = st.tickles.find((o) => o !== t && sideOf(w, o.id) === a.side && !App.isKO(o.id) && Math.hypot(o.pos.x - t.pos.x, o.pos.z - t.pos.z) < 10); if (mate) App.FX.heal(App.scene, { x: mate.pos.x, y: mate.pos.y + 1, z: mate.pos.z }); }
         else App.FX.bolt(App.scene, from, to, school, () => { if (!foe && bld) App.FX.burst(App.scene, to, "#c79a62", 8, 0.15); });
         t.throwAt = performance.now();
       } else if (foe && a.engaged && Math.hypot(foe.pos.x - t.pos.x, foe.pos.z - t.pos.z) < 1.6) {
         App.FX.slash(App.scene, { x: foe.pos.x, y: foe.pos.y + 1.2, z: foe.pos.z }, t.heading, a.side === "A" ? "#ff6b5e" : "#5ab0ff");
         t.throwAt = performance.now();
         if (rnd() < 0.15) App.say(t, ["Pow!", "Take that!", "Hiyah!", "Yield!"][Math.floor(rnd() * 4)], 1.2);
-      } else if (!foe && bld && Math.hypot(bld.x - t.pos.x, bld.z - t.pos.z) < 12) {
+      } else if (!foe && bld && Math.hypot(bld.x - t.pos.x, bld.z - t.pos.z) < (bld.castle ? 12 : 6)) {
         // hammering at the gate or the castle door
         App.FX.burst(App.scene, { x: t.pos.x + Math.sin(t.heading) * 1.2, y: t.pos.y + 1.4, z: t.pos.z + Math.cos(t.heading) * 1.2 }, "#c79a62", 5, 0.12);
         t.throwAt = performance.now();
-        if (rnd() < 0.08) App.say(t, bld === gate ? "Break it down!" : "Into the castle!", 1.5);
+        if (rnd() < 0.08) App.say(t, bld === gate ? "Break it down!" : isDefense(bld) ? "Take out the defences!" : "Tear it down!", 1.5);
       }
       if (rnd() < 0.04) { const L = LINES[a.side], x = L[Math.floor(rnd() * L.length)]; App.say(t, x.endsWith(" ") ? x + App.villages[a.side === "A" ? w.a : w.b].name + "!" : x, 2); }
     }
@@ -645,6 +723,17 @@
         const to = { x: bld.x + (rnd() - 0.5) * 3, y: App.genHeight(bld.x, bld.z) + 3 + rnd() * 2, z: bld.z + (rnd() - 0.5) * 3 };
         fire(o.arm, to, () => { if (w.status === "on" && App.damageBuilding(bld, 45, "in the war between " + App.villages[w.a].name + " and " + B.name) && bld === hallOf(w.b)) finish(w, "A", "The castle of " + B.name + " has fallen."); });
       });
+    }
+    // the wall towers near the front shoot arrows at the attackers
+    if (catT >= 0.6) for (const w of W().wars) {
+      if (w.status !== "on" || !w.siege || !w.bt || w.bt.done || st.T < w.bt.arrive || !near(w.front.x, w.front.z, 180)) continue;
+      for (const tw of towersOf(App.villages[w.b])) {
+        if (tw.ruined || rnd() > 0.35 || Math.hypot(tw.x - w.front.x, tw.z - w.front.z) > 45) continue;
+        const foes = st.tickles.filter((t) => sideOf(w, t.id) === "A" && !App.isKO(t.id) && !w.fallen[t.id] && Math.hypot(t.pos.x - tw.x, t.pos.z - tw.z) < 30);
+        if (!foes.length) continue;
+        const t = foes[Math.floor(rnd() * foes.length)], y0 = App.genHeight(tw.x, tw.z) + 7;
+        App.spawnParticle && App.spawnParticle({ kind: "stone", x0: tw.x, y0, z0: tw.z, x1: t.pos.x, y1: t.pos.y + 1, z1: t.pos.z, arc: 2, age: 0, life: 0.6, onHit: () => { if (!w.fallen[t.id] && rnd() < 0.25) fall(w, "A", t.id); } });
+      }
     }
     if (catT >= 0.6) catT = 0;
     for (const [k, A] of arms) {
@@ -748,11 +837,12 @@
       const units = (s) => { const c = {}; for (const id of sideIds(w, s)) c[w.unit[id]] = (c[w.unit[id]] || 0) + 1; return ORDER.filter((k) => c[k]).map((k) => c[k] + " " + UNITS[k].name.toLowerCase()).join(", "); };
       h += '<span class="k">' + esc(A.name) + "</span><span>" + units("A") + (w.A.length > 1 ? "; allies " + w.A.slice(1).map((c) => esc(App.villages[c.vi].name)).join(", ") : "") + "</span>";
       h += '<span class="k">' + esc(B.name) + "</span><span>" + units("B") + (w.B.length > 1 ? "; allies " + w.B.slice(1).map((c) => esc(App.villages[c.vi].name)).join(", ") : "") + "</span>";
+      const S = starsOf(w);
+      h += '<span class="k">Stars</span><span>' + starText(S.stars) + " " + Math.round(S.pct * 100) + "% destroyed (" + S.down + " of " + S.of + " buildings)</span>";
       if (w.siege) h += '<span class="k">Siege</span><span>Gate: ' + (gateDown(w) ? "broken" : hpText(gateOf(w))) + " \u00b7 Castle: " + hpText(hallOf(w.b)) + " \u00b7 " + (B.catapults || []).filter((c) => !c.ruined).length + " catapults</span>";
-      else if (w.burned) h += '<span class="k">Burned</span><span>' + w.burned + " houses</span>";
       h += "</div>";
     }
-    if (past.length) { h += '<div class="kv">'; for (const w of past) h += '<span class="k">' + esc(App.villages[w.a] ? App.villages[w.a].name : "?") + " vs " + esc(App.villages[w.b] ? App.villages[w.b].name : "?") + "</span><span>" + (w.truce ? "truce" : "won by " + esc(App.villages[w.winner].name)) + (w.loot ? ": " + w.loot.food + " food, " + w.loot.shells + " shells, " + w.loot.arms + " arms and the place" : "") + "</span>"; h += "</div>"; }
+    if (past.length) { h += '<div class="kv">'; for (const w of past) h += '<span class="k">' + esc(App.villages[w.a] ? App.villages[w.a].name : "?") + " vs " + esc(App.villages[w.b] ? App.villages[w.b].name : "?") + "</span><span>" + (w.truce ? "truce" : "won by " + esc(App.villages[w.winner].name) + (w.side === "A" ? " " + starText(w.stars || 0) : " (attack beaten off)")) + (w.loot ? ": " + w.loot.food + " food, " + w.loot.shells + " shells, " + w.loot.arms + " arms" + (w.loot.place ? " and the place" : "") : "") + "</span>"; h += "</div>"; }
     const held = Object.keys(W().lords).map((k) => [App.villages.find((v) => v.ident === k), App.villages.find((v) => v.ident === W().lords[k])]).filter(([a, b]) => a && b);
     if (held.length) h += '<p class="note">Held after a war: ' + held.map(([a, b]) => esc(a.name) + " by " + esc(b.name)).join(", ") + ".</p>";
     return h + "</div>";
@@ -775,6 +865,7 @@
   };
   App.saveWar = () => (st.war ? { wars: st.war.wars.map((w) => { const o = Object.assign({}, w); delete o._ord; return o; }), peace: st.war.peace, lords: st.war.lords, bhp: st.war.bhp, stock: st.war.stock, fought: st.war.fought, day: st.war.day } : null);
 
+  App.warSlot = (w, id) => slotOf(w, sideOf(w, id), id); // (for the tests: where a soldier stands)
   // test hook: a war declared now, the armies marching at once
   App.debugWar = (a, b) => {
     const w = declare(a, b, "A test war.");

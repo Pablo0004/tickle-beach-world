@@ -70,14 +70,36 @@ on the walls make sense. Inspired by the game Imperium." Ideas to agree on with 
   of supplies arrives, loot (food, ores, shells, arms to the armoury, the place held with daily tribute, a war
   of liberation), truce after 5 days, 3 days of peace, the war panel (Menu > World), the War section of the
   encyclopedia. Test hook: `App.debugWar(a, b)`.
-- **Open question (28 October)**: the owner asked whether a Clash of Clans style battle would be simpler; the
-  options are with the owner before going on.
+- **Clash of Clans, merged in (asked 28 October: "incorporate all of it with what we have")**: every unit goes for
+  what it prefers (cavalry, griffin riders and mages the defences: catapults, wall towers, the armoury; swords,
+  spears, archers and tamers the nearest building; griffins fly over the walls), defences fire on their own
+  (catapults, the archers of the wall towers), traps behind the gate, destruction % (every building but the
+  stretches of wall) and stars (half, the castle or hall, all of it). Three stars win at once, two at the end of a
+  day of battle, after five days one star still wins. Loot by stars: three, everything and the place; two,
+  everything but the place; one, half the granary, ores and shells; defenders who beat the attack off take half
+  the attackers' granary and ores and the arms of the attackers who fell. Nothing is rebuilt during the war.
+- **Archers (asked 28 October)**: about a third of the foot soldiers carry bows; in a siege the defenders' archers,
+  mages and tamers go up on the walls either side of the gate and shoot from the top (the wall walk is about 2.6
+  cells wide; widen it if they look cramped). Armies are only the holder's own Tickles, and allies' when there is an
+  alliance (asked 28 October; it already worked that way).
 
 ### 1.5b Interiors: connected floors (asked 28 October)
 "Moving between the rooms is not practical; make bigger and more varied spaces" (a castle, and likely the
 mansions and big houses). Fixed the same day: rooms 99 and 200+ could not be entered; the ways out are numbered
 1, 2, 3... Still to do: one floor plan with the rooms side by side and doorways between them, bigger and more
 varied rooms.
+
+### 1.5d Clearer results in every kind of fight (asked 28 October)
+Wars, the arenas' tournaments, the dungeons, the duels, sea beasts and dragons: say plainly who won, by how much
+and what it brought (stars, scores, loot), where you see it and in the log.
+
+### 1.5e Stables for tamed creatures (asked 28 October)
+Tamed creatures stay waiting at the door while their Tickles sleep: build stables in the villages' grounds and
+inside the fortresses, where they spend the night.
+
+### 1.5f More griffins (asked 28 October)
+"I love seeing Tickles flying on them": more griffin riders, and they attack and defend mounted on them (in a war
+they already fly over the walls and strike the defences; to grow: more of them, and a part in other fights).
 
 ### 1.5c Carried things in the inventory (asked 28 October)
 The rings, boards, balls and other things a Tickle holds make no sense most of the time (training with a swim
