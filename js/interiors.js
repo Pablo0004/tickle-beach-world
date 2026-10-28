@@ -831,6 +831,7 @@
   // throne (one each), the stove, the counter or the cauldron, a shelf to read at, a window or a picture to look
   // at, a training dummy; two by two, a chat in a clear stretch of floor; whoever is left strolls up and down. The
   // places change every hour.
+  const CHAT_GAP = 2.4; // (two who chat stand a good step apart, facing each other)
   function lifeSpots(R) {
     if (R._life) return R._life;
     const out = [], items = R.items || [], inside = (x, z) => Math.abs(x) < R.w / 2 - 0.9 && Math.abs(z) < R.d / 2 - 0.9;
@@ -847,7 +848,7 @@
     const clear = (x, z) => inside(x, z) && items.every((it) => Math.hypot(it.x - x, it.z - z) > 1.7) && out.every((q) => Math.hypot(q.x - x, q.z - z) > 1.3);
     for (let k = 0; k < 60; k++) {
       const x = (hash2(k, Math.round(R.w * 10), 951) - 0.5) * (R.w - 3), z = (hash2(k, Math.round(R.d * 10), 953) - 0.5) * (R.d - 3);
-      if (k % 3 === 0) { if (clear(x, z) && clear(x + 1.4, z)) { add(x, z, Math.PI / 2, "chat", 1); add(x + 1.4, z, -Math.PI / 2, "chat", 2); } }
+      if (k % 3 === 0) { if (clear(x, z) && clear(x + CHAT_GAP, z)) { add(x, z, Math.PI / 2, "chat", 1); add(x + CHAT_GAP, z, -Math.PI / 2, "chat", 2); } }
       else if (clear(x, z) && clear(x + 3, z)) add(x, z, Math.PI / 2, "walk");
     }
     return (R._life = out);
@@ -861,7 +862,7 @@
     let i = 0;
     for (const sp of spots) {
       if (i >= order.length) break;
-      if (sp.act === "chat") { if (sp.pair !== 1) continue; const mate = spots.find((q) => q.act === "chat" && q.pair === 2 && Math.abs(q.z - sp.z) < 0.01 && Math.abs(q.x - sp.x - 1.4) < 0.01); if (!mate || i + 1 >= order.length) continue; out.push({ id: order[i++], pose: "chat", at: { x: sp.x, z: sp.z, rot: sp.rot } }, { id: order[i++], pose: "chat", at: { x: mate.x, z: mate.z, rot: mate.rot } }); continue; }
+      if (sp.act === "chat") { if (sp.pair !== 1) continue; const mate = spots.find((q) => q.act === "chat" && q.pair === 2 && Math.abs(q.z - sp.z) < 0.01 && Math.abs(q.x - sp.x - CHAT_GAP) < 0.01); if (!mate || i + 1 >= order.length) continue; out.push({ id: order[i++], pose: "chat", at: { x: sp.x, z: sp.z, rot: sp.rot } }, { id: order[i++], pose: "chat", at: { x: mate.x, z: mate.z, rot: mate.rot } }); continue; }
       out.push({ id: order[i++], pose: LIFE_POSE[sp.act], at: { x: sp.x, z: sp.z, rot: sp.rot }, walk: sp.act === "walk" ? { ax: sp.x, az: sp.z, bx: sp.x + 3, bz: sp.z } : null });
     }
     // more people than places: they stroll about the middle of the room
@@ -1109,7 +1110,9 @@
         holder.add(bar); fig.bar = bar; fig.fg = fg;
       }
       // whatever its paws hold is put away while it fights or digs (both paws are busy)
-      if ((o.pose === "fight" || o.pose === "guard" || o.pose === "dig" || o.pose === "cards" || o.pose === "deal") && F.arms && F.arms.held) for (const s of ["R", "L"]) if (F.arms.held[s]) F.arms.held[s].visible = false;
+      // (and a float or a wake board stays in the inventory indoors: they are only for the water)
+      const wet = App.WATER_HOLD && App.traitsOf && App.WATER_HOLD.has((App.traitsOf(o.id) || {}).Holding);
+      if ((wet || o.pose === "fight" || o.pose === "guard" || o.pose === "dig" || o.pose === "cards" || o.pose === "deal") && F.arms && F.arms.held) for (const s of ["R", "L"]) if (F.arms.held[s]) F.arms.held[s].visible = false;
       F.pivot.traverse((q) => { q.userData.shared = true; });
       holder.add(F.pivot);
       let x = -4 + j * 2.2, z = 2, rot = Math.PI;

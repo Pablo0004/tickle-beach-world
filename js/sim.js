@@ -123,6 +123,10 @@
   // what the paws hold (the on-chain Holding): a float, a wake board or a towel is too big to wave about,
   // and for anything that needs both paws, whatever is held is put away for the moment
   const BULKY = new Set(["Tube", "Wake Board", "Towel"]);
+  // a float and a wake board are for the water: they stay in the inventory (on the Tickle's on-chain model they are
+  // still part of it) and come out only when it is swimming, floating or out on the water
+  const WATER_HOLD = (App.WATER_HOLD = new Set(["Tube", "Wake Board"]));
+  const inWater = (t) => !!((t.action && t.action.water && t.action.phase === "doing") || (t.detour && t.detour.wet) || (t.action && t.action.surf) || App.surfaceAt(t.pos.x, t.pos.z).water);
   const TWO_HANDED = new Set(["dig", "ball", "dance", "surf", "trick", "skate"]);
   const RIGHT_PAW = new Set(["lift", "fish"]); // one paw at work: only what that paw holds is put away
   const JOB_ITEM = { fisher: "Fishing Rod", dj: "808", vendor: "Cooler", lifeguard: "Chair", surfer: "Surfs Up", host: "Beachball", hunter: "Treasure", coach: "Workout" };
@@ -1665,8 +1669,9 @@
     const HP = A.held;
     if (HP && (HP.R || HP.L)) {
       const busy = TWO_HANDED.has(use) || k === "slay" || k === "box" || k === "ringwait" || k === "brawl" || (k === "fight" && doing) || k === "row" || k === "throw" || k === "held" || k === "flying" || (act && doing && act.anim === "dig");
-      for (const s of ["R", "L"]) { const away = busy || (s === "R" && RIGHT_PAW.has(use)); if (HP[s] && HP[s].visible === away) HP[s].visible = !away; }
-      if (!busy && BULKY.has(t.holding)) {
+      const stowed = WATER_HOLD.has(t.holding) && !inWater(t);
+      for (const s of ["R", "L"]) { const away = busy || stowed || (s === "R" && RIGHT_PAW.has(use)); if (HP[s] && HP[s].visible === away) HP[s].visible = !away; }
+      if (!busy && !stowed && BULKY.has(t.holding)) {
         if (HP.L) { lx = Math.max(lx, -0.45); lz = Math.max(-0.15, Math.min(lz, 0.15)); }
         if (HP.R) { rx = Math.max(rx, -0.45); rz = Math.max(-0.15, Math.min(rz, 0.15)); }
       }

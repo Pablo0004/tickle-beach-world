@@ -95,3 +95,5 @@ mando, ni tarjeta gráfica). Ve tachando lo que veas bien y apunta lo que no.
 ## Vida en los interiores
 
 - Entra en una mansión o un castillo fuera de las comidas: cada Tickle en un sitio (sentados uno por silla o sofá, leyendo en la estantería, mirando por la ventana, entrenando, charlando en parejas, paseando); no en fila. La ficha de la sala dice qué hace cada uno.
+- Los que charlan dentro: separados, cara a cara.
+- Flotador y tabla: en tierra y dentro no se ven en la mano; en el agua (nadando, flotando) sí.

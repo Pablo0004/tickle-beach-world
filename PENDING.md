@@ -92,7 +92,7 @@ varied rooms.
   mansions, casinos, the Parliament...)**: done for houses, mansions and castles: awake and not controlled, each
   Tickle takes a place of its own (one per chair, sofa seat or throne; the stove, counter or cauldron; a shelf to
   read at; a window or picture; a training dummy; chats two by two; the rest stroll up and down), changing every
-  hour; lunch and breakfast still round the table. Still to do: the casinos, the Parliament and the other interiors.
+  hour; lunch and breakfast still round the table; two who chat stand a good step apart (2.4). Still to do: the casinos, the Parliament and the other interiors.
 
 ### 1.5d Clearer results in every kind of fight (asked 28 October)
 Wars, the arenas' tournaments, the dungeons, the duels, sea beasts and dragons: say plainly who won, by how much
@@ -109,7 +109,9 @@ they already fly over the walls and strike the defences; to grow: more of them, 
 ### 1.5c Carried things in the inventory (asked 28 October)
 The rings, boards, balls and other things a Tickle holds make no sense most of the time (training with a swim
 ring in hand). They belong in its inventory with its arms and belongings, and come out only when they are used
-(the swim ring or the board when swimming or surfing).
+(the swim ring or the board when swimming or surfing). Done 28 October for the float (Tube) and the wake board: put away on land and
+indoors, out in the water (the on-chain model keeps them; only the world hides them). To look at with the owner:
+the other things held (towel, snacks, chips, games) and the Ground items.
 
 ### 1.6 Editing homes and a better build mode (asked 16 and 24 October)
 
