@@ -1751,7 +1751,7 @@
       (R.warps.filter((w) => w.to.outside).length > 3
         ? '<div class="rh-warps"><select id="exitSel" aria-label="Way out">' + R.warps.filter((w) => w.to.outside).map((w) => '<option value="' + w.id + '"' + (cur && cur.map.target.dg && w.to.dg === cur.map.target.dg.i ? " selected" : "") + ">" + esc(w.label) + "</option>").join("") + '</select><button class="btn primary" data-warp="exit">Leave</button>' +
           R.warps.filter((w) => !w.to.outside).map((w) => '<button class="btn" data-warp="' + w.id + '">' + esc(w.label) + "</button>").join("") + "</div>"
-        : '<div class="rh-warps">' + R.warps.map((w) => '<button class="btn' + (w.to.outside ? " primary" : "") + '" data-warp="' + w.id + '">' + w.id + ". " + esc(w.label) + "</button>").join("") + "</div>");
+        : '<div class="rh-warps">' + R.warps.map((w, i) => '<button class="btn' + (w.to.outside ? " primary" : "") + '" data-warp="' + w.id + '">' + (i + 1) + ". " + esc(w.label) + "</button>").join("") + "</div>");
   }
   // what a fighter does in a fight
   function roleWord(id) {
