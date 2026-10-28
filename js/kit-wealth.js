@@ -626,6 +626,31 @@
     st.push(S("cube", [0, 95, -90], [74, 59, 6], { color: iron, layer: 2 }));
     return st;
   }
+  // a stable for the tamed creatures: a timber barn with a gabled roof in the house's colour, open at the front with
+  // three stalls, hay in the racks and bales outside, a water trough, a lantern by the door
+  function stable(clan) {
+    const st = [], wood = C("#8a5a30"), wood2 = C("#6b4422"), plank = C("#a0703a"), roof = C(CLANS[clan].color), hay = C("#e8c860"), water = C("#2f8fe0"), dark = C("#3a2a1a");
+    // layer 0: the floor, the back and the two ends
+    st.push(S("cube", [0, 0, 10], [330, 200, 10], { color: C("#7a6a5a") }));
+    st.push(S("cube", [0, -190, 220], [330, 14, 210], { color: plank }));
+    st.push(S("cube", [320, 0, 220], [14, 200, 210], { color: plank, mirror: true, offsX: 320 }));
+    // layer 1: the gabled roof and its ridge beam
+    st.push(S("cube", [0, 0, 520], [350, 225, 100], { color: roof, cone: 1, layer: 1 }));
+    st.push(S("cube", [0, 0, 432], [345, 220, 10], { color: wood2, layer: 1 }));
+    // layer 2: the posts across the open front and the stall dividers
+    for (const x of [320, 110]) st.push(S("joint", [x, 190, 220], [14, 14, 215], { color: wood, mirror: true, offsX: x, layer: 2 }));
+    for (const x of [110]) st.push(S("cube", [x, 0, 110], [8, 180, 100], { color: wood2, mirror: true, offsX: x, layer: 2 }));
+    // layer 3: hay in the racks along the back, the bales outside, the trough
+    st.push(S("cube", [0, -160, 300], [300, 22, 40], { color: hay, round: 0.3, layer: 3 }));
+    st.push(S("cube", [-380, 120, 50], [50, 70, 50], { color: hay, round: 0.25, layer: 3 }));
+    st.push(S("cube", [-380, 0, 50], [50, 50, 50], { color: hay, round: 0.25, layer: 3 }));
+    st.push(S("cube", [380, 120, 40], [40, 90, 40], { color: wood2, layer: 4 }));
+    st.push(S("cube", [380, 120, 76], [32, 80, 6], { color: water, layer: 4 }));
+    // layer 5: a lantern by the front and the shadowed back of the stalls
+    st.push(S("cube", [330, 205, 330], [16, 16, 24], { color: C("#ffd23f"), layer: 5 }));
+    st.push(S("cube", [0, -170, 120], [300, 6, 100], { color: dark, layer: 5 }));
+    return st;
+  }
   // a battering ram: a log with an iron head, slung on chains under a roof on wheels, the front (+y) at the gate
   function ram() {
     const st = [], wood = C("#8a5a30"), wood2 = C("#6b4422"), iron = C("#4a4a4a"), hide = C("#a0703a"), log = C("#7a4a24");
@@ -881,6 +906,7 @@
     catapult: { name: "Catapult", group: "Village", variants: [0], build: catapult, voxel: [8, 20], lazy: true },
     catapultarm: { name: "Catapult Arm", group: "Village", variants: [0], build: catapultarm, voxel: [7] },
     ram: { name: "Battering Ram", group: "Village", variants: [0], build: ram, voxel: [8] },
+    stable: { name: "Stable", group: "Village", variants: clanV, build: stable, voxel: [12, 28], lazy: true, variantLabel: (v) => CLANS[v].species + " roof" },
     mlodge: { name: "Log Lodge (Camping mansion)", group: "Village", variants: clanV, build: mlodge, voxel: [22, 48], lazy: true, variantLabel: (v) => CLANS[v].species + " roof" },
     mfarm: { name: "Country House (Duck Pond mansion)", group: "Village", variants: clanV, build: mfarm, voxel: [22, 48], lazy: true, variantLabel: (v) => CLANS[v].species + " roof" },
     mkeep: { name: "Stone Keep (Waterfall mansion)", group: "Village", variants: clanV, build: mkeep, voxel: [22, 48], lazy: true, variantLabel: (v) => CLANS[v].species + " roofs" },

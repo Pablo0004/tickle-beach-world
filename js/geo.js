@@ -1256,11 +1256,11 @@
       }
       // a fortress (and a great estate) keeps its arms in an armoury; a fortress's catapults stand inside its walls,
       // between the gates, ready to throw over them (war.js)
-      if (FORTS[v.cls] || v.cls === "grand") {
-        const W0 = v.walls, keepClear = (x, z, d) => App.gridNear("scenery", x, z, d + 12).every((o) => !o.building || Math.hypot(o.x - x, o.z - z) > d + (o.castle ? 14 : o.house && v.cls === "grand" ? 8 : o.wall ? 1 : 3));
+      const W0 = v.walls, keepClear = (x, z, d) => App.gridNear("scenery", x, z, d + 12).every((o) => !o.building || Math.hypot(o.x - x, o.z - z) > d + (o.castle ? 14 : o.house && v.cls === "grand" ? 8 : o.wall ? 1 : 3));
         const okAt = (x, z, d) => !nearRoad(x, z, d) && !inField(x, z, d) && flatAt(x, z, SMALL, 1.5) && noLake(x, z, 6) && keepClear(x, z, d) &&
           Math.hypot(x - v.granary.x, z - v.granary.z) > d + 4 && Math.hypot(x - v.altar.x, z - v.altar.z) > d + 3 && Math.hypot(x - v.x, z - v.z) > d + 8 &&
           (!W0 || Math.hypot(x - W0.x, z - W0.z) < W0.r - d - 2);
+      if (FORTS[v.cls] || v.cls === "grand") {
         const mx = W0 ? W0.x : v.x, mz = W0 ? W0.z : v.z, far0 = W0 ? W0.r * 0.62 : 26;
         for (let k = 0; k < 40; k++) {
           const a = hash2(v.i, k, 1301) * 6.283, r = far0 * (0.75 + hash2(v.i, k, 1303) * 0.45), x = mx + Math.cos(a) * r, z = mz + Math.sin(a) * r;
@@ -1280,6 +1280,16 @@
             break;
           }
         });
+      }
+      // a stable for the place's tamed creatures, where they spend the night while their Tickles sleep (asked 28
+      // October); inside the walls of a fortress
+      {
+        const sx = W0 ? W0.x : v.x, sz = W0 ? W0.z : v.z, far1 = W0 ? W0.r * 0.5 : Math.max(14, (v.r || 20) * 0.75);
+        for (let k = 0; k < 60 && !v.stable; k++) {
+          const a = hash2(v.i, k, 1311) * 6.283, r = far1 * (0.7 + hash2(v.i, k, 1313) * 0.6), x = sx + Math.cos(a) * r, z = sz + Math.sin(a) * r;
+          if (!okAt(x, z, 3.6)) continue;
+          v.stable = tsc(key + "/stable", "stable_" + v.style, x, z, faceTo(x, z, v.x, v.z), { building: true, stable: true, village: v.i });
+        }
       }
       homesInOrder(v);
       // a third ring of logs round the fire, as far as the people need it

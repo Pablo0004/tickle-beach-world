@@ -100,7 +100,7 @@ the bedrooms. Still to do: the same for the other big interiors, and more varied
 "At the fire of a mansion or a castle they are too crowded: spread them, or not all of them: some patrolling the
 walls, some in the stable, some indoors, the rest round the fire, more spread out." Done the same day for places of
 more than 24: about 15% keep an evening watch on the walls (fortresses), about 35% spend the evening indoors (seen
-inside, each in a place of its own), about 12% at the armoury (the stable when there are stables, 1.5e), the rest
+inside, each in a place of its own), about 12% at the armoury, the rest
 round the fire in wider rings. Also: snacks and chips stay in the paws everywhere (indoors too); the towel only
 near the water; a griffin takes off even for a short hop, so its rider flies over the walls, never through the
 gate.
@@ -114,7 +114,9 @@ guardians beaten, loot). Still to do if wanted: duels and contests (contests alr
 
 ### 1.5e Stables for tamed creatures (asked 28 October)
 Tamed creatures stay waiting at the door while their Tickles sleep: build stables in the villages' grounds and
-inside the fortresses, where they spend the night.
+inside the fortresses, where they spend the night. Done 28 October: a stable (strokes: a timber barn, open front, hay, a trough) in every
+lived-in place (249), inside the walls of a fortress; while its Tickle is indoors a tamed creature waits at the
+front of its place's stable or in the yard before it.
 
 ### 1.5f More griffins (asked 28 October)
 "I love seeing Tickles flying on them": more griffin riders, and they attack and defend mounted on them (in a war
