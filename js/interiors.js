@@ -1825,14 +1825,14 @@
     }
     const b = e.target.closest("[data-warp]");
     if (!b || !cur) return;
-    const ws = cur.map.rooms[cur.ri].warps, w = b.dataset.warp === "exit" ? ws[+document.getElementById("exitSel").value] : ws[+b.dataset.warp];
+    const ws = cur.map.rooms[cur.ri].warps, id = b.dataset.warp === "exit" ? document.getElementById("exitSel").value : b.dataset.warp, w = ws.find((x) => String(x.id) === String(id)); // (by its number: 99 or 200 are not places in the list)
     if (w) take(w);
   });
   function take(w) {
     fade(() => {
       if (w.to.outside) return leave(w.to.door);
       build(cur.map, w.to.room);
-      const ws = cur.map.rooms[w.to.room].warps, W = w.to.warp === "down" ? ws.find((x) => x.down) : ws[w.to.warp];
+      const ws = cur.map.rooms[w.to.room].warps, W = w.to.warp === "down" ? ws.find((x) => x.down) : ws.find((x) => x.id === w.to.warp);
       cur.focus = cur.map.maze ? { x: W ? W.x : 0, z: W ? W.z : 0 } : { x: W ? W.x * 0.4 : 0, z: W ? W.z * 0.3 : 0 };
       App.cam.target.x = cur.worldCam.x; App.cam.target.z = cur.worldCam.z;
     });
