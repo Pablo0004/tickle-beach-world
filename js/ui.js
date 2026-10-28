@@ -63,6 +63,24 @@
     while (box.children.length > 3) box.firstChild.remove();
     setTimeout(() => el.remove(), 4200);
   };
+  // the result of a fight, said plainly (asked 28 October): what it was, who won, the score, what it brought. For the
+  // fights near you or the ones you are watching: wars, raids, dragons, sea beasts, tournaments, the Great Underworld
+  App.resultCard = (o) => {
+    if (!o || quiet()) return;
+    let el = $("resultCard");
+    if (!el) {
+      el = document.createElement("div"); el.id = "resultCard";
+      el.style.cssText = "position:absolute;left:50%;top:16%;transform:translateX(-50%);z-index:40;min-width:240px;max-width:min(92vw,440px);background:rgba(18,22,30,.93);color:#fff;border-radius:14px;padding:12px 18px 14px;text-align:center;box-shadow:0 10px 32px rgba(0,0,0,.45);cursor:pointer";
+      el.title = "Click to dismiss"; el.addEventListener("click", () => { el.hidden = true; });
+      ($("toasts").parentNode || document.body).appendChild(el);
+    }
+    el.innerHTML = '<div style="font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;opacity:.7">' + esc(o.kind) + '</div>' +
+      '<div style="font-size:21px;font-weight:800;margin:3px 0 2px;color:' + (o.good === false ? "#ff8a7a" : "#ffd23f") + '">' + esc(o.title) + "</div>" +
+      (o.score ? '<div style="font-size:17px;font-weight:700;margin-bottom:4px">' + esc(o.score) + "</div>" : "") +
+      (o.lines || []).filter(Boolean).map((l) => '<div style="font-size:13px;opacity:.9;margin-top:2px">' + esc(l) + "</div>").join("");
+    el.hidden = false;
+    clearTimeout(el._t); el._t = setTimeout(() => { el.hidden = true; }, 8000);
+  };
   // a toast with a button (e.g. "Watch" when a fight worth seeing starts down below)
   App.toastAction = (msg, label, fn) => {
     if (!App.notifyOn()) return;

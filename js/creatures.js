@@ -493,6 +493,7 @@
     tr.champ = champ;
     st.champs[tr.region] = { id: champ, day: tr.day, creature: c ? App.creatureLabel(c) : "" };
     const near = Math.hypot(ar.x - App.cam.target.x, ar.z - App.cam.target.z) < 600;
+    if (App.resultCard && tr.live) App.resultCard({ kind: "Tournament \u00b7 " + ar.name, title: App.nameOf(champ) + " is the champion", score: (c ? App.creatureLabel(c) : "") , lines: [tr.players.length + " tamers, " + tr.matches.length + " battles"] });
     if (near || tr.live) App.log("creature", App.nameOf(champ) + " and " + (c ? App.creatureLabel(c) : "their creature") + " won tonight's tournament at " + ar.name + ".",
       tr.players.length + " tamers of " + App.regions[tr.region].name + " took part; " + tr.matches.length + " battles in all.", { who: [champ] });
   }

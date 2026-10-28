@@ -301,6 +301,8 @@
     }
     o.food -= stolen; v.food += stolen;
     r.stolen = stolen;
+    if (App.resultCard && (r.live || near(o))) App.resultCard({ kind: "Raid \u00b7 " + v.name + " on " + o.name, title: stolen > 5 ? v.name + " got away with it" : o.name + " beat them back", good: stolen > 5 ? false : true,
+      score: Math.round(stolen) + " food taken", lines: [(r.kos ? r.kos + " knocked out" : "Nobody hurt"), (r.fights ? r.fights + " fights at the granary" : "")] });
     bumpClan(v.clan, o.clan, -8);
     if (near(v) || near(o) || r.live)
       App.log("raid", stolen > 5 ? "The raiders from " + v.name + " got away with " + Math.round(stolen) + " food from " + o.name + "." : o.name + " beat back the raid from " + v.name + ".",
@@ -357,6 +359,7 @@
       for (const f of o.fields.slice(0, a.burned)) f.burnt = a.t1 + DAY;
     }
     o.food = Math.max(0, o.food - a.stolen);
+    if (App.resultCard && (a.live || near(o))) App.resultCard({ kind: "Dragon attack \u00b7 " + o.name, title: "The dragon was driven off", good: !a.burned, score: Math.round(a.stolen) + " food lost" + (a.burned ? " \u00b7 " + a.burned + " field" + (a.burned > 1 ? "s" : "") + " burned" : ""), lines: [(a.kos ? a.kos + " defenders knocked out" : "No defender hurt"), a.helpers.length > 1 ? a.helpers.length + " places fought side by side" : ""] });
     const clans = [...new Set(a.helpers.map((vi) => App.villages[vi].clan))];
     for (let i = 0; i < clans.length; i++) for (let j = i + 1; j < clans.length; j++) bumpClan(clans[i], clans[j], clans[i] === o.clan || clans[j] === o.clan ? 7 : 4);
     for (const id of defenders) defendBy.delete(id);

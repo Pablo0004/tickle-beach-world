@@ -186,6 +186,7 @@
         if (!list.includes(B.trophy)) { list.push(B.trophy); if (list.length > 6) { list.sort((a, b) => App.relicInfo(b).bonus - App.relicInfo(a).bonus); list.length = 6; } }
       }
       st.seaLog.won++;
+      if (App.resultCard && A.live) App.resultCard({ kind: "Sea beast \u00b7 " + F.name, title: B.name.replace(/^the /, "The ") + " is dead!", score: alive.length + " defenders standing", lines: [last != null ? nm(last) + " struck the last blow: the " + App.RELICS[B.trophy].name : "", "Each defender: " + Math.round(30 * (App.lawMul ? App.lawMul("bounty") : 1)) + " shells, 2 Ethernum"] });
       App.log("sea", "The defenders of " + F.name + " killed " + B.name + "!", (last != null ? nm(last) + " struck the last blow and keeps the " + App.RELICS[B.trophy].name + ". " : "") + alive.length + " defenders share its hoard: 30 shells, 2 Ethernum and some experience each.", { who: A.def.slice(0, 6) });
       if (beastObj && beastObj.A === A) { beastObj.dying = performance.now(); if (App.FX) App.FX.label(App.scene, { x: F.x, y: App.WATER_Y + 7, z: F.z }, B.name.replace(/^the /, "The ") + " is dead!", "#ffd23f"); App.sfx && App.sfx.cheer && App.sfx.cheer(); }
     } else {
@@ -194,6 +195,7 @@
       if (A.kind === "serpent" && F.D && App.rowboats) for (const b of App.rowboats) if (b.dock === F.D.i && !b.user) { b.sunk = A.day; sunk++; }
       for (const id of A.def) if (hash2(id, A.day, 509) < 0.25) App.knockOut(id, 180, "Ouch...");
       st.seaLog.lost++;
+      if (App.resultCard && A.live) App.resultCard({ kind: "Sea beast \u00b7 " + F.name, title: B.name.replace(/^the /, "The ") + " got away", good: false, score: Math.round((1 - A.hp / A.max) * 100) + "% of its health taken", lines: [sunk ? sunk + " rowing boats sunk until morning" : ""] });
       App.log("sea", B.name.replace(/^the /, "The ") + " went back down off " + F.name + ".", "The defenders could not beat it" + (sunk ? "; it smashed " + sunk + " rowing boats, which lie on the bottom until morning" : "") + ".", { who: A.def.slice(0, 6) });
       if (beastObj && beastObj.A === A) beastObj.leaving = performance.now();
     }

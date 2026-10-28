@@ -107,7 +107,10 @@ gate.
 
 ### 1.5d Clearer results in every kind of fight (asked 28 October)
 Wars, the arenas' tournaments, the dungeons, the duels, sea beasts and dragons: say plainly who won, by how much
-and what it brought (stars, scores, loot), where you see it and in the log.
+and what it brought (stars, scores, loot), where you see it and in the log. Done 28 October: a result card (App.resultCard, ui.js) for the
+fights near you or the ones you watch: wars (stars, % destroyed, who is left standing, the spoils), the spoils
+arriving, truces, raids, dragon attacks, sea beasts, the arena tournaments, the Great Underworld (floors reached,
+guardians beaten, loot). Still to do if wanted: duels and contests (contests already show a podium).
 
 ### 1.5e Stables for tamed creatures (asked 28 October)
 Tamed creatures stay waiting at the door while their Tickles sleep: build stables in the villages' grounds and

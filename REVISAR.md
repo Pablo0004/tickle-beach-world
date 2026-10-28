@@ -102,3 +102,4 @@ mando, ni tarjeta gráfica). Ve tachando lo que veas bien y apunta lo que no.
 - Un jinete de grifo que sale o entra en una fortaleza pasa volando por encima de la muralla.
 - Entra en una mansión o un castillo: una sola planta con el gran salón en el centro y la cocina, el entrenamiento, el salón y el tesoro a los lados, con tabiques bajos y huecos de puerta. La ficha dice "On this floor: ...". Los dormitorios, por la escalera.
 - Casino de noche: los que no juegan miran las mesas de pie alrededor; en la sala del torneo esperan en corrillos. En una sede de gremio, cada miembro en un sitio.
+- Al acabar una guerra, incursión, ataque de dragón, bestia marina, torneo o una expedición a la Gran Mazmorra que estés viendo: sale una tarjeta arriba con el resultado (quién ganó, marcador o estrellas, qué se llevan). Se cierra sola o con un clic.

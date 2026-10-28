@@ -363,7 +363,12 @@
     const carriers = (s === "A" ? w.A : w.B)[0].ids.filter((id) => !w.fallen[id] && !App.isKO(id)).slice(0, 12);
     w.convoy = { t0, t1: t0 + 25 + len / App.WALK_SPEED, carriers, from: lose, to: win };
     App.log("war", V.name + " has won the war against " + L.name + "!", why + " The soldiers of " + V.name + " will carry everything off from " + L.name + "'s granary at " + App.clock(t0).short + "; the fallen of both sides recover once the supplies have been moved.", { war: w.id });
-    App.toast && App.toast(V.name + " won the war against " + L.name);
+    if (App.resultCard && (near(L.x, L.z, 600) || near(V.x, V.z, 600))) {
+      const S = starsOf(w);
+      App.resultCard({ kind: "War \u00b7 " + App.villages[w.a].name + " against " + App.villages[w.b].name, title: V.name + " wins", good: true,
+        score: s === "A" ? starText(w.stars) + "  " + Math.round(S.pct * 100) + "% destroyed" : "The attack was beaten off",
+        lines: [why, standing(w, "A").length + " of " + w.start.A + " attackers and " + standing(w, "B").length + " of " + w.start.B + " defenders still on their feet", "Spoils: " + (s === "A" ? (w.stars >= 3 ? "everything, and the place itself" : w.stars === 2 ? "everything but the place" : "half the granary, ores and shells") : "half the attackers' granary and ores, and the arms of their fallen")] });
+    } else App.toast && App.toast(V.name + " won the war against " + L.name);
     for (const id of new Set(sideIds(w, "A").concat(sideIds(w, "B")).concat(L.residents))) App.invalidatePlan(id);
     if (App.sfx && App.sfx.cheer && near(L.x, L.z, 200)) App.sfx.cheer();
   }
@@ -372,6 +377,7 @@
     for (const c of w.A) for (const d of w.B) W().peace[pairKey(c.ident, d.ident)] = st.T + PEACE;
     setRel(App.villages[w.a].clan, App.villages[w.b].clan, 30);
     recover(w, 60);
+    if (App.resultCard && near(w.front.x, w.front.z, 600)) App.resultCard({ kind: "War", title: "Truce", good: false, score: starText(starsOf(w).stars) + "  " + Math.round(starsOf(w).pct * 100) + "% destroyed", lines: ["After " + MAXDAYS + " days nobody has won: " + App.villages[w.a].name + " and " + App.villages[w.b].name + " go home"] });
     App.log("war", "Truce between " + App.villages[w.a].name + " and " + App.villages[w.b].name + ".", "After " + MAXDAYS + " days nobody has won. The armies go home with their supplies; the fallen recover within the hour.", { war: w.id });
   }
   function recover(w, mins) { for (const id in w.fallen) if (App.pop.ko[id] > 1e7) App.pop.ko[id] = st.T + (mins || 20); for (const id in w.fallen) App.invalidatePlan(+id); }
@@ -411,6 +417,7 @@
     } else if (A && lordOf(V) === L) delete W().lords[V.ident]; // a held place that wins any war against its lord is free again
     w.loot = loot;
     recover(w, 20);
+    if (App.resultCard && (near(L.x, L.z, 600) || near(V.x, V.z, 600))) App.resultCard({ kind: "Spoils of war", title: V.name + " takes them home", score: loot.food + " food \u00b7 " + loot.shells + " shells \u00b7 " + loot.ores + " ore \u00b7 " + loot.arms + " arms", lines: [loot.place ? L.name + " is now held by " + V.name : "", "The fallen of both sides are on their feet again"] });
     App.log("war", "The supplies have been moved from " + L.name + " to " + V.name + (A ? " (" + starText(S) + ")." : "."), "Taken: " + loot.food + " food, " + loot.shells + " shells, " + loot.ores + " ore and " + loot.arms + " sets of arms for the armoury of " + V.name + ". " +
       (loot.place ? L.name + ", its houses and its plot are now held by " + App.clanName(V.clan) + ", and pay it tribute every morning. " : "") + "The fallen of the war are on their feet again.", { war: w.id });
     for (const id of L.residents.concat(V.residents)) App.invalidatePlan(id);
