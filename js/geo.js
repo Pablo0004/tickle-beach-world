@@ -408,6 +408,13 @@
     const [s, e] = [[540, 720], [900, 1080], [1200, 1380]][turn];
     return { k: "wallwatch", s, e, p, ww };
   };
+  // an evening turn on the walls, for a fortress whose people do not all go to the fire (population.js)
+  App.wallWatchAt = (id, day, v, s, e) => {
+    if (!v || !v.walls) return null;
+    const W = v.walls, G = W.gates, gi = Math.floor(App.hash2(id, day, 409) * G.length), a = G[gi], b = gi + 1 < G.length ? G[gi + 1] : G[0] + Math.PI * 2;
+    const ww = { x: W.x, z: W.z, r: W.r, a, b, off: App.hash2(id, day, 411) };
+    return { k: "wallwatch", s, e, p: { x: W.x + Math.cos(a) * (W.r - 3.5), z: W.z + Math.sin(a) * (W.r - 3.5), label: "on the walls of " + v.name + " (evening watch)", cx: W.x, cz: W.z }, ww };
+  };
   // where a guard is on its round, so many minutes after climbing up: along the top from its gate to the next and back
   App.wallPos = (ww, mins) => {
     const gh = (GATE_HALF + 1.4) / ww.r, a0 = ww.a + gh, span = Math.max(0.05, ww.b - ww.a - 2 * gh), L = span * ww.r, per = (2 * L) / 1.2;

@@ -435,6 +435,15 @@
     // a turn on the walls of its fortress (geo.js)
     const ww = App.wallWatch && App.wallWatch(id, day, v);
     if (ww) steps = overlay(steps, ww);
+    // a big place (an estate, a fortress) does not all crowd round its fire of an evening: some keep watch on the
+    // walls, some are at the armoury, many stay indoors, and the rest sit round the fire (further out)
+    const E = steps.find((s) => s.k === "evening");
+    if (E && v.residents.length > 24 && E.p && Math.hypot(E.p.x - v.x, E.p.z - v.z) < 20 && E.e - E.s > 40) {
+      const u = App.hash2(id, day, 971);
+      if (v.walls && u < 0.15 && App.wallWatchAt) steps = overlay(steps, App.wallWatchAt(id, day, v, E.s + 10, E.e));
+      else if (u < 0.5) steps = overlay(steps, { k: "indoors", s: E.s + 30, e: E.e, p: { x: home.x, z: home.z, label: "an evening at home in " + v.name } });
+      else if (u < 0.62 && v.armoury) E.p = standAt({ x: v.armoury.x, z: v.armoury.z, type: "yard", label: "the armoury of " + v.name }, id, day * 7 + 9);
+    }
     // a night at the casino (the gamblers often; others now and then; the dealers every night)
     const cv = App.casinoVisit && App.casinoVisit(id, day);
     if (cv) steps = overlay(steps, { k: "casino", s: cv.s, e: cv.e, p: { x: cv.Cs.door.x + (App.hash2(id, 345, 3) - 0.5) * 3, z: cv.Cs.door.z + (App.hash2(id, 347, 3) - 0.5) * 3, label: cv.Cs.name + (cv.staff ? " (dealing at the tables)" : " (a night at the casino)"), casino: cv.Cs.i, staff: !!cv.staff } });
@@ -467,7 +476,7 @@
       const to = s.k === "ferry" ? s.from : s.p; // a ferry step walks to the dock, then rides
       s.path = App.route(prev.x, prev.z, to.x, to.z);
       s.len = App.pathLength(s.path);
-      if (mt && s.len > 30) {
+      if (mt && s.len > (mt.fly ? 8 : 30)) {
         if (mt.fly) { s.path = [{ x: prev.x, z: prev.z }, { x: to.x, z: to.z }]; s.len = App.pathLength(s.path); }
         s.spd = SPEED * mt.mul;
       }
@@ -511,7 +520,7 @@
       if (m < step.arr) { const f = App.ferryAt(App.ferries[step.ferry], T); return { x: f.x, z: f.z, moving: true, boat: true }; }
     }
     // at home asleep or at breakfast means indoors
-    return { x: step.p.x, z: step.p.z, moving: false, inside: step.k === "sleep" || step.k === "morning" || step.k === "shelter" || step.k === "rainshelter" || step.k === "mine" || step.k === "rounds" || step.k === "guildhall" || step.k === "casino" || step.k === "cell" || step.k === "canteen" || step.k === "parliament" };
+    return { x: step.p.x, z: step.p.z, moving: false, inside: step.k === "sleep" || step.k === "morning" || step.k === "shelter" || step.k === "rainshelter" || step.k === "indoors" || step.k === "mine" || step.k === "rounds" || step.k === "guildhall" || step.k === "casino" || step.k === "cell" || step.k === "canteen" || step.k === "parliament" };
   };
   const STEP_LABEL = { sleep: "Sleeping", morning: "Breakfast at home", job: "At work", lunch: "Having lunch", chore: "Chores for the village", leisure: "Free time", evening: "Dinner and friends on the square", raid: "Raiding", defend: "Defending against a dragon", arena: "Creature tournament", adventure: "Adventuring in a dungeon", ritual: "Revival ritual",
     hunt: "Dragon hunt with the Guild", train: "Creature training at the arena", bet: "Betting at the tournament", watch: "Night watch", outlaw: "Out in the night", trade: "Buying food to trade", trade2: "Delivering food", shelter: "Hiding at home from the dragon", ferry: "Crossing the lake by ferry", pray: "Praying to the Maker", mine: "Down the mine", guard: "Guarding the mine (Warriors' Guild)", rounds: "On guard down the mine (Warriors' Guild)", guildhall: "At the guild hall", casino: "A night at the casino", contest: "In a contest", contestWatch: "At a contest", dive: "Diving", seadefend: "Fighting a sea beast", ether: "Gathering Ether crystals", boat: "At the helm of the boat", smith: "At the anvil (Blacksmiths' Guild)", rainshelter: "Sheltering at home from the weather", flee: "Running inland from the sea", groom: "Tending the horses (Blacksmiths' Guild)", shop: "Out shopping", sail: "Out sailing its own boat",

@@ -1110,8 +1110,8 @@
         holder.add(bar); fig.bar = bar; fig.fg = fg;
       }
       // whatever its paws hold is put away while it fights or digs (both paws are busy)
-      // (and a float or a wake board stays in the inventory indoors: they are only for the water)
-      const wet = App.WATER_HOLD && App.traitsOf && App.WATER_HOLD.has((App.traitsOf(o.id) || {}).Holding);
+      // (and a float, a wake board or a towel stays in the inventory indoors: they are for the water; snacks come along)
+      const hold = App.traitsOf ? (App.traitsOf(o.id) || {}).Holding : null, wet = (App.WATER_HOLD && App.WATER_HOLD.has(hold)) || hold === "Towel";
       if ((wet || o.pose === "fight" || o.pose === "guard" || o.pose === "dig" || o.pose === "cards" || o.pose === "deal") && F.arms && F.arms.held) for (const s of ["R", "L"]) if (F.arms.held[s]) F.arms.held[s].visible = false;
       F.pivot.traverse((q) => { q.userData.shared = true; });
       holder.add(F.pivot);

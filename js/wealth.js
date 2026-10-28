@@ -519,7 +519,7 @@
     const M = App.mountOf(t.id);
     if (!M || a.slow || App.isKO(t.id)) return null;
     if (!t.riding) {
-      if (remaining < 30) return null;
+      if (remaining < (M.fly ? 8 : 30)) return null; // (a griffin takes off even for a short hop: over the walls, never through the gate)
       t.riding = { fly: M.fly, seat: M.seat, ph: 0, bob: 0, seen: frameNo, from: { x: t.pos.x, z: t.pos.z } };
       // a griffin goes straight there, over water, hills and houses
       if (M.fly && a.path && a.path.length) a.path = [a.path[a.path.length - 1]];

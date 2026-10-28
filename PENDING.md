@@ -94,6 +94,15 @@ varied rooms.
   read at; a window or picture; a training dummy; chats two by two; the rest stroll up and down), changing every
   hour; lunch and breakfast still round the table; two who chat stand a good step apart (2.4). Still to do: the casinos, the Parliament and the other interiors.
 
+### 1.5g The evening in the big places (asked 28 October)
+"At the fire of a mansion or a castle they are too crowded: spread them, or not all of them: some patrolling the
+walls, some in the stable, some indoors, the rest round the fire, more spread out." Done the same day for places of
+more than 24: about 15% keep an evening watch on the walls (fortresses), about 35% spend the evening indoors (seen
+inside, each in a place of its own), about 12% at the armoury (the stable when there are stables, 1.5e), the rest
+round the fire in wider rings. Also: snacks and chips stay in the paws everywhere (indoors too); the towel only
+near the water; a griffin takes off even for a short hop, so its rider flies over the walls, never through the
+gate.
+
 ### 1.5d Clearer results in every kind of fight (asked 28 October)
 Wars, the arenas' tournaments, the dungeons, the duels, sea beasts and dragons: say plainly who won, by how much
 and what it brought (stars, scores, loot), where you see it and in the log.

@@ -126,6 +126,7 @@
   // a float and a wake board are for the water: they stay in the inventory (on the Tickle's on-chain model they are
   // still part of it) and come out only when it is swimming, floating or out on the water
   const WATER_HOLD = (App.WATER_HOLD = new Set(["Tube", "Wake Board"]));
+  const towelSpot = (t) => { if (!(t.nwAt > performance.now() - 2000)) { t.nwAt = performance.now(); const s = shoreNear(t.pos.x, t.pos.z); t.nw = !!s && Math.hypot(s.x - t.pos.x, s.z - t.pos.z) < 14; } return t.nw || inWater(t); };
   const inWater = (t) => !!((t.action && t.action.water && t.action.phase === "doing") || (t.detour && t.detour.wet) || (t.action && t.action.surf) || App.surfaceAt(t.pos.x, t.pos.z).water);
   const TWO_HANDED = new Set(["dig", "ball", "dance", "surf", "trick", "skate"]);
   const RIGHT_PAW = new Set(["lift", "fish"]); // one paw at work: only what that paw holds is put away
@@ -638,6 +639,7 @@
   const LOOT = { id: "loot", name: "Grab food", verb: "is grabbing food from the granary", needs: { hunger: 6 }, capacity: 99, minutes: 6, where: "self", source: "core", status: "core" };
   const CHANT = { id: "chant", name: "Revival ritual", verb: "is chanting round the altar", needs: { social: 14, fun: 4 }, capacity: 99, minutes: 8, where: "self", anim: "chant", source: "core", status: "core" };
   const WATCH_ARENA = { id: "watch_arena", name: "Tournament", verb: "is waiting for a turn in the arena", needs: { fun: 10, social: 6 }, capacity: 99, minutes: 5, where: "self", source: "core", status: "core", anim: "sitWatch" };
+  const HOME_EVE = { id: "shelter", name: "An evening at home", verb: "is spending the evening indoors", needs: { social: 4, energy: 6 }, capacity: 99, minutes: 30, where: "home", source: "core", status: "core" };
   const WAR_SHELTER = { id: "shelter", name: "Keep indoors", verb: "is keeping indoors while the battle is on", needs: {}, capacity: 9, minutes: 30, where: "home", source: "core", status: "core" };
   const SHELTER = { id: "shelter", name: "Hide from the dragon", verb: "is hiding at home from the dragon", needs: {}, capacity: 9, minutes: 30, where: "home", source: "core", status: "core" };
   const WATCH = { id: "watch", name: "Keep watch", verb: "is watching the sky for the dragon", needs: {}, capacity: 99, minutes: 4, where: "self", source: "core", status: "core" };
@@ -652,7 +654,7 @@
   function dinnerSeat(t) {
     const v = t.village, list = v.residents, i = Math.max(0, list.indexOf(t.id));
     if (v.seats && i < v.seats.length) return { x: v.seats[i].x, z: v.seats[i].z, log: true };
-    if (v.seats) { const j = i - v.seats.length, n = Math.max(1, list.length - v.seats.length), a = (j / n) * 6.28 + 0.3; return { x: v.x + Math.cos(a) * 9.4, z: v.z + Math.sin(a) * 9.4, log: false }; }
+    if (v.seats) { const j = i - v.seats.length, n = Math.max(1, list.length - v.seats.length), big = list.length > 24, a = (j / n) * 6.28 * (big ? 3 : 1) + 0.3, R = big ? 10.5 + (j % 3) * 3.2 : 9.4; return { x: v.x + Math.cos(a) * R, z: v.z + Math.sin(a) * R, log: false }; }
     if (i < 8) {
       const k = i >> 1, a = (k / 4) * 6.28 + 0.4, side = i % 2 ? 0.75 : -0.75, tx = -Math.sin(a), tz = Math.cos(a);
       return { x: v.x + Math.cos(a) * 4.2 + tx * side, z: v.z + Math.sin(a) * 4.2 + tz * side, log: true };
@@ -868,6 +870,10 @@
       if (Math.hypot(step.p.x - t.pos.x, step.p.z - t.pos.z) > 1.5) return startTravel(t, step.p, "to the statue of the Maker");
       App.prayed(t);
       return startDo(t, { act: App.PRAY, ref: "pray" + t.id, spot: { x: t.pos.x, z: t.pos.z }, exact: true, face: { x: step.p.cx, z: step.p.cz } }, false, st.T + 8);
+    }
+    if (step.k === "indoors") {
+      if (Math.hypot(t.home.x - t.pos.x, t.home.z - t.pos.z) > 1.5) return startTravel(t, t.home, "home for the evening");
+      return startDo(t, { act: HOME_EVE, ref: "home" + t.id, spot: t.home }, false, Math.floor(st.T / 1440) * 1440 + step.e);
     }
     if (step.k === "shelter" || step.k === "rainshelter") {
       if (Math.hypot(t.home.x - t.pos.x, t.home.z - t.pos.z) > 1.5) return startTravel(t, t.home, step.warShelter ? "home: there is a battle" : step.k === "rainshelter" ? "home out of the weather" : "home to hide from the dragon");
@@ -1669,7 +1675,8 @@
     const HP = A.held;
     if (HP && (HP.R || HP.L)) {
       const busy = TWO_HANDED.has(use) || k === "slay" || k === "box" || k === "ringwait" || k === "brawl" || (k === "fight" && doing) || k === "row" || k === "throw" || k === "held" || k === "flying" || (act && doing && act.anim === "dig");
-      const stowed = WATER_HOLD.has(t.holding) && !inWater(t);
+      // (a towel comes out only by the water; snacks, chips and games go everywhere, indoors too)
+      const stowed = (WATER_HOLD.has(t.holding) && !inWater(t)) || (t.holding === "Towel" && !towelSpot(t));
       for (const s of ["R", "L"]) { const away = busy || stowed || (s === "R" && RIGHT_PAW.has(use)); if (HP[s] && HP[s].visible === away) HP[s].visible = !away; }
       if (!busy && !stowed && BULKY.has(t.holding)) {
         if (HP.L) { lx = Math.max(lx, -0.45); lz = Math.max(-0.15, Math.min(lz, 0.15)); }
