@@ -94,7 +94,7 @@ the bedrooms. Still to do: the same for the other big interiors, and more varied
   mansions, casinos, the Parliament...)**: done for houses, mansions and castles: awake and not controlled, each
   Tickle takes a place of its own (one per chair, sofa seat or throne; the stove, counter or cauldron; a shelf to
   read at; a window or picture; a training dummy; chats two by two; the rest stroll up and down), changing every
-  hour; lunch and breakfast still round the table; two who chat stand a good step apart (2.4). Still to do: the casinos, the Parliament and the other interiors.
+  hour; lunch and breakfast still round the table; two who chat stand a good step apart (2.4). Also done: the guild halls (each member in a place of its own instead of two rows), the casino (one per seat at the tables, the machines and the stools as before; the other guests stand round the tables watching; those waiting for the tournament in little knots, talking, not in a queue). The Parliament already seats each minister in its own seat.
 
 ### 1.5g The evening in the big places (asked 28 October)
 "At the fire of a mansion or a castle they are too crowded: spread them, or not all of them: some patrolling the

@@ -838,6 +838,11 @@
       const sp = Cs.spectators || [];
       sp.slice(0, MY_SLOT).forEach((id, k) => out.push({ id, pose: "slots", at: L.slot(k) }));
       sp.slice(MY_SLOT, MY_SLOT + BAR.stools.length).forEach((id, k) => out.push({ id, pose: "drink", at: L.stool(k) }));
+      const tabs = all.filter((T) => T.def.room === 0 && TP[T.key]);
+      if (tabs.length) sp.slice(MY_SLOT + BAR.stools.length, MY_SLOT + BAR.stools.length + 10).forEach((id, k) => {
+        const P = TP[tabs[k % tabs.length].key], a = App.hash2(id, k, 811) * 6.283, r = (P.big ? 14 : 11.5) + App.hash2(id, k, 813) * 1.5, x = P.x + Math.cos(a) * r, z = P.z + Math.sin(a) * r;
+        out.push({ id, pose: "look", at: { x, z, rot: Math.atan2(P.x - x, P.z - z) } });
+      });
       // the player's Tickle at its own machine
       if (st.casinoMe && st.casinoMe.slot && st.casinoMe.c === Cs.i) out.push({ id: st.casinoMe.id, pose: "slots", at: L.slot(MY_SLOT) });
       if (open) {
@@ -845,7 +850,7 @@
         [staff[TABLES.length + 2], staff[TABLES.length + 3], staff[TABLES.length + 4]].forEach((id, k) => { if (id != null && !App.isKO(id)) out.push({ id, pose: "serve", at: { x: BAR.x + 4.5, z: -6 + k * 6, rot: Math.PI / 2 }, staff: true, tag: "waiter" }); });
       }
     }
-    if (room === 1) (Cs.waiting || []).slice(0, 12).forEach((id, k) => out.push({ id, pose: "stand", at: L.wait(k) }));
+    if (room === 1) (Cs.waiting || []).slice(0, 12).forEach((id, k) => out.push({ id, pose: "chat", at: L.wait(k) }));
     return out;
   };
   App.CASINO_LAYOUT = {
@@ -871,7 +876,12 @@
     stool(k) { const S = BAR.stools[k % BAR.stools.length]; return { x: S.x + 0.3, z: S.z, rot: -Math.PI / 2 }; },
     // how far the seats are from the middle of a table (to find the place on the felt in front of each)
     seatRadii(key) { const P = TP[key]; return P.kind === "poker" ? (P.big ? { rx: 11.4, rz: 8.85 } : { rx: 9.0, rz: 6.9 }) : P.kind === "blackjack" ? { rx: 8.4, rz: 6.3 } : { rx: 7.4, rz: 5.85 }; },
-    wait(k) { return { x: -40 + (k % 12) * 7, z: 4, rot: Math.PI }; },
+    // waiting for the tournament: in little knots of two or three, talking, not in a queue
+    wait(k) {
+      const g = Math.floor(k / 3), j = k % 3, cx = -34 + (g % 4) * 22 + (g >= 4 ? 11 : 0), cz = g >= 4 ? 9 : 1, a = j * 2.09 + g;
+      const x = cx + Math.cos(a) * 1.6, z = cz + Math.sin(a) * 1.6;
+      return { x, z, rot: Math.atan2(cx - x, cz - z) };
+    },
   };
   // the waiters: from the end of the bar to a guest with a tray of drinks and back, along the aisles
   App.casinoWaiters = (cur, dt) => {

@@ -972,12 +972,13 @@
     }
     if (T.kind === "guild" && T.hall) {
       // members spending their free time at the hall
-      let j = 0;
+      const here = [];
       for (const v of App.villages) if (v.region === T.hall.region) for (const id of v.residents) {
-        if (j >= 10 || App.isKO(id) || App.isDead(id)) continue;
+        if (here.length >= 12 || App.isKO(id) || App.isDead(id)) continue;
         const step = App.planStep(id, st.T).step;
-        if (step.k === "guildhall" && step.p.hall === T.hall.guild && m >= step.s + (step.travel || 0)) out.push({ id, pose: "stand", j: j++ });
+        if (step.k === "guildhall" && step.p.hall === T.hall.guild && m >= step.s + (step.travel || 0)) here.push(id);
       }
+      placeAwake(map.rooms[ri], here, out);
     }
     if (T.kind === "mine") {
       const v0 = App.villages.filter((v) => v.region === T.mine.region);
