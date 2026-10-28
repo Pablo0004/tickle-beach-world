@@ -149,6 +149,18 @@ owner before building:
   - better block building: more block types, filling and clearing an area, lines and walls, a ghost of the block
     before it goes down.
 
+- **Agreed with the owner (28 October)**:
+  - **Who edits where**: playing as a holder, only its own homes, and only on its own plot (land); never on
+    another holder's plot. Any edit on neutral land (no holder's plot) is provisional: it lasts only if the
+    Parliament approves it (it goes on its agenda; rejected, it is taken away). Reading of "I'm in control" with no
+    holder chosen: it has no plot of its own, so it may only make provisional edits on neutral land (to confirm
+    with the owner when it is built).
+  - **What**: everything: furniture inside (move, add, remove), floors and walls, colours outside (walls, roof,
+    shutters), extras (porch, balcony, chimney, garden, fence, flowers) and enlarging.
+  - **Build mode**: all of it: remove and undo, the catalogue of objects in groups with a preview, turning and
+    moving, more block types, fill and clear an area, lines and walls, a ghost of the block before it goes down.
+  - **Oxygen (1.6b)**: the tank refills on its own at the surface, like the breath.
+
 ### 1.6b Oxygen tanks (asked 24 October, decided with the owner; not started)
 
 Without a tank a Tickle holds its breath for **1 minute 30 seconds** under the water (today 45 seconds,
@@ -160,8 +172,7 @@ owner: a tank can be **bought and found**, both. Plan:
 - found: a rare dive find (diving.js `FINDS`/`ITEM`/`credit`: "an old oxygen tank, still sound"; kept if it has
   none, sold for shells if it has one), and a chance in the sea caves' chests (interiors.js `seaCaveMap`);
 - in first person: the tank's air is used first, then the breath; a second bar ("Tank") in the HUD when it has one;
-  the breath and the tank fill again at the surface (to confirm with the owner: refilled at the surface, or only at
-  a shop or the dock);
+  the breath and the tank fill again at the surface (confirmed with the owner, 28 October);
 - a tank on its back in the model while diving (a small kit model on the pivot, like the weapons in rampage.js
   `weaponShow`), and in the inspect window and the encyclopedia (1.3);
 - NPC divers: with a tank they stay down longer per dive (diving.js `CYCLE`) and find a little more.
