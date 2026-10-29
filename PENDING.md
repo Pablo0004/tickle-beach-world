@@ -1,25 +1,25 @@
 # Tickle Beach World — what is pending
 
-Updated 24 October 2026 (end of the day). This repository (`main`) holds version 50, published as the game
-(https://claude.ai/artifact/Y2NNeAnZA2GCzhpAS2qC6b) once the owner approved it; see section 4. Items are worked in the order agreed with the project owner;
-one item is finished before the next one starts. The browser test scripts and what each one checks are in
-[tests/README.md](tests/README.md).
+Updated 30 October 2026. This repository (`main`) is ahead of version 50, the game published on 24 October
+(https://claude.ai/artifact/Y2NNeAnZA2GCzhpAS2qC6b); nothing since has been published yet. Items are worked in the order
+agreed with the project owner; one item is finished before the next one starts. The browser test scripts and what
+each one checks are in [tests/README.md](tests/README.md); `REVISAR.md` is the owner's checklist (in Spanish).
 
 ---
 
 ## 1. Next, in order
 
-Done on 24 October and published as the game (version 50): 1.0, 1.1 (first person), 1.2 (more detail), 1.2b (doors),
-1.2c (diving), 1.4 (the menu); see section 4. The owner has not tested yet: `REVISAR.md` is the checklist for when
-they do. Next, in this order:
+Done since version 50 (details in each item below): 1.3 the encyclopedia, 1.5 wars (with Clash of Clans' stars and
+Imperium's fortresses), 1.5b connected floors, 1.5d result cards, 1.5e stables, 1.5f griffins, 1.5g the evening in
+big places, 1.6 editing homes and the build mode, 1.6b oxygen tanks, 1.8 controls in the menu and dark sea caves, 1.8b
+birds' wings, first person inside buildings. Still to do, in this order:
 
-1. ~~1.3 The encyclopedia~~: done 28 October (see below).
-2. **1.5 Wars between holders**: agree how they work with the owner first.
-3. **1.6 Editing homes and a better build mode**: every home inside and out (houses, mansions, castles...), and the
-   build mode with removing and a catalogue of objects to place; agree the details with the owner first.
-4. **1.6b Oxygen tanks**: decided with the owner; confirm first whether a tank refills at the surface or only at
-   a shop or the dock.
-5. **1.7 The smaller things left over from version 50**: ask the owner before widening any of them.
+1. **1.7 What is left over**: first person able to do everything a Tickle does (dive, tame, hunt, attack, ride,
+   fish...), improving skills and experience; things for your own Tickle to find or catch under the sea; more detail
+   on the water surface and in the interiors.
+2. **1.8 Open caves and mines**: only the dungeons stay labyrinths.
+3. Smaller ends: the guided tour to redo (1.5h, on hold); the other things held in the paws (1.5c); extras attached
+   to a house and more outside colours (1.6); a tank now and then in the sea caves' chests (1.6b).
 
 ### 1.3 An encyclopedia (asked 22-23 October)
 
@@ -286,8 +286,8 @@ kind) hung from the shoulders: spread and beating while it flies (a gull glides 
 
 - **The menu and the clock**: the world keeps running while the menu is open; should it pause? (Asked in
   `REVISAR.md`.)
-- **Breath under water**: decided (24 October): 1 minute 30 seconds without a tank, 10 more minutes with one (item
-  1.6b). Still to confirm: whether the tank refills at the surface or only at a shop or the dock.
+- **Breath under water**: decided and built (1.6b): 1 minute 30 seconds without a tank, 10 more minutes with one,
+  refilled at the surface.
 - **Waves in the rivers and the lake** (item 8b): the waves at the mouths of the channels were removed (the
   "open sea" no longer includes the channels between regions), and the lake and ponds are calm. If the owner
   meant something else — for example the dark stripes of the stepped riverbed seen through the water — it is
