@@ -228,7 +228,12 @@ owner: a tank can be **bought and found**, both. Plan:
 - **Descriptions folded (asked 30 October)**: the long description of every place in the room's card is folded into
   "About this place" (and the treasure of a floor into "Treasure on this floor"), opened only if wanted. Done.
 - **First person inside buildings (asked 30 October)**: going into buildings in first person; and a Tickle in first
-  person does not get the buttons to go up, down or out until it reaches the door or the stairs that lead there.
+  person does not get the buttons to go up, down or out until it reaches the door or the stairs that lead there. Done
+  30 October (interiors.js, "first person inside"): walking one of your Tickles in first person, E at a door takes
+  it in and you keep walking it: WASD (Shift to run), the mouse (click to capture) or the arrow keys to look, the
+  view just behind it; it goes round the walls, the low walls of a floor plan, the passages of a cave and the big
+  furniture; the ways on show in the room's card only when it stands at them ("... (E)"), E takes them (up, down,
+  out); out of the door it is still yours in first person outside; Esc gives the room view back.
 - **Open caves and mines**: only the dungeons (the Great Underworld) stay labyrinths; the other caves and the mines
   become open spaces, like the rooms worked on lately (the merged floors).
 - **Sea caves**: walls of dark blue stone, as dark as it should be down there, lit only in spots by torches. Done 30 October:

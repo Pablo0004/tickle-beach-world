@@ -122,3 +122,4 @@ mando, ni tarjeta gráfica). Ve tachando lo que veas bien y apunta lo que no.
 - Entra en una cueva marina (buceando hasta su entrada): oscura, piedra azul oscuro, luz solo junto a las antorchas, cangrejos y medusas por los pasillos.
 - Menú > Controls: todo en tablas (teclado, mando, táctil). En primera persona ya no sale la línea de teclas; en el dock no sale la pista.
 - Dentro de un lugar, la descripción larga está plegada en "About this place".
+- Primera persona dentro: en "I'm in control", tu Tickle en primera persona (V), ve a una puerta y pulsa E: entras andando. Camina (WASD), mira (ratón o flechas), choca con paredes y muebles; los botones de puerta o escalera solo salen al llegar (E los usa). Sal por la puerta: sigues en primera persona fuera. Esc: vista de la sala.

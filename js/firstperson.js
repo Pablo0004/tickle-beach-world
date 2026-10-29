@@ -69,6 +69,7 @@
     showHud(t);
     hudStats(t);
   };
+  App.fpDriving = () => (fp && fp.drive ? fp.id : null);
   App.exitFP = () => {
     if (!fp) return;
     const t = agentOf(fp.id);

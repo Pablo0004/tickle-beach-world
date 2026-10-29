@@ -1233,6 +1233,7 @@
       // guests come and go, and move from table to table
       const want = new Map(who.map((o) => [o.id, o]));
       for (const f of cur.figures) {
+        if (f.pose === "ifp") continue; // (the Tickle you walk in first person)
         const o = want.get(f.id);
         if (!o) { if (!f.gone) { f.gone = true; f.holder.visible = false; } continue; }
         if (f.gone) { f.gone = false; f.holder.visible = true; }
@@ -1822,6 +1823,7 @@
       A.R.rotation.x = -1.8 - k * 0.9; A.L.rotation.x = -1.2 - k * 1.2; A.R.rotation.z = 0.2; A.L.rotation.z = -0.2;
       f.F.pivot.position.y = k * 0.15;
     } else if (f.pose === "guard") { A.R.rotation.x = -0.6; A.L.rotation.x = f.shield ? -0.8 : -0.1; }
+    else if (f.pose === "ifp") { const k = f.moving ? Math.sin(now / 140) * 0.7 : 0; A.R.rotation.x = k; A.L.rotation.x = -k; f.F.pivot.position.y = f.moving ? Math.abs(Math.sin(now / 140)) * 0.07 : 0; }
     else if (f.pose === "sitidle") { const c = (now / 4000 + f.id * 0.13) % 1; A.R.rotation.x = c < 0.1 ? -1.4 : -0.5; A.L.rotation.x = -0.5; f.F.pivot.position.y = 0.35; }
     else if (f.pose === "read") { A.R.rotation.x = A.L.rotation.x = -1.3 + Math.sin(now / 1500 + f.id) * 0.08; A.R.rotation.z = -0.25; A.L.rotation.z = 0.25; }
     else if (f.pose === "look") { A.R.rotation.x = -0.15; A.L.rotation.x = (now / 5000 + f.id * 0.3) % 1 < 0.12 ? -2.2 : -0.15; }
@@ -1881,7 +1883,8 @@
       (map.floors ? '<div class="rh-warps"><button class="btn" data-floor="up" ' + (ri === 0 ? "disabled" : "") + ' title="One floor up">&#9650;</button><select id="floorSel" aria-label="Go to floor">' +
         Array.from({ length: map.floors }, (_, f) => { const n = App.villages.filter((v) => ((st.depth && st.depth[v.i]) || 0) >= f).length; return '<option value="' + f + '"' + (f === ri ? " selected" : "") + ">B" + (f + 1) + "F \u00b7 " + esc(GUARDIANS[f].name) + (f === 0 ? "" : n ? " \u00b7 reached by " + n + " village" + (n === 1 ? "" : "s") : " \u00b7 nobody has been here") + "</option>"; }).join("") +
         '</select><button class="btn" data-floor="down" ' + (ri === map.floors - 1 ? "disabled" : "") + ' title="One floor down">&#9660;</button></div>' : "") +
-      (R.warps.filter((w) => w.to.outside).length > 3
+      (cur && cur.ifp ? (() => { const ws = ifpNearWarps(R); return ws.length ? '<div class="rh-warps">' + ws.map((w) => '<button class="btn' + (w.to.outside ? " primary" : "") + '" data-warp="' + w.id + '">' + esc(w.label) + " (E)</button>").join("") + "</div>" : '<div class="rh-note">Walk to a door or the stairs to go on.</div>'; })() :
+      R.warps.filter((w) => w.to.outside).length > 3
         ? '<div class="rh-warps"><select id="exitSel" aria-label="Way out">' + R.warps.filter((w) => w.to.outside).map((w) => '<option value="' + w.id + '"' + (cur && cur.map.target.dg && w.to.dg === cur.map.target.dg.i ? " selected" : "") + ">" + esc(w.label) + "</option>").join("") + '</select><button class="btn primary" data-warp="exit">Leave</button>' +
           R.warps.filter((w) => !w.to.outside).map((w) => '<button class="btn" data-warp="' + w.id + '">' + esc(w.label) + "</button>").join("") + "</div>"
         : '<div class="rh-warps">' + R.warps.map((w, i) => '<button class="btn' + (w.to.outside ? " primary" : "") + '" data-warp="' + w.id + '">' + (i + 1) + ". " + esc(w.label) + "</button>").join("") + "</div>");
@@ -1963,9 +1966,17 @@
   });
   function take(w) {
     fade(() => {
-      if (w.to.outside) return leave(w.to.door);
+      const keepFP = cur.ifp ? cur.ifp.id : null;
+      if (w.to.outside) {
+        leave(w.to.door);
+        // out of the door, still yours in first person outside
+        const door = w.to.door || (cur ? null : null);
+        if (keepFP != null) setTimeout(() => { const t = App.pop.agent[keepFP], D = door || App.lastDoor; if (t && D) { t.pos.x = D.x; t.pos.z = D.z; } if (App.enterFP) App.enterFP(keepFP); }, 400);
+        return;
+      }
       build(cur.map, w.to.room);
       const ws = cur.map.rooms[w.to.room].warps, W = w.to.warp === "down" ? ws.find((x) => x.down) : ws.find((x) => x.id === w.to.warp);
+      if (keepFP != null) { cur.ifp = { id: keepFP, x: 0, z: 0, yaw: 0, pitch: -0.18 }; ifpPlace(W); }
       cur.focus = cur.map.maze ? { x: W ? W.x : 0, z: W ? W.z : 0 } : { x: W ? W.x * 0.4 : 0, z: W ? W.z * 0.3 : 0 };
       App.cam.target.x = cur.worldCam.x; App.cam.target.z = cur.worldCam.z;
     });
@@ -1989,6 +2000,7 @@
       C.radius = map.maze ? (opt ? 26 : 30) : T.kind === "casino" ? 52 : T.kind === "parliament" ? 50 : map.merged ? Math.min(58, 18 + map.rooms[0].w * 0.5) : 20; C.phi = map.maze ? (opt ? 0.8 : 0.75) : 0.95; C.theta = 0;
       App.inside = cur;
       build(map, (opt && opt.floor) || 0);
+      if (opt && opt.fpId != null) { const ws0 = map.rooms[cur.ri].warps; ifpStart(opt.fpId, ws0.find((w) => w.to && w.to.outside) || ws0[0]); }
       // in an Underworld you arrive at the foot of the cave you came down (or, watching a party, right where it is)
       const ws = map.rooms[cur.ri].warps, W0 = (T.dg != null && ws.find((w) => w.to.dg === T.dg.i)) || ws[0];
       if (opt && opt.at) cur.focus = opt.at;
@@ -2000,12 +2012,93 @@
     if (!cur) return;
     const w = cur.worldCam, T = cur.map.target, C = App.cam;
     if (door) T.door = door; // out by the other cave
+    App.lastDoor = T.door;
     scene.remove(cur.group);
     cur = null; App.inside = null;
     const el = document.getElementById("roomHud"); if (el) el.hidden = true;
     // back outside, in front of the door you came in by
     C.target.x = T.door.x; C.target.z = T.door.z; C.radius = Math.min(w.r, 30); C.theta = w.theta; C.phi = w.phi;
   }
+  // ---------- first person inside (asked 30 October) ----------
+  // A Tickle of yours walked in first person goes in with you: WASD (Shift to run) to walk, the mouse (click to
+  // capture it) or the arrow keys to look, the view just behind it. It walks round the walls, the low walls of a
+  // floor plan, the rock of a cave and the big furniture; the ways on (a door, the stairs, the way out) show in the
+  // room's card only when it stands at them, and E takes them too. Out of the door it is still yours in first
+  // person outside; Esc puts the view back over the room.
+  const IFP_SOLID = /^(table|longtable|sofa|bed|bunkbed|counter|stove|chest|shelf|throne|cauldron|weightrack|pokertable|bjtable|roulettetable|slotmachine|barrel|crate|sacks|pillar|stalagmite|boulders|orepile|cart)$/;
+  const ifpKeys = new Set();
+  function ifpFree(R, x, z, x0, z0) {
+    if (Math.abs(x) > R.w / 2 - 0.5 || Math.abs(z) > R.d / 2 - 0.5) return false;
+    for (const P of R.parts || []) if (Math.abs(x - P.x) < P.w / 2 + 0.45 && Math.abs(z - P.z) < P.d / 2 + 0.45) return false;
+    for (const it of R.items) if (IFP_SOLID.test(it.k) && Math.hypot(it.x - x, it.z - z) < (/table|bed|sofa|counter/.test(it.k) ? 1.3 : 0.85) && Math.hypot(it.x - x0, it.z - z0) >= Math.hypot(it.x - x, it.z - z)) return false;
+    if (R.maze) {
+      if (!R._cellSet) R._cellSet = new Set(R.cells.map(([a, b]) => a + "," + b));
+      const cs = R.cs || CS, ix = Math.floor((x + R.w / 2) / cs), iy = Math.floor((z + R.d / 2) / cs), jx = Math.floor((x0 + R.w / 2) / cs), jy = Math.floor((z0 + R.d / 2) / cs);
+      if (!R._cellSet.has(ix + "," + iy)) return false;
+      if (ix !== jx || iy !== jy) { if (Math.abs(ix - jx) + Math.abs(iy - jy) !== 1 || !openTo(R.maze, jx, jy, ix - jx, iy - jy)) return false; }
+      const u = x + R.w / 2 - ix * cs, v = z + R.d / 2 - iy * cs, M = 0.55;
+      if ((u < M && !openTo(R.maze, ix, iy, -1, 0)) || (u > cs - M && !openTo(R.maze, ix, iy, 1, 0)) || (v < M && !openTo(R.maze, ix, iy, 0, -1)) || (v > cs - M && !openTo(R.maze, ix, iy, 0, 1))) return false;
+    }
+    return true;
+  }
+  function ifpPlace(W) {
+    const R = cur.map.rooms[cur.ri], I = cur.ifp;
+    let x = W ? W.x : 0, z = W ? W.z : 0;
+    // a step in from the way it came by, towards the middle of the room
+    const dx = -x, dz = -z, L = Math.hypot(dx, dz) || 1;
+    for (let k = 0; k < 8; k++) { const nx = x + (dx / L) * 0.6, nz = z + (dz / L) * 0.6; if (ifpFree(R, nx, nz, nx, nz)) { x = nx; z = nz; } }
+    I.x = x; I.z = z; I.yaw = Math.atan2(dx, dz); I.near = "";
+    // (if it was already drawn in the room, as one of its people, that figure gives way to the one you walk)
+    for (const f of cur.figures.filter((q) => q.id === I.id)) { if (f.holder && f.holder.parent) f.holder.parent.remove(f.holder); }
+    cur.figures = cur.figures.filter((q) => q.id !== I.id); cur.pending.delete(I.id);
+    spawnFigure({ id: I.id, pose: "ifp", at: { x, z, rot: I.yaw } }, 0, R, cur.group, cur.token);
+  }
+  function ifpStart(id, W) {
+    cur.ifp = { id, x: 0, z: 0, yaw: 0, pitch: -0.18 };
+    ifpPlace(W);
+    App.toast("In first person inside: WASD to walk; doors and stairs show when you reach them (E). Esc for the room view.");
+  }
+  function ifpEnd() { if (!cur || !cur.ifp) return; const f = cur.figures.find((x) => x.id === cur.ifp.id && x.pose === "ifp"); if (f) { f.holder.visible = false; f.gone = true; } cur.ifp = null; if (document.pointerLockElement && document.exitPointerLock) document.exitPointerLock(); hud(cur.map, cur.ri, cur.who || []); }
+  App.insideFPOn = () => !!(cur && cur.ifp);
+  function ifpNearWarps(R) { const I = cur.ifp; return R.warps.filter((w) => Math.hypot(w.x - I.x, w.z - I.z) < 2.6); }
+  function ifpStep(dt) {
+    const I = cur.ifp, R = cur.map.rooms[cur.ri];
+    const run = ifpKeys.has("ShiftLeft") || ifpKeys.has("ShiftRight"), sp = (run ? 7 : 4) * dt;
+    if (ifpKeys.has("ArrowLeft")) I.yaw += dt * 2.2;
+    if (ifpKeys.has("ArrowRight")) I.yaw -= dt * 2.2;
+    if (ifpKeys.has("ArrowUp")) I.pitch = Math.min(0.5, I.pitch + dt);
+    if (ifpKeys.has("ArrowDown")) I.pitch = Math.max(-0.9, I.pitch - dt);
+    const f = (ifpKeys.has("KeyW") ? 1 : 0) - (ifpKeys.has("KeyS") ? 1 : 0), s = (ifpKeys.has("KeyD") ? 1 : 0) - (ifpKeys.has("KeyA") ? 1 : 0);
+    let mx = Math.sin(I.yaw) * f - Math.cos(I.yaw) * s, mz = Math.cos(I.yaw) * f + Math.sin(I.yaw) * s;
+    const ml = Math.hypot(mx, mz);
+    const fig = cur.figures.find((x) => x.id === I.id && x.pose === "ifp");
+    if (ml > 0) {
+      mx = (mx / ml) * sp; mz = (mz / ml) * sp;
+      // slide along a wall rather than stop dead against it
+      if (ifpFree(R, I.x + mx, I.z + mz, I.x, I.z)) { I.x += mx; I.z += mz; }
+      else if (ifpFree(R, I.x + mx, I.z, I.x, I.z)) I.x += mx;
+      else if (ifpFree(R, I.x, I.z + mz, I.x, I.z)) I.z += mz;
+    }
+    if (fig) { fig.holder.position.set(I.x, 0, I.z); fig.holder.rotation.y = I.yaw; fig.moving = ml > 0; }
+    // the ways on, in the card only when it stands at them
+    const sig = ifpNearWarps(R).map((w) => w.id).join(",");
+    if (sig !== I.near) { I.near = sig; hud(cur.map, cur.ri, cur.who || []); }
+  }
+  window.addEventListener("keydown", (e) => {
+    if (!cur || !cur.ifp) return;
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || "")) return;
+    if (e.code === "Escape") { ifpEnd(); e.stopPropagation(); return; }
+    if (e.code === "KeyE") { const w = ifpNearWarps(cur.map.rooms[cur.ri])[0]; if (w) take(w); e.preventDefault(); e.stopPropagation(); return; }
+    ifpKeys.add(e.code);
+    if (/^(KeyW|KeyA|KeyS|KeyD|Arrow)/.test(e.code)) { e.preventDefault(); e.stopPropagation(); }
+  }, true);
+  window.addEventListener("keyup", (e) => { ifpKeys.delete(e.code); }, true);
+  window.addEventListener("blur", () => ifpKeys.clear());
+  document.addEventListener("mousemove", (e) => {
+    if (!cur || !cur.ifp || document.pointerLockElement !== App.renderer.domElement) return;
+    cur.ifp.yaw -= e.movementX * 0.0032; cur.ifp.pitch = Math.max(-0.9, Math.min(0.5, cur.ifp.pitch - e.movementY * 0.0026));
+  });
+  document.addEventListener("mousedown", (e) => { if (cur && cur.ifp && e.target === App.renderer.domElement && !document.pointerLockElement && App.renderer.domElement.requestPointerLock) App.renderer.domElement.requestPointerLock(); });
   App.leaveInterior = () => fade(() => leave());
   // what is under the cursor inside (inspect.js): a Tickle, a monster, or a piece of furniture or of the cave
   App.insidePick = (ndc) => {
@@ -2052,6 +2145,15 @@
     cam.aspect = camera.aspect; cam.updateProjectionMatrix();
     cam.position.set(px + r * Math.sin(phi) * Math.sin(C.theta), 1.5 + r * Math.cos(phi), pz + r * Math.sin(phi) * Math.cos(C.theta));
     cam.lookAt(px, 1.5, pz);
+    if (cur.ifp) {
+      const I = cur.ifp, dtf = Math.min(0.1, (performance.now() - (I.lt || performance.now())) / 1000);
+      I.lt = performance.now();
+      ifpStep(dtf);
+      const back = 3.4, ey = 3.2;
+      cam.position.set(I.x - Math.sin(I.yaw) * back * Math.cos(I.pitch), ey - Math.sin(I.pitch) * back, I.z - Math.cos(I.yaw) * back * Math.cos(I.pitch));
+      cam.lookAt(I.x + Math.sin(I.yaw) * 4, 1.9 + Math.sin(I.pitch) * 4, I.z + Math.cos(I.yaw) * 4);
+      cur.view = { x: I.x, z: I.z };
+    }
     const now = performance.now(), dtm = Math.min(0.1, (now - (cur.last || now)) / 1000) * Math.max(0.25, Math.min(2, st.speed || 0.25));
     cur.last = now;
     stepMaze(dtm, now);

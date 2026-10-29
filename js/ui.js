@@ -376,7 +376,7 @@
     else if (e.key === "f" || e.key === "F") { if (ui.sel != null) App.cam.follow = ui.sel; }
     else if (e.key === "Escape" && !$("placeCard").hidden) { $("placeCard").hidden = true; }
     else if (e.key === "Escape" && App.inside) { App.leaveInterior(); }
-    else if ((e.key === "e" || e.key === "E") && !App.inside) { const T = App.enterableAt(App.cam.target.x, App.cam.target.z); if (T && T.shut) App.toast(T.shut); else if (T) { if (App.fpOn && App.fpOn()) App.exitFP(); App.enter(T); } else App.toast("Nothing to go into here: move close to a door, a cave or a mine."); }
+    else if ((e.key === "e" || e.key === "E") && !App.inside) { const T = App.enterableAt(App.cam.target.x, App.cam.target.z); if (T && T.shut) App.toast(T.shut); else if (T) { const fid = App.fpDriving ? App.fpDriving() : null; if (App.fpOn && App.fpOn()) App.exitFP(); App.enter(T, fid != null ? { fpId: fid } : undefined); } else App.toast("Nothing to go into here: move close to a door, a cave or a mine."); }
     else if (e.key === "Escape") { ui.sel = null; App.cam.follow = null; App.pinned = null; $("onchainModal").hidden = true; $("helpModal").hidden = true; $("mapModal").hidden = true; $("mapTip").hidden = true; refresh(true); }
     else if ((e.key === "m" || e.key === "M") && !(e.target && e.target.closest && e.target.closest("input, textarea"))) { if (App.toggleMenu) App.toggleMenu("map"); else if ($("mapModal").hidden) App.openMap(); else $("mapModal").hidden = true; }
   });
