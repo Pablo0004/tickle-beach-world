@@ -118,3 +118,4 @@ mando, ni tarjeta gráfica). Ve tachando lo que veas bien y apunta lo que no.
 
 - En primera persona bajo el agua: la respiración dura un minuto y medio; con tanque sale la barra "Tank" (10 minutos) que se gasta primero; al subir se rellena.
 - Un Tickle con tanque bucea con la botella amarilla a la espalda. En su ficha sale "Oxygen tank" entre sus cosas; en la enciclopedia, en Arms.
+- Acércate a la costa o a un punto de buceo: el agua deja ver el fondo; al alejarte vuelve a su color. Los árboles tienen varios verdes.

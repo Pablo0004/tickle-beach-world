@@ -312,3 +312,4 @@ Código en GitHub: https://github.com/Pablo0004/tickle-beach-world — la versi�
 - 1.7: las figuras lejanas ya no atraviesan edificios (se dibujan rodeándolos).
 - Apuntado (30 de octubre, 1.8): una sección de Controles en el menú (teclado y mando), para que ninguna ayuda de controles ocupe la pantalla; cuevas y minas como espacios abiertos (solo las mazmorras siguen siendo laberintos); cuevas marinas con muros de piedra azul oscuro, oscuras, iluminadas solo por antorchas en puntos. El repositorio lo tiene ahora también Paul McKellar: mantenerlo al día.
 - 1.7: árboles y arbustos con varios verdes (copa más clara arriba y más oscura abajo; pinos por pisos; arbustos en dos tonos), siempre con la paleta on-chain.
+- 1.7: de cerca el agua es más transparente y se ve el fondo desde arriba (arrecifes, algas, rocas, peces); de lejos sigue con el color del mar.

@@ -236,7 +236,9 @@ owner: a tank can be **bought and found**, both. Plan:
 - First-person abilities against dragons, sea beasts and the Underworld's guardians (first person is not available
   inside); ability levels or choices.
 - Under the sea: things for your own Tickle to find or catch (pearls, shells), sea creatures in the sea caves, the
-  sea floor seen from above through the water (the surface is nearly opaque from above).
+  sea floor seen from above through the water (the surface is nearly opaque from above). Done 30 October: close up
+  (camera nearer than 60) the water is clear enough to see the bottom, its reefs, weed, rocks and fish; it fades back
+  to the sea's colour by 120 (world.js `daylight`).
 
 - **More detail and more life in the living (28 October, local, not published)**: dragons were the coarsest thing in
   the world (cube 12 scaled 2.4 times); now cube 8 on Normal and smaller with the Graphics setting. Monsters,
