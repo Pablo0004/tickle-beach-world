@@ -224,7 +224,9 @@ owner: a tank can be **bought and found**, both. Plan:
   help about controls takes up the screen while playing.
 - **Open caves and mines**: only the dungeons (the Great Underworld) stay labyrinths; the other caves and the mines
   become open spaces, like the rooms worked on lately (the merged floors).
-- **Sea caves**: walls of dark blue stone, as dark as it should be down there, lit only in spots by torches.
+- **Sea caves**: walls of dark blue stone, as dark as it should be down there, lit only in spots by torches. Done 30 October:
+  dark blue stone walls and floor, very little light but the torches (warm pools), and sea creatures going up and
+  down the passages (crabs, jellyfish, a turtle, a manta) (1.7's "sea creatures in the sea caves" too).
 
 ### 1.7 Left over from version 50 (smaller; ask the owner before widening any of them)
 
@@ -235,6 +237,9 @@ owner: a tank can be **bought and found**, both. Plan:
   point falls inside a building is drawn just outside it, so it goes round the walls (population.js `updatePawns`).
 - First-person abilities against dragons, sea beasts and the Underworld's guardians (first person is not available
   inside); ability levels or choices.
+  **Widened by the owner (30 October)**: in first person a Tickle must be able to do everything a Tickle not in
+  first person does: dive, tame, hunt, attack, ride animals, fish, and the rest; and every one of them improves its
+  skills and experience.
 - Under the sea: things for your own Tickle to find or catch (pearls, shells), sea creatures in the sea caves, the
   sea floor seen from above through the water (the surface is nearly opaque from above). Done 30 October: close up
   (camera nearer than 60) the water is clear enough to see the bottom, its reefs, weed, rocks and fish; it fades back

@@ -610,7 +610,7 @@
       const sd = wallSide(m, x, y, r);
       if (!sd) continue;
       const a = against(x, y, sd, 0.7);
-      put({ k: kind === "mine" ? "lantern" : kind === "seacave" ? "crystal" : "torch", x: a.x, z: a.z, rot: a.rot, light: true });
+      put({ k: kind === "mine" ? "lantern" : "torch", x: a.x, z: a.z, rot: a.rot, light: true });
     }
     // dead ends: treasure, bones, cages; ore veins in a mine
     const ends = cells.filter(([x, y]) => exits(m, x, y) === 1 && !used.has(x + "," + y));
@@ -848,16 +848,19 @@
   }
   // a sea cave, only reached by diving (sea.js): two floors of grotto, lit by glowing crystals, coral, sponges, weed and
   // shells everywhere, treasure in the dead ends and, at the bottom, the pearl chamber; nothing hostile lives there
-  const SEA_LOOK = { smooth: 0.2, wall: "#2e5864", wall2: "#22464f", floor: ["#c8b894", "#b4a684"], deco: ["coral", "sponge", "anemone", "seagrass", "seashell", "searock"], sun: 0x082a34, pools: false };
+  // (asked 30 October: walls of dark blue stone, as dark as it is down there, lit only in spots by torches)
+  const SEA_LOOK = { smooth: 0.15, wall: "#1c2c50", wall2: "#121d38", floor: ["#252d40", "#1e2536"], deco: ["coral", "sponge", "anemone", "seagrass", "seashell", "searock"], deep: true, pools: false };
   function seaCaveMap(T) {
     const c = T.cave, r = rngOf(c.i * 977 + 13), rooms = [], names = ["The grotto", "The pearl chamber"];
     let entry = null;
     for (let f = 0; f < 2; f++) {
       const W = 6 + f * 2, H = 5 + f, last = f === 1;
       entry = f === 0 ? [Math.floor(W / 2), H - 1] : [Math.min(W - 1, rooms[0].exit[0]), Math.min(H - 1, rooms[0].exit[1])];
-      const R = mazeFloor({ r, W, H, loops: 0.35, entry, kind: "seacave", look: SEA_LOOK, last, first: f === 0, index: f, monsters: 0, name: names[f],
-        outLabel: "Swim out of the cave", upLabel: "Up to the grotto", downLabel: "Down to the pearl chamber", pick: () => ["goblin", 1], boss: null });
-      R.note = f === 0 ? "A cave in the sea floor that only divers ever find: the water is still and blue-green, crystals glow on the walls, and coral and sponges grow over everything. Treasure lies in the dead ends." : "The deepest chamber, where the oysters grow big and the oldest chests lie half buried in the sand.";
+      // its creatures go up and down the passages: crabs, jellyfish, a turtle, a manta in the bigger chamber
+      const SEA_MON = [["seacrab", 0], ["jelly", 0], ["seacrab", 0], ["seaturtle", 0], ["jelly", 0], ["manta", 0]];
+      const R = mazeFloor({ r, W, H, loops: 0.35, entry, kind: "seacave", look: SEA_LOOK, last, first: f === 0, index: f, monsters: 3 + f * 2, name: names[f],
+        outLabel: "Swim out of the cave", upLabel: "Up to the grotto", downLabel: "Down to the pearl chamber", pick: (k) => SEA_MON[(k + f) % SEA_MON.length], boss: null });
+      R.note = f === 0 ? "A cave in the sea floor that only divers ever find: walls of dark blue stone, dark but where a torch burns, coral and sponges over everything, crabs and jellyfish in the passages. Treasure lies in the dead ends." : "The deepest chamber, where the oysters grow big and the oldest chests lie half buried in the sand.";
       if (last) for (let k = 0; k < 6; k++) R.items.push({ k: "oyster", x: R.cx(R.exit[0]) + Math.cos(k) * 2.6, z: R.cz(R.exit[1]) + Math.sin(k) * 2.6, rot: k });
       rooms.push(R);
     }
@@ -1055,6 +1058,7 @@
       const rm = new THREE.MeshLambertMaterial({ color: R.wall });
       for (let k = 0; k < 14; k++) { const b = new THREE.Mesh(new THREE.DodecahedronGeometry(0.8 + hash2(k, ri, 7) * 1.2), rm); const side = k % 3; b.position.set(side === 0 ? -R.w / 2 + 0.4 : side === 1 ? R.w / 2 - 0.4 : -R.w / 2 + hash2(k, ri, 9) * R.w, 0.4 + hash2(k, ri, 11) * 3, side === 2 ? -R.d / 2 + 0.3 : -R.d / 2 + hash2(k, ri, 13) * R.d); g.add(b); }
       hemi.intensity = 0.45; sun.intensity = 0.25;
+    } else if (R.maze && R.look && R.look.deep) { hemi.intensity = 0.07; sun.intensity = 0.02; // deep under the sea: dark but for the torches
     } else if (R.maze && R.look && R.look.sun) { hemi.intensity = 0.95; sun.intensity = 0.7; } // open to the sky: daylight
     else if (R.maze && R.look && R.look.cold) { hemi.intensity = 0.55; sun.intensity = 0.3; }
     else if (R.maze) { hemi.intensity = 0.34; sun.intensity = 0.22; }
@@ -1089,7 +1093,7 @@
       cur.lightItems = R.items.filter((it) => it.light);
       cur.gate = null;
       if (R.gate) App.kitMesh("gate", 0).then((mk) => { if (cur.token !== token) return; const h = new THREE.Group(), mesh = App.centeredMesh(mk.md, mk.geo, true); mesh.userData.shared = true; h.add(mesh); h.position.set(R.gate.x, 0, R.gate.z); h.rotation.y = R.gate.rot; g.add(h); cur.gate = h; });
-      for (let k = 0; k < 8; k++) { const L = new THREE.PointLight(R.look === MINE_LOOK ? 0xffd890 : 0xffb060, 1.3, 16, 1.6); L.position.set(0, -50, 0); g.add(L); cur.lights.push(L); }
+      for (let k = 0; k < 8; k++) { const L = new THREE.PointLight(R.look === MINE_LOOK ? 0xffd890 : 0xffb060, R.look && R.look.deep ? 0.8 : 1.3, R.look && R.look.deep ? 6.5 : 16, 2); L.userData.deep = !!(R.look && R.look.deep); L.position.set(0, -50, 0); g.add(L); cur.lights.push(L); }
       // the carts of a mine roll along its rails
       if (R.rails && R.carts) App.kitMesh("cart", 0).then((mk) => {
         if (cur.token !== token) return;
@@ -1278,6 +1282,7 @@
     const lt = new THREE.Color(R.look.wall), mx = Math.max(lt.r, lt.g, lt.b, 0.01);
     lt.setRGB(lt.r / mx, lt.g / mx, lt.b / mx);
     const TINTS = [new THREE.Color(1, 1, 1), new THREE.Color(0.68, 0.68, 0.72), new THREE.Color(0.92, 0.74, 0.56)];
+    if (R.look && R.look.deep) { lt.copy(new THREE.Color(R.look.wall)); TINTS.forEach((T, i) => T.setRGB(1.6 - i * 0.25, 1.6 - i * 0.25, 1.6 - i * 0.25)); } // (dark blue stone: the wall's own colour, not lightened)
     // batched by patch of the maze (two cells by two); near the view a patch shows the stones themselves,
     // further off the same walls as plain blocks in the rocks' colours (the stones are too many to draw everywhere)
     const PATCH = CS * 2, areas = new Map();
@@ -2059,7 +2064,7 @@
       cur.lights.forEach((L, i) => { const it = near[i]; if (it) L.position.set(it.x, 3.2, it.z + 0.8); else L.position.set(0, -50, 0); });
       drawFloorMap();
     }
-    for (const L of cur.lights) L.intensity = 1.1 + Math.sin(now / 90 + L.position.x) * 0.15;
+    for (const L of cur.lights) L.intensity = (L.userData.deep ? 0.75 : 1.1) + Math.sin(now / 90 + L.position.x) * 0.15;
     // rock walls: the stones near the view, plain blocks further off
     if ((cur.rockAreas || cur.itemAreas) && now - (cur.rockLodT || 0) > 250) {
       cur.rockLodT = now;
