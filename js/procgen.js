@@ -397,30 +397,31 @@
   // land in the same style. Each kind has two variants so forests don't look stamped.
   const TREES = {
     tree_leafy: (v) => {
-      const r = rng(4001 + v), st = [], bark = nearest("#7a4a24"), g1 = nearest(v ? "#00751f" : "#006308"), g2 = nearest("#00b126");
+      // (the crown is not one green: lighter where the sun is on top, darker underneath, all from the on-chain palette)
+      const r = rng(4001 + v), st = [], bark = nearest("#7a4a24"), g1 = nearest(v ? "#00751f" : "#006308"), g2 = nearest("#00b126"), gDark = nearest(v ? "#005a10" : "#004a08"), gSun = nearest(v ? "#2e9a3a" : "#1f8a2a");
       const lean = (r() - 0.5) * 0.12;
       st.push(S("joint", [0, 0, 190], [30, 30, 190], { color: bark, rot: [0, lean, 0], cone: 0.25 }));
       st.push(S("joint", [55, 0, 330], [14, 14, 70], { color: bark, rot: dirRot(0.7, 0.1, 1), blend: 8 }));
       st.push(S("joint", [-50, 20, 350], [13, 13, 60], { color: bark, rot: dirRot(-0.7, 0.3, 1), blend: 8 }));
       const cx = Math.sin(lean) * 380;
       const blobs = [[0, 0, 470, 150], [95, 20, 420, 115], [-95, -15, 425, 120], [20, 85, 440, 110], [-15, -90, 445, 110], [10, 5, 560, 105]];
-      for (const [x, y, z, rr] of blobs) st.push(S("sphere", [cx + x * (0.9 + r() * 0.2), y * (0.9 + r() * 0.2), z], [rr, rr * (0.9 + r() * 0.2), rr * 0.82], { color: g1, blend: 26, layer: 1 }));
+      for (const [x, y, z, rr] of blobs) st.push(S("sphere", [cx + x * (0.9 + r() * 0.2), y * (0.9 + r() * 0.2), z], [rr, rr * (0.9 + r() * 0.2), rr * 0.82], { color: z >= 540 ? gSun : z <= 425 ? gDark : g1, blend: 26, layer: 1 }));
       for (let k = 0; k < 7; k++) { const a = r() * 6.28, d = 60 + r() * 90; st.push(S("sphere", [cx + Math.cos(a) * d, Math.sin(a) * d, 400 + r() * 170], [42, 42, 36], { color: g2, m: "rep", layer: 1 })); }
       return st;
     },
     tree_pine: (v) => {
-      const r = rng(5003 + v), st = [], bark = nearest("#6b4a2a"), g = nearest(v ? "#00731f" : "#005a10");
+      const r = rng(5003 + v), st = [], bark = nearest("#6b4a2a"), g = nearest(v ? "#00731f" : "#005a10"), gs = [nearest(v ? "#005a10" : "#004a08"), g, nearest(v ? "#008a2a" : "#006a18"), nearest(v ? "#1f9a3a" : "#0f7a22")];
       const sc = 0.9 + r() * 0.25;
       st.push(S("joint", [0, 0, 130 * sc], [22, 22, 130 * sc], { color: bark }));
       st.push(S("sphere", [0, 0, 10], [34, 34, 16], { color: bark, blend: 10 }));
       const tiers = [[0, 270, 175, 120], [0, 410, 140, 105], [0, 535, 100, 90], [0, 640, 55, 55]];
-      for (const [, z, rr, hl] of tiers) st.push(S("joint", [0, 0, z * sc], [rr * sc, rr * sc, hl * sc], { color: g, cone: 0.95, blend: 6, layer: 1 }));
+      tiers.forEach(([, z, rr, hl], k) => st.push(S("joint", [0, 0, z * sc], [rr * sc, rr * sc, hl * sc], { color: gs[k], cone: 0.95, blend: 6, layer: 1 }))); // (darker at the bottom, lighter at the top)
       st.push(S("joint", [0, 0, 700 * sc], [8, 8, 22], { color: g, layer: 1 }));
       return st;
     },
     bush: (v) => {
-      const r = rng(6007 + v), st = [], g = nearest(v ? "#00751f" : "#006308"), g2 = nearest(v ? "#ff8fc0" : "#ffd23f");
-      for (let k = 0; k < 5; k++) st.push(S("sphere", [(r() - 0.5) * 90, (r() - 0.5) * 80, 45 + r() * 30], [55 + r() * 20, 50 + r() * 18, 45 + r() * 15], { color: g, blend: 18 }));
+      const r = rng(6007 + v), st = [], g = nearest(v ? "#00751f" : "#006308"), gb = nearest(v ? "#008a2a" : "#00751f"), g2 = nearest(v ? "#ff8fc0" : "#ffd23f");
+      for (let k = 0; k < 5; k++) st.push(S("sphere", [(r() - 0.5) * 90, (r() - 0.5) * 80, 45 + r() * 30], [55 + r() * 20, 50 + r() * 18, 45 + r() * 15], { color: k % 2 ? gb : g, blend: 18 }));
       for (let k = 0; k < 4; k++) st.push(S("sphere", [(r() - 0.5) * 100, (r() - 0.5) * 90, 60 + r() * 35], [22, 22, 20], { color: g2, m: "rep" }));
       return st;
     },
