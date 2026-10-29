@@ -113,3 +113,8 @@ mando, ni tarjeta gráfica). Ve tachando lo que veas bien y apunta lo que no.
 - Prueba en tu terreno (se queda), en el de otro poseedor (no deja) y en terreno neutro (aviso; el Parlamento lo vota en su sesión de la tarde y, si lo rechaza, desaparece).
 - Por la tarde, en la hoguera no hay mascotas: esperan en el establo (más grande y alejado) y vuelven con su Tickle al acabar.
 - Elige tu poseedor, entra en una de tus casas y pulsa "Edit this home": mueve, gira y quita muebles; añade uno; cambia suelo y paredes; añade una sala; repinta el tejado y sal a verlo. Fuera, en Place object, el grupo "Garden and extras" (flores, setos, porche).
+
+## Tanques de oxígeno (1.6b)
+
+- En primera persona bajo el agua: la respiración dura un minuto y medio; con tanque sale la barra "Tank" (10 minutos) que se gasta primero; al subir se rellena.
+- Un Tickle con tanque bucea con la botella amarilla a la espalda. En su ficha sale "Oxygen tank" entre sus cosas; en la enciclopedia, en Arms.

@@ -115,13 +115,14 @@
   const FINDS = {
     reef: [["shell", 0.22], ["coral", 0.12], ["pearl", 0.03], ["blackpearl", 0.002]],
     pearls: [["shell", 0.12], ["pearl", 0.16], ["blackpearl", 0.008]],
-    wreck: [["coins", 0.2], ["shell", 0.08], ["chest", 0.012], ["relic", 0.0004]],
+    wreck: [["coins", 0.2], ["shell", 0.08], ["chest", 0.012], ["tank", 0.004], ["relic", 0.0004]],
     ruins: [["ether", 0.14], ["gold", 0.05], ["coins", 0.06], ["relic", 0.0006]],
   };
   const ITEM = (App.DIVE_ITEMS = {
     shell: { name: "a pretty shell", shells: 1 }, coral: { name: "a piece of coral", shells: 3 }, pearl: { name: "a pearl", shells: 12 },
     blackpearl: { name: "a black pearl", shells: 50, big: true }, coins: { name: "old coins", shells: 5 }, chest: { name: "a sea chest", shells: 40, gold: 1, big: true },
     ether: { name: "Ethernum", ether: 1 }, gold: { name: "old gold", gold: 0.5 }, relic: { name: "a relic", big: true },
+    tank: { name: "an old oxygen tank, still sound", tank: true, big: true },
   });
   // relics only the sea gives
   const SEA_RELICS = { combs: { name: "Mermaid's Comb", band: 0, bonus: 1.05 }, bell: { name: "Drowned Bell", band: 1, bonus: 1.07 }, deeppearl: { name: "Pearl of the Deep", band: 1, bonus: 1.08 } };
@@ -223,7 +224,7 @@
 
   // ---------- what each dive brings up (the same whether you watch or not) ----------
   function findOf(id, day, k, s) {
-    const u = hash2(id * 37 + k, day, 443 + s.i);
+    const u = hash2(id * 37 + k, day, 443 + s.i) * (App.hasTank && App.hasTank(id) ? 0.8 : 1);
     let acc = 0;
     for (const [key, p] of FINDS[s.kind]) { acc += p; if (u < acc) return key; }
     return null;
@@ -236,6 +237,8 @@
     if (I.ether && App.addEthernum) App.addEthernum(id, I.ether);
     if (I.gold && App.oreOf) App.oreOf(v).gold += I.gold;
     let what = I.name;
+    // an old tank: kept if it has none (and used on the next dives), sold for shells if it has one already
+    if (I.tank) { if (!(App.giveTank && App.giveTank(id))) { App.pay(id, 25); what = I.name + " (sold: it has one)"; } }
     if (key === "relic") {
       const keys = Object.keys(SEA_RELICS), r = keys[Math.floor(hash2(id, Math.floor(st.T), 445) * keys.length)];
       st.relics = st.relics || {};
@@ -393,7 +396,24 @@
     pearls: () => [[0, 0], [1.4, 0.6], [-1.2, 1.1], [0.6, -1.5], [-1.8, -0.8], [2.4, -1.2], [-0.4, 2.4], [2, 2], [-2.6, 1.8], [1, -2.8]].map(([x, z], i) => ["oyster", 0, x, z, i * 1.3]).concat([["coral", 1, 3.5, 0.5, 0], ["coral", 3, -3.6, -1.5, 0]]),
     ruins: (r) => [["sunkenruin", 0, 0, 0, r * 6.28], ["crystal", 0, 3.5, 2.2, 0], ["crystal", 0, -3, -2.8, 1], ["coral", 2, 4, -3, 0]],
   };
+  // the tank on its back while a Tickle with one dives (as a diver, or in first person in the water)
+  let tankRes = null;
+  function tanks() {
+    if (!App.hasTank || !App.kitMesh) return;
+    if (!tankRes) { tankRes = "loading"; App.kitMesh("oxytank", 0).then((r) => { tankRes = r; }); return; }
+    if (tankRes === "loading") return;
+    for (const t of st.tickles) {
+      const a = t.action, want = App.hasTank(t.id) && a && (a.kind === "dive" || (a.kind === "fp" && a.water)) && t.pivot;
+      if (want && !t.tankMesh) {
+        const m = new THREE.Mesh(tankRes.geo, App.voxMaterial), S = App.S, k = 0.8;
+        m.scale.setScalar(tankRes.md.voxel * S * k); m.position.set(tankRes.md.origin[0] * S * k, tankRes.md.origin[1] * S * k + (t.height || 3) * 0.28, tankRes.md.origin[2] * S * k - 0.75);
+        m.userData.tickle = true;
+        t.pivot.add(m); t.tankMesh = m;
+      } else if (!want && t.tankMesh) { if (t.tankMesh.parent) t.tankMesh.parent.remove(t.tankMesh); t.tankMesh = null; }
+    }
+  }
   App.updateDiving = (dt) => {
+    tanks();
     if (!SITES.length) return;
     const tx = App.cam.target.x, tz = App.cam.target.z, now = performance.now() / 1000;
     for (const s of SITES) {

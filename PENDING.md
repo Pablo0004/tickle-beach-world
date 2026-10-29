@@ -193,7 +193,17 @@ At first the game will be for Discord, where holders' addresses are verified thr
 if it grows it will move elsewhere. To keep in mind: playing as a holder (st.wallet) should come from that verified
 address; nothing to build for it yet unless the owner asks.
 
-### 1.6b Oxygen tanks (asked 24 October, decided with the owner; not started)
+### 1.6b Oxygen tanks (asked 24 October, decided with the owner; built 29 October)
+
+Built: the breath is now a minute and a half; a tank gives ten more minutes, used first, and both fill again at
+the surface (a "Tank" bar in first person); bought for 40 shells (wished for by those who love the water, more by
+the water jobs and divers; on the Tickle's card; old families may own one), found now and then on a wreck (kept,
+or sold for 25 shells if it has one); divers with a tank find a little more; the tank (strokes, `oxytank`) on the
+back while diving or in the water in first person; in the encyclopedia (Arms) and the Tickle's belongings. Not
+done: a chance in the sea caves' chests (left out: the caves' chests have no loot of their own yet). Not seen yet in
+the browser (the pane was hidden): the tank on a diver's back and the bar.
+
+Original plan:
 
 Without a tank a Tickle holds its breath for **1 minute 30 seconds** under the water (today 45 seconds,
 firstperson.js `a.air`, `dtReal / 45`). With an **oxygen tank** it has **10 more minutes** of air. Decided with the

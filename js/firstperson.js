@@ -202,6 +202,7 @@
     const bar = (label, v, col, txt) => '<div class="fs-row"><span>' + label + '</span><i><b style="width:' + Math.round(Math.max(0, Math.min(1, v)) * 100) + "%;background:" + col + '"></b></i><em>' + txt + "</em></div>";
     let h = '<div class="fs-name">' + esc(t.name) + "</div>" + bar("Health", now / top, now / top < 0.3 ? "#e8443a" : "#e86a5a", Math.round(now) + "/" + Math.round(top));
     const a = t.action;
+    if (a && a.kind === "fp" && (a.water || (a.tank != null && a.tank < 1)) && App.hasTank && App.hasTank(t.id)) h += bar("Tank", a.tank == null ? 1 : a.tank, a.tank < 0.2 ? "#ff6b5e" : "#ffd23f", Math.round((a.tank == null ? 1 : a.tank) * 10) + " min");
     if (a && a.kind === "fp" && (a.water || (a.air != null && a.air < 1))) h += bar("Breath", a.air == null ? 1 : a.air, a.air < 0.25 ? "#ff6b5e" : "#8fd3f4", Math.round((a.air == null ? 1 : a.air) * 100) + "%");
     for (const k of App.NEEDS || []) h += bar((App.NEED_LABEL && App.NEED_LABEL[k]) || k, t.needs[k] / 100, COL[k] || "#9fb", Math.round(t.needs[k]));
     el.innerHTML = h;
@@ -545,7 +546,12 @@
       a.dive = Math.min(a.dive || 0, room);
       t.flyY = a.dive > 0.05 ? surf - a.dive : null;
       const under = a.dive > 0.6;
-      a.air = Math.max(0, Math.min(1, (a.air == null ? 1 : a.air) + (under ? -dtReal / 45 : dtReal / 3)));
+      // a minute and a half of breath; with an oxygen tank, ten more minutes first; both fill again at the surface
+      const tank = App.hasTank && App.hasTank(t.id);
+      if (tank && a.tank == null) a.tank = 1;
+      if (under && tank && a.tank > 0) a.tank = Math.max(0, a.tank - dtReal / 600);
+      else a.air = Math.max(0, Math.min(1, (a.air == null ? 1 : a.air) + (under ? -dtReal / 90 : dtReal / 3)));
+      if (!under && tank) a.tank = Math.min(1, (a.tank || 0) + dtReal / 4);
       if (under && a.air <= 0 && performance.now() - (a.drownAt || 0) > 1500) {
         a.drownAt = performance.now();
         if (App.hurt && App.hurt(t, 6, "out of breath under the sea", "Out of breath\u2026 KO!", 0)) return;

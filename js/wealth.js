@@ -28,6 +28,8 @@
       { name: "a white charger", short: "White charger", kind: "horse", price: 240, mul: 3.0, scale: 1.05 }, { name: "a riding griffin", short: "Riding griffin", kind: "griffin", price: 400, mul: 4.5, fly: true, scale: 1 }],
     weapon: [null, { name: "a fine steel weapon", short: "Fine steel", price: 60 }, { name: "a masterwork weapon", short: "Masterwork", price: 180 }],
     shield: [null, null, { name: "a steel shield", short: "Steel shield", price: 45 }],
+    // an oxygen tank (item 1.6b): ten more minutes of air under the water; it fills again at the surface
+    tank: [null, { name: "an oxygen tank", short: "Oxygen tank", price: 40 }],
   });
   // riding beasts: not every mount is a horse. Some Tickles ride the animal of their way of life (the rangers and the
   // climbing guides a stag, the duck keepers and the coconut farmers a ram, the treasure hunters a boar), and any
@@ -41,7 +43,9 @@
   const WAY = { ranger: ["deer", 0.3], climber: ["deer", 0.3], keeper: ["sheep", 0.25], farmer: ["sheep", 0.25], hunter: ["boar", 0.35] };
   const beastOf = (id) => { const o = st.own && st.own[id]; if (o && o.rb) return o.rb; const w = WAY[App.jobOf(id)]; return w && hash2(id, 17, 663) < w[1] ? w[0] : null; };
   App.beastOf = beastOf; App.RIDE_BEASTS = BEASTS;
-  const LABEL = { house: "House", boat: "Boat", mount: "Mount", weapon: "Weapon", shield: "Shield", beast: "Mount" };
+  const LABEL = { house: "House", boat: "Boat", mount: "Mount", weapon: "Weapon", shield: "Shield", beast: "Mount", tank: "Diving" };
+  App.hasTank = (id) => !!(st.own && st.own[id] && st.own[id].ox);
+  App.giveTank = (id) => { const o = st.own[id] || (st.own[id] = {}); if (o.ox) return false; o.ox = 1; return true; };
   // what a purchase is called (the catalogue has tiers; a repair or a replacement weapon does not)
   const lostWeapon = (id) => (((st.gear && st.gear[id]) || {}).was) || "weapon";
   const nameOfBuy = (w, id) => (w.cat === "repair" ? "a repair of its arms" : w.cat === "rearm" ? (w.price === 14 ? "a second-hand " : "a new ") + lostWeapon(id) : CAT[w.cat][w.to].name);
@@ -78,13 +82,14 @@
   // what it is all worth: purse and belongings (for the richest list)
   const worthOf = (id) => {
     const o = (st.own && st.own[id]) || {}, g = st.gear && st.gear[id];
-    return App.shellsOf(id) + (o.h ? CAT.house[o.h].price : 0) + (o.b ? CAT.boat[o.b].price : 0) + (o.m ? CAT.mount[o.m].price : 0) + (o.rb && BEASTS[o.rb] ? BEASTS[o.rb].price : 0) + (g && g.q ? CAT.weapon[g.q].price : 0);
+    return App.shellsOf(id) + (o.h ? CAT.house[o.h].price : 0) + (o.b ? CAT.boat[o.b].price : 0) + (o.ox ? CAT.tank[1].price : 0) + (o.m ? CAT.mount[o.m].price : 0) + (o.rb && BEASTS[o.rb] ? BEASTS[o.rb].price : 0) + (g && g.q ? CAT.weapon[g.q].price : 0);
   };
   App.worthOf = worthOf;
   App.wealthText = (id) => {
     const o = (st.own && st.own[id]) || {}, g = st.gear && st.gear[id], out = [];
     if (o.h) out.push(CAT.house[o.h].short + (App.homeRuined && App.homeRuined(id) && st.ruins && (() => { const s = homeSc(id); return s && st.ruins[s.idx] && st.ruins[s.idx].upgrade; })() ? " (being built)" : ""));
     if (o.b) out.push(CAT.boat[o.b].short + (o.dock != null && App.docks[o.dock] ? " at " + App.docks[o.dock].name : ""));
+    if (o.ox) out.push("Oxygen tank");
     if (o.m) out.push(App.mountOf(id).name);
     else if (o.rb && BEASTS[o.rb]) out.push(BEASTS[o.rb].short);
     if (g && g.q) out.push(CAT.weapon[g.q].short + " " + g.weapon);
@@ -225,6 +230,7 @@
     if ((o.m || 0) < 4) out.push({ cat: "mount", from: o.m || 0, to: (o.m || 0) + 1, pref: 1.1 + taste(3) + (f === "merchants" || App.isAdventurer(id) ? 0.6 : 0) });
     const D = dockOf(id);
     if (D && (o.b || 0) < 3 && (o.b || freeMooring(D) >= 0)) out.push({ cat: "boat", from: o.b || 0, to: (o.b || 0) + 1, pref: 0.8 + taste(4) + (WATER_JOBS.has(App.jobOf(id)) ? 0.7 : 0) });
+    if (!o.ox) out.push({ cat: "tank", from: 0, to: 1, pref: 0.5 + taste(6) + (WATER_JOBS.has(App.jobOf(id)) ? 0.8 : 0) + (App.diveOf && App.diveOf(id, Math.floor(st.T / 1440)) ? 0.6 : 0) });
     const s = homeSc(id);
     if (ownHouse(s) && (o.h || 0) < 2 && roomAt(id) >= ROOM[(o.h || 0) + 1]) out.push({ cat: "house", from: o.h || 0, to: (o.h || 0) + 1, pref: 1.0 + taste(5) });
     for (const w of out) if (w.price == null) w.price = costOf(w.cat, w.from, w.to);
@@ -243,6 +249,7 @@
       o.b = w.to; boatsDirty = true;
     } else if (w.cat === "mount") { o.m = w.to; if (w.to === 2) o.coat = hash2(id, 3, 661) < 0.5 ? 1 : 2; }
     else if (w.cat === "beast") o.rb = w.to;
+    else if (w.cat === "tank") o.ox = 1;
     else if (w.cat === "weapon") {
       const old = (st.gear && st.gear[id]) || {}, g = App.gearOf(id) || { weapon: old.was || ["sword", "axe", "spear"][Math.floor(hash2(id, 5, 661) * 3)], armor: old.armor || 0 };
       const c = App.armsCond(id), cs = g.armor ? (c && c.s != null ? c.s : old.cs) : null;
@@ -296,6 +303,7 @@
     if (!o.m) for (const b in BEASTS) if (o.rb !== b) out.push({ cat: "beast", from: 0, to: b, price: costOf("beast", 0, b) });
     const D = dockOf(id);
     if (D && (o.b || 0) < 3 && (o.b || freeMooring(D) >= 0)) out.push({ cat: "boat", from: o.b || 0, to: (o.b || 0) + 1 });
+    if (!o.ox) out.push({ cat: "tank", from: 0, to: 1 });
     const mageOrBlessed = g && (g.mage || g.blessed || g.legendary || g.weapon === "staff");
     // arms to put right, or a weapon to replace (new, or second-hand and cheaper)
     const c = App.armsCond(id);
@@ -306,7 +314,7 @@
     for (const w of out) if (w.price == null) w.price = costOf(w.cat, w.from, w.to);
     return out;
   }
-  const line = (w) => w.cat === "repair" ? pick(["Good as new!", "Sharp again.", "Not a scratch on it now."]) : w.cat === "rearm" ? pick(["Armed again!", "A blade of my own again.", "Let them come now."]) : w.cat === "mount" ? (w.to === 4 ? "My own griffin! To the skies!" : pick(["My own horse!", "Giddy up!", "Isn't it beautiful?"])) : w.cat === "beast" ? (w.to === "deer" ? "What antlers! Let's go." : w.to === "boar" ? "Steady, piggy... steady!" : "Baa-rilliant! My own ram!") : w.cat === "boat" ? pick(["She's all mine!", "Fair winds!", "Wait till you see her sail."])
+  const line = (w) => w.cat === "tank" ? pick(["Ten more minutes down there!", "Now for the deep wrecks.", "Air on my back!"]) : w.cat === "repair" ? pick(["Good as new!", "Sharp again.", "Not a scratch on it now."]) : w.cat === "rearm" ? pick(["Armed again!", "A blade of my own again.", "Let them come now."]) : w.cat === "mount" ? (w.to === 4 ? "My own griffin! To the skies!" : pick(["My own horse!", "Giddy up!", "Isn't it beautiful?"])) : w.cat === "beast" ? (w.to === "deer" ? "What antlers! Let's go." : w.to === "boar" ? "Steady, piggy... steady!" : "Baa-rilliant! My own ram!") : w.cat === "boat" ? pick(["She's all mine!", "Fair winds!", "Wait till you see her sail."])
     : w.cat === "house" ? pick(["A bigger house!", "The builders start today.", "Room for everything at last."]) : pick(["Look at this blade!", "Finest work in the land.", "Now let a dragon come."]);
 
   // ---------- the families that were rich before the game began ----------
@@ -323,6 +331,7 @@
         if (w.cat === "house") { o.h = w.to; }
         else if (w.cat === "boat") { const D = dockOf(id); if (!o.b) { const m = freeMooring(D); if (m < 0) { if (!Object.keys(o).length) delete st.own[id]; break; } o.dock = D.i; o.moor = m; } o.b = w.to; }
         else if (w.cat === "mount") { o.m = w.to; if (w.to === 2) o.coat = hash2(id, 3, 661) < 0.5 ? 1 : 2; }
+        else if (w.cat === "tank") o.ox = 1;
         else if (w.cat === "weapon") st.gear[id] = Object.assign({}, App.gearOf(id), { q: w.to });
         else if (w.cat === "shield") st.gear[id] = Object.assign({}, App.gearOf(id), { armor: 2 });
         if (!Object.keys(o).length) delete st.own[id];

@@ -651,6 +651,15 @@
     st.push(S("cube", [0, -170, 120], [300, 6, 100], { color: dark, layer: 5 }));
     return st;
   }
+  // an oxygen tank, worn on the back while diving: two yellow cylinders, their valves, the harness
+  function oxytank() {
+    const st = [], yel = C("#ffd23f"), dark = C("#3a3a3a"), steel = C("#c8d0d8");
+    st.push(S("cylinder", [45, 0, 140], [40, 40, 120], { color: yel, mirror: true, offsX: 45 }));
+    st.push(S("cube", [0, 20, 140], [90, 8, 14], { color: dark }));
+    st.push(S("cylinder", [45, 0, 275], [14, 14, 16], { color: steel, mirror: true, offsX: 45, layer: 1 }));
+    st.push(S("cube", [0, 0, 292], [50, 10, 8], { color: steel, layer: 1 }));
+    return st;
+  }
   // ---------- extras for a home's garden (build mode, "Garden and extras") ----------
   // a flower bed: a low border of stones round dark earth, flowers in the house's colour and others
   function flowerbed(clan) {
@@ -935,6 +944,7 @@
     catapult: { name: "Catapult", group: "Village", variants: [0], build: catapult, voxel: [8, 20], lazy: true },
     catapultarm: { name: "Catapult Arm", group: "Village", variants: [0], build: catapultarm, voxel: [7] },
     ram: { name: "Battering Ram", group: "Village", variants: [0], build: ram, voxel: [8] },
+    oxytank: { name: "Oxygen Tank", group: "Diving", variants: [0], build: oxytank, voxel: [4] },
     flowerbed: { name: "Flower Bed", group: "Garden", variants: clanV, build: flowerbed, voxel: [6], variantLabel: (v) => CLANS[v].species + " flowers" },
     hedge: { name: "Hedge", group: "Garden", variants: [0], build: hedge, voxel: [7] },
     porch: { name: "Porch", group: "Garden", variants: clanV, build: porch, voxel: [7], variantLabel: (v) => CLANS[v].species + " roof" },
