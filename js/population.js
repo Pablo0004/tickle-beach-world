@@ -632,8 +632,11 @@
     let n = 0;
     for (const id of pawnIds) {
       if (P.agent[id] || n >= PAWN_CAP) continue;
-      const p = App.planPos(id, st.T);
+      let p = App.planPos(id, st.T);
       if (p.inside) continue;
+      // (the plan's way is straight between its points: where it runs through a building, the figure goes round
+      // the outside of it instead of through its walls)
+      if (App.clearOfBuildings && App.buildingAt && App.buildingAt(p.x, p.z)) p = App.clearOfBuildings(p);
       M4.makeTranslation(p.x, heightAt(id, p.x, p.z), p.z);
       pawnMesh.setMatrixAt(n, M4);
       const c = App.bodyColor[P.body[id]];

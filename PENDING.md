@@ -222,7 +222,8 @@ owner: a tank can be **bought and found**, both. Plan:
 ### 1.7 Left over from version 50 (smaller; ask the owner before widening any of them)
 
 - More detail: colour variation inside the models (a leafy tree is one green), the water surface, the interiors.
-- The far walking figures (pawns) follow straight lines between plan points and can cross buildings.
+- The far walking figures (pawns) follow straight lines between plan points and can cross buildings. Done 29 October: a far figure whose
+  point falls inside a building is drawn just outside it, so it goes round the walls (population.js `updatePawns`).
 - First-person abilities against dragons, sea beasts and the Underworld's guardians (first person is not available
   inside); ability levels or choices.
 - Under the sea: things for your own Tickle to find or catch (pearls, shells), sea creatures in the sea caves, the
