@@ -98,11 +98,14 @@ the bedrooms. Still to do: the same for the other big interiors, and more varied
 
 ### 1.5h A guided tour of everything (asked 29 October, done)
 For showing the game to someone (the owner thinks of showing it to the collection's creator): the "Tour" button in
-the top bar (or T) takes the camera through 20 stops with a caption each, Back / Next / Play (every 14 seconds) /
+the top bar (or T) takes the camera through 23 stops with a caption each, Back / Next / Play (every 14 seconds) /
 Close: the island, a town, a fortress, inside the castle, an estate, the Guild Quarter, the arena, the Great
 Underworld (and down below), a mine, a dragon's peak, the lake, a dive site, the casino (inside), the Parliament
 (inside), the prison, an Ether field, wars ("Watch a demo war" starts one), the encyclopedia ("Open it") and the
-tools of "I'm in control" (js/tour.js).
+tools of "I'm in control" (js/tour.js). Added the same day (asked): "A battle in the arena" (with "Skip to tonight's
+tournament", which moves the clock on to 17:25 and flies to the arena; the battles are fought in front of you
+from 17:30), "Under the water" (a Tickle dives at the site and the view goes down with it; the dive takes about
+half a minute to reach the bottom) and "A sea cave" (inside). 23 stops.
 
 ### 1.5g The evening in the big places (asked 28 October)
 "At the fire of a mansion or a castle they are too crowded: spread them, or not all of them: some patrolling the

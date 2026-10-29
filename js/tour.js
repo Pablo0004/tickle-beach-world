@@ -26,12 +26,15 @@
       grand && { t: "An estate", v: grand, r: 55, text: "Middling holders get an estate: a mansion in the style of its island for all their Tickles, its own fields and fire. In the evening some stay indoors, some keep the armoury, the rest sit round the fire; the pets wait at the stable." },
       gq && { t: "The Guild Quarter", x: gq.x, z: gq.z, r: 55, text: "Six guilds (warriors, mages, merchants, miners, marauders, adventurers) with ranks from Novice to Grandmaster, and the Blacksmiths' Guild with its forge, horse paddock and griffin roost: shells buy arms, mounts, boats and better houses." },
       arena && { t: arena.name, x: arena.x, z: arena.z, r: 45, text: "Tamers catch the wild creatures (seven types, strong and weak against each other), raise them and fight in the arena's tournament every evening from 17:30. Contests of every kind are held in each island too." },
+      arena && { t: "A battle in the arena", x: arena.x, z: arena.z, r: 28, arena: true, text: "Every evening from 17:30 the eight strongest tamers of the island fight it out, creature against creature, type against type, until one is champion; the result comes in a card. \u201cSkip to tonight's tournament\u201d moves the clock on to it." },
       dg && { t: "The Great Underworld", x: dg.x, z: dg.z, r: 40, text: "Every cave leads down into one dungeon under the whole map, twelve floors deep, each with a guardian. Village parties go down in the afternoon for relics, Ethernum and treasure; you can go in and watch them fight." },
       dg && { t: "Down below", inside: dg.door || dg, text: "A floor of the Great Underworld: corridors, chambers, monsters on patrol, chests and the guardian at the stairs. Results come in a card: floors reached, guardians beaten, loot." },
       mine && { t: mine.name, x: mine.x, z: mine.z, r: 40, text: "The miners dig stone, coal, copper, iron, silver, gold, gems and orichalcum; the smiths turn them into tools and arms. The Warriors' Guild guards the mines." },
       lair && { t: lair.name, x: lair.x, z: lair.z, r: 70, text: "Each island's dragon sleeps on its highest peak, wings folded, and flies a patrol. Some nights it attacks a village and the places round about fight it together; heroes can slay it." },
       dock && { t: "The great lake", x: dock.x, z: dock.z, r: 70, text: "Ferries cross the lake to the other islands; fishers row out; swans, turtles, otters and koi live in it. The Lake Serpent rises some afternoons, and the Kraken from the open sea." },
       dive && { t: dive.name.charAt(0).toUpperCase() + dive.name.slice(1), x: dive.x, z: dive.z, r: 45, text: "Divers go down to wrecks and reefs for treasure; a float or a wake board only comes out in the water." },
+      dive && { t: "Under the water", dive, text: "Down with a diver: the surface closes overhead, fish and sea life all round, the wreck or the reef below, and what it finds (pearls, coins, old treasure). In first person you can dive yourself, holding your breath." },
+      App.seaCaves && App.seaCaves.length && { t: "A sea cave", cave: near(App.seaCaves, fort.x, fort.z), text: "Deep under the open sea, a few caves go down into the rock: only a diver can find the way in, and inside there are monsters, crystals and old chests." },
       casino && { t: casino.name, inside: casino.door, text: "Each island has a casino, open from 19:00: poker (with a nightly tournament), blackjack, roulette, bingo, the slot machines and the bar, with its dealers and waiters." },
       P && { t: P.name || "The Parliament", inside: P.door || P, text: "On the Maker's Isle the holders' ministers sit every afternoon, seats shared by how many Tickles each holds, and vote laws, the Director's designs, and the works done on neutral land." },
       pr && { t: pr.name || "The prison", x: pr.x, z: pr.z, r: 50, text: "A Tickle listed for sale on the marketplace lives here until it is sold (a joke, read from OpenSea's listings)." },
@@ -57,6 +60,7 @@
       if (a === "next") go(i + 1); else if (a === "back") go(i - 1); else if (a === "close") App.endTour();
       else if (a === "play") { if (timer) { clearInterval(timer); timer = null; } else timer = setInterval(() => go(i + 1 < list.length ? i + 1 : 0), 14000); show(); }
       else if (a === "demo") demoWar();
+      else if (a === "tourney") skipToTourney(list[i]);
       else if (a === "menu") { const s = list[i]; const btn = document.querySelector('[data-gm="' + s.menu + '"]'); if (btn) btn.click(); }
     });
     return el;
@@ -71,6 +75,7 @@
       '<button class="btn primary" data-tour="next">' + (i + 1 < list.length ? "Next" : "Finish") + "</button>" +
       '<button class="btn" data-tour="play">' + (timer ? "Pause" : "Play") + "</button>" +
       (s.war ? '<button class="btn" data-tour="demo">Watch a demo war</button>' : "") +
+      (s.arena ? '<button class="btn" data-tour="tourney">Skip to tonight\u2019s tournament</button>' : "") +
       (s.menu ? '<button class="btn" data-tour="menu">Open it</button>' : "") +
       '<span style="flex:1"></span><button class="btn" data-tour="close">Close</button></div>';
   }
@@ -79,11 +84,32 @@
     i = Math.max(0, k);
     const s = list[i];
     if (s.inside) inside(s.inside.x, s.inside.z);
+    else if (s.cave) { const c = s.cave, go2 = () => App.enter({ kind: "seacave", cave: c, door: c.door, name: c.name }); if (App.inside && App.leaveInterior) { App.leaveInterior(); setTimeout(go2, 900); } else { App.flyTo(c.x, c.z, 30); setTimeout(go2, 1600); } }
+    else if (s.dive) diveDemo(s.dive);
     else if (s.v) fly(s.v.walls ? s.v.walls.x : s.v.x, s.v.walls ? s.v.walls.z : s.v.z, s.r);
     else if (s.war) { const w = st.war && st.war.wars.find((x) => x.status === "on"); if (w) fly(w.front.x, w.front.z, 55); else if (App.inside && App.leaveInterior) App.leaveInterior(); }
     else if (s.x != null) fly(s.x, s.z, s.r);
     else if (App.inside && App.leaveInterior) App.leaveInterior();
     show();
+  }
+  // down with a diver: a Tickle near the site dives, and the view follows it under the water
+  function diveDemo(site) {
+    fly(site.x, site.z, 26);
+    setTimeout(() => {
+      const t = st.tickles.filter((x) => !App.isKO(x.id) && !(x.action && x.action.kind === "fp")).sort((a, b) => Math.hypot(a.pos.x - site.x, a.pos.z - site.z) - Math.hypot(b.pos.x - site.x, b.pos.z - site.z))[0];
+      if (!t || !App.startDiveAt) return;
+      if (App.endAction) App.endAction(t);
+      if (site.shore) { t.pos.x = site.shore.x; t.pos.z = site.shore.z; } // (straight to the water's edge, for the tour)
+      App.startDiveAt(t, site.i, st.T + 40);
+      App.cam.follow = t.id;
+    }, 2200);
+  }
+  // the clock moved on to this evening's tournament (or tomorrow's, if tonight's is over)
+  function skipToTourney(s) {
+    const DAY = 1440, day = Math.floor(st.T / DAY), m = st.T - day * DAY, T0 = 17 * 60 + 25;
+    if (m < T0) st.T = day * DAY + T0; else if (m > 21 * 60) st.T = (day + 1) * DAY + T0;
+    App.flyTo(s.x, s.z, 30);
+    App.toast("It is " + App.clock(st.T).short + ": the tournament starts at 17:30.");
   }
   // a demo war: the nearest strong place against a fortress near the view, marching at once
   function demoWar() {
