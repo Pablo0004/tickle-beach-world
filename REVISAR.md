@@ -120,3 +120,5 @@ mando, ni tarjeta gráfica). Ve tachando lo que veas bien y apunta lo que no.
 - Un Tickle con tanque bucea con la botella amarilla a la espalda. En su ficha sale "Oxygen tank" entre sus cosas; en la enciclopedia, en Arms.
 - Acércate a la costa o a un punto de buceo: el agua deja ver el fondo; al alejarte vuelve a su color. Los árboles tienen varios verdes.
 - Entra en una cueva marina (buceando hasta su entrada): oscura, piedra azul oscuro, luz solo junto a las antorchas, cangrejos y medusas por los pasillos.
+- Menú > Controls: todo en tablas (teclado, mando, táctil). En primera persona ya no sale la línea de teclas; en el dock no sale la pista.
+- Dentro de un lugar, la descripción larga está plegada en "About this place".

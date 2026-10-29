@@ -218,7 +218,7 @@
     document.querySelectorAll("[data-tool]").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.tool === t)));
     $("swatches").hidden = t !== "build";
     $("placeRow").hidden = t !== "place";
-    $("toolHint").textContent = HINTS[t];
+    $("toolHint").textContent = HINTS[t]; // (kept hidden: the same is in Menu > Controls)
     if (t === "place") fillPlaceSel();
     if (App.buildToolChanged) App.buildToolChanged(t); // (build.js: the modes, the catalogue, the ghost)
   }
@@ -743,7 +743,7 @@
     $("tickleList").innerHTML = list.slice(0, 40).map((x) => {
       const bars = App.NEEDS.map((k) => '<i style="height:' + Math.max(2, Math.round((x.needs[k] / 100) * 22)) + "px;background:" + NEED_COL[k] + '"></i>').join("");
       return '<button class="trow" data-tid="' + x.id + '" aria-current="' + (x.id === ui.sel) + '"><span class="sw" style="background:' + x.swatch + '"></span><span style="min-width:0"><div class="tname">' + esc(x.name) + (App.isMine(x.id) ? ' <span class="chip approved">yours</span>' : "") + '</div><div class="tact">' + esc(actionText(x)) + '</div></span><span class="mini">' + bars + "</span></button>";
-    }).join("") || '<p class="note">No Tickles in view. Move with WASD or click the map.</p>';
+    }).join("") || '<p class="note">No Tickles in view.</p>';
   }
   $("tab-tickles").addEventListener("click", (e) => {
     const row = e.target.closest("[data-tid]");

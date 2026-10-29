@@ -221,7 +221,14 @@ owner: a tank can be **bought and found**, both. Plan:
 
 ### 1.8 Controls in the menu, open caves and mines, dark sea caves (asked 30 October)
 - **Controls**: a "Controls" section in the menu with everything for keyboard and gamepad (and touch), so that no
-  help about controls takes up the screen while playing.
+  help about controls takes up the screen while playing. Done 30 October: Menu > Controls rewritten as tables (around the
+  world, first person with keyboard, controller and touch, the build tools, inside); off the screen: the keys line
+  in first person (only the name and Leave), the dock's hint line, the "drag to look" note inside, the long
+  controller toast.
+- **Descriptions folded (asked 30 October)**: the long description of every place in the room's card is folded into
+  "About this place" (and the treasure of a floor into "Treasure on this floor"), opened only if wanted. Done.
+- **First person inside buildings (asked 30 October)**: going into buildings in first person; and a Tickle in first
+  person does not get the buttons to go up, down or out until it reaches the door or the stairs that lead there.
 - **Open caves and mines**: only the dungeons (the Great Underworld) stay labyrinths; the other caves and the mines
   become open spaces, like the rooms worked on lately (the merged floors).
 - **Sea caves**: walls of dark blue stone, as dark as it should be down there, lit only in spots by torches. Done 30 October:

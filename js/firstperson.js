@@ -42,7 +42,9 @@
       ? [coarse ? "stick to walk, drag to look" : "WASD to walk, Shift to run, Space to jump", mouse, coarse ? "" : "F, Q, G, R to fight, T to talk", coarse ? "" : "in the water C dives, Space comes up", "wheel: camera back", "E to go in"]
       : ["riding along", coarse ? "drag to look round" : mouse, "wheel: camera back"];
     if (fp.drive && M) parts.push("M to " + (M.fly ? "mount its griffin (Space up, C down)" : M.kind === "horse" ? "mount its horse" : "ride " + M.name.replace(/^Riding /, "its ").replace(/^Stag$/, "its stag")));
-    el.innerHTML = "<span><b>" + esc(t.name) + '</b><span class="fh-keys"> \u00b7 ' + parts.filter(Boolean).join(" \u00b7 ") + '</span></span><button class="btn" id="fpLeave">Leave (Esc)</button>';
+    // (only its name: the keys are in Menu > Controls, so they do not take up the screen)
+    void parts;
+    el.innerHTML = "<span><b>" + esc(t.name) + '</b></span><button class="btn" id="fpLeave">Leave</button>';
     el.hidden = false;
   }
   function show(on) {
@@ -191,7 +193,7 @@
     padWas[9] = start;
     if (leave) App.exitFP();
   }
-  window.addEventListener("gamepadconnected", () => { if (!padSeen) { padSeen = true; App.toast("Controller connected: in first person, left stick to walk, right stick to look, A to jump, X/Y/LB/RB to fight."); } });
+  window.addEventListener("gamepadconnected", () => { if (!padSeen) { padSeen = true; App.toast("Controller connected (its buttons: Menu > Controls)."); } });
   // ---------- the HUD: health and needs, the compass, the name of what is in front ----------
   function hudStats(t) {
     const el = $("fpStats");

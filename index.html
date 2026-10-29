@@ -173,6 +173,12 @@ pre.json { margin: 0; max-height: 160px; overflow: auto; background: rgba(0,0,0,
 .swatches button { width: 26px; height: 26px; border-radius: 6px; border: 2px solid transparent; box-shadow: inset 0 -4px 0 rgba(0,0,0,0.22); }
 .swatches button[aria-pressed="true"] { border-color: var(--text); }
 .hint { font-size: 12px; color: var(--muted); }
+.rh-more summary { cursor: pointer; opacity: .8; }
+.rh-more[open] summary { margin-bottom: 4px; }
+.ctl { width: 100%; border-collapse: collapse; font-size: 13px; margin: 4px 0 12px; }
+.ctl th { text-align: left; font-weight: 700; opacity: .75; padding: 4px 6px; }
+.ctl td { padding: 4px 6px; border-top: 1px solid rgba(127,127,127,.2); vertical-align: top; }
+.ctl td:first-child { font-weight: 700; white-space: nowrap; }
 .iconbtn.primaryish { background: var(--sun); color: #2a2100; border-color: transparent; }
 .modal.dir { padding: 12px; }
 .dirbox { width: min(1180px, 100%); height: 100%; max-height: 100%; display: flex; flex-direction: column; gap: 10px; }
@@ -466,7 +472,7 @@ body.fpmode #mapbox, body.fpmode #dock { display: none !important; }
       <div class="card">
         <label class="note" for="findInput">Find any of the 9,629 Tickles by token number</label>
         <div class="row"><input id="findInput" type="text" inputmode="numeric" placeholder="e.g. 4048" style="flex:1;min-width:0"><button class="btn primary" id="findBtn">Go</button></div>
-        <p class="note" id="findNote">Move with WASD or the arrow keys, or click the map.</p>
+        <p class="note" id="findNote">The controls are in the menu (Controls).</p>
       </div>
       <div id="tickleDetail"></div>
       <h3 id="nearbyTitle">Nearby</h3>
@@ -527,7 +533,7 @@ body.fpmode #mapbox, body.fpmode #dock { display: none !important; }
     <div class="swatches" id="swatches" hidden></div>
     <div class="row" id="buildRow" hidden><select id="buildMode" aria-label="How to build"></select><label>Wall height <input id="wallH" type="number" min="1" max="8" value="3" style="width:3.2em"></label></div>
     <div class="row" id="placeRow" hidden><select id="placeGroup" aria-label="Group of objects"></select><select id="placeSel" aria-label="Object to place"></select></div>
-    <div class="hint" id="toolHint">Click a Tickle to inspect it.</div>
+    <div class="hint" id="toolHint" hidden>Click a Tickle to inspect it.</div>
   </div>
 
   <div id="mapbox" class="glass">
@@ -611,16 +617,49 @@ body.fpmode #mapbox, body.fpmode #dock { display: none !important; }
       <div class="row" style="justify-content: space-between"><h2>Menu</h2><button class="btn primary" id="helpClose">Close</button></div>
       <div class="seg menutabs" role="group" aria-label="Menu sections"><button data-menu="help" aria-pressed="true">How it works</button><button data-menu="controls" aria-pressed="false">Controls</button><button data-menu="music" aria-pressed="false">Sound</button><button data-menu="settings" aria-pressed="false">Settings</button><button data-menu="credits" aria-pressed="false">Credits</button></div>
       <div class="menusec" id="menu-controls" hidden>
-        <ul>
-          <li><b>Move:</b> drag the ground, or WASD / the arrow keys (hold Shift to go faster). Click the small map to travel; M opens the big map.</li>
-          <li><b>First person (V):</b> pick a Tickle and press V (or "First person" on its card) to see the world through its eyes. A Tickle of yours, while you are in control, you walk yourself: WASD to walk, Shift to run, drag or Z/X to turn, E to go into a building, and it swims if you take it into the water; if it owns a horse or a griffin, M puts it in the saddle (on a griffin, Space climbs and C comes down). Any other Tickle you ride along with through its day (races, regattas, dives...), dragging to look round. Esc leaves.</li>
-          <li><b>Turn the view:</b> Z and X, or the &#x27f2; &#x27f3; buttons under the small map, or right-drag (Ctrl-drag); twist two fingers on a touch screen.</li>
-          <li><b>Zoom:</b> the mouse wheel, or pinch: from a few steps away up into the sky, with the whole map in sight (far away the buildings and trees are drawn simpler).</li>
-          <li><b>Pick up and throw:</b> press on a Tickle, an animal, a creature, a dragon, a horse or a griffin, a sea beast, a boat, an object, a tree or a building and drag to lift it; let go to set it down, or let go while moving to throw it. Buildings and trees break when thrown; a sea beast thrown hard is hurt, then slides back into the water; a boat set down on land is carried back to its mooring (holders can only pick up their own Tickles).</li>
-          <li><b>Look and go in:</b> click anything (a Tickle, a creature, a monster, an animal, a dragon, a boat, a tree, the ground or the water, and inside every piece of furniture) for a small window about it, with its health, what it can do and what it fights with; click a building or landmark for its card; E goes inside the nearest door, cave or mine; Esc comes back out (and closes cards).</li>
-          <li><b>Follow:</b> select a Tickle and press F, and the camera follows it.</li>
-          <li><b>Time:</b> Space pauses; 1, 2 and 3 set the speed.</li>
-        </ul>
+        <p class="note">Every control is here, so nothing about them takes up the screen while you play.</p>
+        <h3>Around the world</h3>
+        <table class="ctl"><tr><th></th><th>Keyboard and mouse</th><th>Touch</th></tr>
+          <tr><td>Move</td><td>WASD or the arrow keys (Shift: faster), or drag the ground</td><td>drag</td></tr>
+          <tr><td>Turn the view</td><td>Z and X, the &#x27f2; &#x27f3; buttons, or right-drag (Ctrl-drag)</td><td>twist two fingers</td></tr>
+          <tr><td>Zoom</td><td>the mouse wheel</td><td>pinch</td></tr>
+          <tr><td>Travel</td><td>click the small map; M opens the big map</td><td>tap the map</td></tr>
+          <tr><td>Look at anything</td><td>click it (a window about it opens)</td><td>tap it</td></tr>
+          <tr><td>Pick up and throw</td><td>press on it and drag; let go to set it down, or while moving to throw it</td><td>the same</td></tr>
+          <tr><td>Follow a Tickle</td><td>select it, then F</td><td>its card</td></tr>
+          <tr><td>Go in</td><td>E by a door, a cave or a mine</td><td>the "Go in" chip</td></tr>
+          <tr><td>Time</td><td>Space pauses; 1, 2, 3 set the speed</td><td>the buttons at the top</td></tr>
+          <tr><td>Menu</td><td>Esc</td><td>the Menu button</td></tr>
+        </table>
+        <h3>First person (V)</h3>
+        <p class="note">Select a Tickle and press V, or "First person" on its card. A Tickle of yours, while you are in control, you walk yourself; any other you ride along with.</p>
+        <table class="ctl"><tr><th></th><th>Keyboard and mouse</th><th>Controller</th><th>Touch</th></tr>
+          <tr><td>Walk / run</td><td>WASD / Shift</td><td>left stick / press it</td><td>the stick</td></tr>
+          <tr><td>Look</td><td>the mouse (click to capture it, Esc to free it)</td><td>right stick</td><td>drag</td></tr>
+          <tr><td>Jump; come up in the water</td><td>Space</td><td>A</td><td>the button</td></tr>
+          <tr><td>Dive down</td><td>C</td><td>LT</td><td>the button</td></tr>
+          <tr><td>Fight</td><td>F, Q, G, R</td><td>X or RT, Y, LB, RB</td><td>the buttons</td></tr>
+          <tr><td>Talk</td><td>T</td><td>B</td><td>the button</td></tr>
+          <tr><td>Mount (horse, griffin, beast)</td><td>M; on a griffin Space up, C down</td><td>Back</td><td>the button</td></tr>
+          <tr><td>Go in</td><td>E</td><td></td><td></td></tr>
+          <tr><td>Camera further back</td><td>the mouse wheel</td><td></td><td>pinch</td></tr>
+          <tr><td>Leave first person</td><td>Esc</td><td>Start</td><td>Leave</td></tr>
+        </table>
+        <h3>I'm in control: the tools</h3>
+        <table class="ctl"><tr><th></th><th></th></tr>
+          <tr><td>Give orders</td><td>select one of your Tickles, then click the ground (go there), another Tickle (chat) or an object (use it)</td></tr>
+          <tr><td>Build</td><td>click a block face; for a line, a wall or an area, click where it starts and then where it ends. Only on your own land; on neutral land the Parliament decides</td></tr>
+          <tr><td>Dig</td><td>click a block (Clear an area: two clicks)</td></tr>
+          <tr><td>Place object</td><td>choose a group and an object, click open ground; R turns it</td></tr>
+          <tr><td>Move / Remove</td><td>click a placed object (Move: then where it goes; R turns it)</td></tr>
+          <tr><td>Undo</td><td>Ctrl+Z, or the Undo button</td></tr>
+        </table>
+        <h3>Inside</h3>
+        <table class="ctl"><tr><th></th><th></th></tr>
+          <tr><td>Look around</td><td>drag to pan over the floor; the wheel zooms</td></tr>
+          <tr><td>Other rooms</td><td>the numbered buttons in the room's card</td></tr>
+          <tr><td>Edit your home</td><td>"Edit this home" in the room's card: click a piece of furniture, then the floor to move it</td></tr>
+        </table>
       </div>
       <div class="menusec" id="menu-music" hidden></div>
       <div class="menusec" id="menu-settings" hidden></div>
@@ -711,7 +750,7 @@ body.fpmode #mapbox, body.fpmode #dock { display: none !important; }
 <script src="js/contests.js?v=250"></script>
 <script src="js/diving.js?v=226"></script>
 <script src="js/sea.js?v=5"></script>
-<script src="js/firstperson.js?v=260"></script>
+<script src="js/firstperson.js?v=261"></script>
 <script src="js/seabeasts.js?v=253"></script>
 <script src="js/war.js?v=7"></script>
 <script src="js/wealth.js?v=255"></script>
@@ -719,14 +758,14 @@ body.fpmode #mapbox, body.fpmode #dock { display: none !important; }
 <script src="js/parliament.js?v=252"></script>
 <script src="js/birds.js?v=225"></script>
 <script src="js/weather.js?v=248"></script>
-<script src="js/interiors.js?v=272"></script>
+<script src="js/interiors.js?v=273"></script>
 <script src="js/places.js?v=251"></script>
 <script src="js/inspect.js?v=254"></script>
 <script src="js/farview.js?v=253"></script>
 <script src="js/sfx.js?v=225"></script>
 <script src="js/music.js?v=225"></script>
 <script src="js/hand.js?v=225"></script>
-<script src="js/ui.js?v=265"></script>
+<script src="js/ui.js?v=266"></script>
 <script src="js/directory.js?v=225"></script>
 <script src="js/homeedit.js?v=2"></script>
 <script src="js/build.js?v=3"></script>
