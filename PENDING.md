@@ -96,6 +96,14 @@ the bedrooms. Still to do: the same for the other big interiors, and more varied
   read at; a window or picture; a training dummy; chats two by two; the rest stroll up and down), changing every
   hour; lunch and breakfast still round the table; two who chat stand a good step apart (2.4). Also done: the guild halls (each member in a place of its own instead of two rows), the casino (one per seat at the tables, the machines and the stools as before; the other guests stand round the tables watching; those waiting for the tournament in little knots, talking, not in a queue). The Parliament already seats each minister in its own seat.
 
+### 1.5h A guided tour of everything (asked 29 October, done)
+For showing the game to someone (the owner thinks of showing it to the collection's creator): the "Tour" button in
+the top bar (or T) takes the camera through 20 stops with a caption each, Back / Next / Play (every 14 seconds) /
+Close: the island, a town, a fortress, inside the castle, an estate, the Guild Quarter, the arena, the Great
+Underworld (and down below), a mine, a dragon's peak, the lake, a dive site, the casino (inside), the Parliament
+(inside), the prison, an Ether field, wars ("Watch a demo war" starts one), the encyclopedia ("Open it") and the
+tools of "I'm in control" (js/tour.js).
+
 ### 1.5g The evening in the big places (asked 28 October)
 "At the fire of a mansion or a castle they are too crowded: spread them, or not all of them: some patrolling the
 walls, some in the stable, some indoors, the rest round the fire, more spread out." Done the same day for places of
