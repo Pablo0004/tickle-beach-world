@@ -1976,7 +1976,7 @@
       }
       build(cur.map, w.to.room);
       const ws = cur.map.rooms[w.to.room].warps, W = w.to.warp === "down" ? ws.find((x) => x.down) : ws.find((x) => x.id === w.to.warp);
-      if (keepFP != null) { cur.ifp = { id: keepFP, x: 0, z: 0, yaw: 0, pitch: -0.18 }; ifpPlace(W); }
+      if (keepFP != null) { cur.ifp = { id: keepFP, x: 0, z: 0, yaw: 0, pitch: -0.05 }; ifpPlace(W); }
       cur.focus = cur.map.maze ? { x: W ? W.x : 0, z: W ? W.z : 0 } : { x: W ? W.x * 0.4 : 0, z: W ? W.z * 0.3 : 0 };
       App.cam.target.x = cur.worldCam.x; App.cam.target.z = cur.worldCam.z;
     });
@@ -2021,7 +2021,7 @@
   }
   // ---------- first person inside (asked 30 October) ----------
   // A Tickle of yours walked in first person goes in with you: WASD (Shift to run) to walk, the mouse (click to
-  // capture it) or the arrow keys to look, the view just behind it. It walks round the walls, the low walls of a
+  // capture it) or the arrow keys to look, through its own eyes (the Tickle is not seen). It walks round the walls, the low walls of a
   // floor plan, the rock of a cave and the big furniture; the ways on (a door, the stairs, the way out) show in the
   // room's card only when it stands at them, and E takes them too. Out of the door it is still yours in first
   // person outside; Esc puts the view back over the room.
@@ -2054,7 +2054,7 @@
     spawnFigure({ id: I.id, pose: "ifp", at: { x, z, rot: I.yaw } }, 0, R, cur.group, cur.token);
   }
   function ifpStart(id, W) {
-    cur.ifp = { id, x: 0, z: 0, yaw: 0, pitch: -0.18 };
+    cur.ifp = { id, x: 0, z: 0, yaw: 0, pitch: -0.05 };
     ifpPlace(W);
     App.toast("In first person inside: WASD to walk; doors and stairs show when you reach them (E). Esc for the room view.");
   }
@@ -2149,9 +2149,12 @@
       const I = cur.ifp, dtf = Math.min(0.1, (performance.now() - (I.lt || performance.now())) / 1000);
       I.lt = performance.now();
       ifpStep(dtf);
-      const back = 3.4, ey = 3.2;
-      cam.position.set(I.x - Math.sin(I.yaw) * back * Math.cos(I.pitch), ey - Math.sin(I.pitch) * back, I.z - Math.cos(I.yaw) * back * Math.cos(I.pitch));
-      cam.lookAt(I.x + Math.sin(I.yaw) * 4, 1.9 + Math.sin(I.pitch) * 4, I.z + Math.cos(I.yaw) * 4);
+      // through its own eyes: the Tickle itself is not seen (asked 30 October)
+      const fig = cur.figures.find((x) => x.id === I.id && x.pose === "ifp"), ey = fig && fig.F.height ? fig.F.height * 0.78 : 2.4;
+      if (fig) fig.holder.visible = false;
+      const ex = I.x + Math.sin(I.yaw) * 0.35, ez = I.z + Math.cos(I.yaw) * 0.35;
+      cam.position.set(ex, ey, ez);
+      cam.lookAt(ex + Math.sin(I.yaw) * Math.cos(I.pitch) * 4, ey + Math.sin(I.pitch) * 4, ez + Math.cos(I.yaw) * Math.cos(I.pitch) * 4);
       cur.view = { x: I.x, z: I.z };
     }
     const now = performance.now(), dtm = Math.min(0.1, (now - (cur.last || now)) / 1000) * Math.max(0.25, Math.min(2, st.speed || 0.25));

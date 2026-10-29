@@ -25,6 +25,7 @@ JavaScript, no build step). The owner talks in Spanish: answer in Spanish. Code,
   change bumps the layout tag (`App.LAYOUT`, with `App.migrateLayout`).
 - The owner's OpenSea API key stays on the owner's machine (`OPENSEA_API_KEY`); never store it.
 
+- In first person the Tickle itself is never seen: the view is through its own eyes (said 30 October 2026).
 - Everything must stay convertible to on-chain vector models like the Tickles (the SDF stroke format of the kit), in
   case the whole game is ever put on the chain: new models are strokes, never meshes or images; finer cubes are only
   a rendering resolution, and textures must be reproducible from strokes and colours (asked 28 October 2026).

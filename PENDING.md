@@ -230,8 +230,8 @@ owner: a tank can be **bought and found**, both. Plan:
 - **First person inside buildings (asked 30 October)**: going into buildings in first person; and a Tickle in first
   person does not get the buttons to go up, down or out until it reaches the door or the stairs that lead there. Done
   30 October (interiors.js, "first person inside"): walking one of your Tickles in first person, E at a door takes
-  it in and you keep walking it: WASD (Shift to run), the mouse (click to capture) or the arrow keys to look, the
-  view just behind it; it goes round the walls, the low walls of a floor plan, the passages of a cave and the big
+  it in and you keep walking it: WASD (Shift to run), the mouse (click to capture) or the arrow keys to look,
+  through its own eyes (the Tickle itself is never seen in first person: the owner's rule); it goes round the walls, the low walls of a floor plan, the passages of a cave and the big
   furniture; the ways on show in the room's card only when it stands at them ("... (E)"), E takes them (up, down,
   out); out of the door it is still yours in first person outside; Esc gives the room view back.
 - **Open caves and mines**: only the dungeons (the Great Underworld) stay labyrinths; the other caves and the mines
