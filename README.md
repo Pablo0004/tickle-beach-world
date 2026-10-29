@@ -606,8 +606,8 @@ sea beasts, wealth and weather. A layout tag (`App.LAYOUT`) lets an old save mig
 Other files: `tests/` (browser test scripts with Playwright, and what each checks: [tests/README.md](tests/README.md)),
 `CLAUDE.md` (notes for Claude sessions), `onchain-tickle.html` (the original on-chain viewer, used to open kit models in it),
 `dev-*.html` (developer test pages), `reference/` (the decoded on-chain repository and one on-chain token
-page), `v1/` (the first single-island version), `music/` (the CC0 tracks), `ESTADO_Y_PENDIENTES.md`
-(the project log in Spanish) and [PENDING.md](PENDING.md) (what is left, in English).
+page), `v1/` (the first single-island version), `music/` (the CC0 tracks), [PENDING.md](PENDING.md) (the project's record: what is pending
+and what was done) and [CHECKLIST.md](CHECKLIST.md) (the owner's list of things to test).
 
 **Conventions**: kit coordinates are SDF units with z up, ground at z = 0, front +y, a Tickle about 480
 units tall (160 units per block). JavaScript files are kept ASCII (non-ASCII characters escaped). Each

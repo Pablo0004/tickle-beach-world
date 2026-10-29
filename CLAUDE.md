@@ -1,18 +1,17 @@
 # Notes for Claude
 
 Tickle Beach World: a browser voxel life sim where all 9,629 on-chain Tickle Beach NFTs live (three.js r128, plain
-JavaScript, no build step). The owner talks in Spanish: answer in Spanish. Code, comments, `README.md`,
-`PENDING.md` and `tests/README.md` are in English; `ESTADO_Y_PENDIENTES.md` (the project log) is in Spanish.
+JavaScript, no build step). The owner talks in Spanish: answer in Spanish. Everything in the repository is in
+English (code, comments and every document): the repository is shared with the collection's creator.
 
 ## Where to start
 
 - `PENDING.md`: what is next, in the agreed order, with the plan for each item, the open questions and the
   owner's rules. Work the items in that order, one at a time.
-- `ESTADO_Y_PENDIENTES.md`: everything asked, done and pending, in Spanish. Update it (and `PENDING.md`) after
-  every item.
+  It is the one record of the project (what is pending, what was done and when); update it after every item.
 - `README.md`: the whole game, controls, technical overview and what each file in `js/` does.
-- `REVISAR.md` (Spanish): the checklist the owner goes through at the end, when they test everything; add to it
-  after every item (the owner does not want to test until the work is finished).
+- `CHECKLIST.md`: the checklist the owner goes through at the end, when they test everything; add to it after every
+  item (the owner does not want to test until the work is finished).
 - `tests/README.md`: the browser test scripts (Playwright), how to run them and what each one checks. Use them
   to see a change working before publishing.
 
@@ -35,7 +34,7 @@ JavaScript, no build step). The owner talks in Spanish: answer in Spanish. Code,
 - JavaScript files are pure ASCII: escape anything else (write `\u00b7`, not the character itself). The file-writing tool may turn escapes into
   raw characters; check with `grep -P '[^\x00-\x7F]' js/*.js`.
 - Every changed script gets its `?v=N` cache-buster bumped in `index.html`.
-- Some files use CRLF line endings (`index.html`, `ESTADO_Y_PENDIENTES.md`, several `js/` files): keep them as
+- Some files use CRLF line endings (`index.html`, several `js/` files): keep them as
   they are (edit with the Edit tool, or Python with `newline=''`).
 
 ## Publishing
