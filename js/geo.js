@@ -1281,14 +1281,15 @@
           }
         });
       }
-      // a stable for the place's tamed creatures, where they spend the night while their Tickles sleep (asked 28
-      // October); inside the walls of a fortress
+      // a stable for the place's tamed creatures, where they spend the night while their Tickles sleep and wait while
+      // their Tickles sit round the fire (asked 28 and 29 October): a big one, well away from the fire; inside the
+      // walls of a fortress
       {
-        const sx = W0 ? W0.x : v.x, sz = W0 ? W0.z : v.z, far1 = W0 ? W0.r * 0.5 : Math.max(14, (v.r || 20) * 0.75);
+        const sx = W0 ? W0.x : v.x, sz = W0 ? W0.z : v.z, far1 = W0 ? W0.r * 0.62 : Math.max(24, (v.r || 20) * 1.05);
         for (let k = 0; k < 60 && !v.stable; k++) {
           const a = hash2(v.i, k, 1311) * 6.283, r = far1 * (0.7 + hash2(v.i, k, 1313) * 0.6), x = sx + Math.cos(a) * r, z = sz + Math.sin(a) * r;
-          if (!okAt(x, z, 3.6)) continue;
-          v.stable = tsc(key + "/stable", "stable_" + v.style, x, z, faceTo(x, z, v.x, v.z), { building: true, stable: true, village: v.i });
+          if (Math.hypot(x - v.x, z - v.z) < 22 || !okAt(x, z, 5.4)) continue;
+          v.stable = tsc(key + "/stable", "stable_" + v.style, x, z, faceTo(x, z, v.x, v.z), { building: true, stable: true, village: v.i, scale: 1.5 });
         }
       }
       homesInOrder(v);

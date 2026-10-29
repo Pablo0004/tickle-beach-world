@@ -253,15 +253,18 @@
       }
       const inside = !t.group.visible;
       // while its Tickle is indoors it waits at the stable of its place (at its open front, or in the yard before it), or else by the door
-      const Sb = inside && t.village && t.village.stable && !t.village.stable.ruined && Math.hypot(t.village.stable.x - t.home.x, t.village.stable.z - t.home.z) < 140 ? t.village.stable : null;
+      // (and while it sits round the fire with the others of an evening: a creature takes up too much room there; it
+      // is fetched again when the gathering is over)
+      const atFire = !!(t.step && t.step.k === "evening" && t.village && Math.hypot(t.pos.x - t.village.x, t.pos.z - t.village.z) < 26);
+      const Sb = (inside || atFire) && t.village && t.village.stable && !t.village.stable.ruined && Math.hypot(t.village.stable.x - t.home.x, t.village.stable.z - t.home.z) < 140 ? t.village.stable : null;
       let ox, oz;
       if (Sb) {
-        const k = Math.floor(App.hash2(b.data.owner, 517, 3) * 15), fx = Math.sin(Sb.rot || 0), fz = Math.cos(Sb.rot || 0), lx = ((k % 5) - 2) * 1.3, fwd = k < 3 ? 1.9 : 3.3 + Math.floor((k - 3) / 5) * 1.4;
+        const k = Math.floor(App.hash2(b.data.owner, 517, 3) * 15), fx = Math.sin(Sb.rot || 0), fz = Math.cos(Sb.rot || 0), sc = Sb.scale || 1, lx = ((k % 5) - 2) * 1.3 * sc, fwd = (k < 3 ? 1.9 : 3.3 + Math.floor((k - 3) / 5) * 1.4) * sc;
         ox = Sb.x + fz * lx + fx * fwd; oz = Sb.z - fx * lx + fz * fwd;
         if (Math.hypot(ox - b.x, oz - b.z) < 0.5) b.h = Math.atan2(fx, fz);
       } else { ox = inside ? t.home.x + 1.2 : t.pos.x - Math.sin(t.heading) * 1.4 + Math.cos(t.heading) * 0.9; oz = inside ? t.home.z + 0.6 : t.pos.z - Math.cos(t.heading) * 1.4 - Math.sin(t.heading) * 0.9; }
       const d = Math.hypot(ox - b.x, oz - b.z);
-      if (d > 18) { b.x = ox; b.z = oz; }
+      if (d > 45) { b.x = ox; b.z = oz; } // (from the stable it runs back to its Tickle when the gathering is over)
       else if (d > 0.4) moveTo(b, ox, oz, d > 4 ? 4.2 : 2.2, dm);
       return;
     }

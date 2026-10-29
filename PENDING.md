@@ -116,7 +116,9 @@ guardians beaten, loot). Still to do if wanted: duels and contests (contests alr
 Tamed creatures stay waiting at the door while their Tickles sleep: build stables in the villages' grounds and
 inside the fortresses, where they spend the night. Done 28 October: a stable (strokes: a timber barn, open front, hay, a trough) in every
 lived-in place (249), inside the walls of a fortress; while its Tickle is indoors a tamed creature waits at the
-front of its place's stable or in the yard before it.
+front of its place's stable or in the yard before it. Changed 29 October (asked): the pets are not taken to the evening gathering
+at the fire (they take up too much room): they wait at the stable and are fetched when it is over; the stable is
+half as big again and well away from the fire (22 to about 50 cells, 35 on average).
 
 ### 1.5f More griffins (asked 28 October)
 "I love seeing Tickles flying on them": more griffin riders, and they attack and defend mounted on them (in a war

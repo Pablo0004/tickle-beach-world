@@ -111,3 +111,4 @@ mando, ni tarjeta gráfica). Ve tachando lo que veas bien y apunta lo que no.
 - En "I'm in control": Build con sus modos (uno, línea, muro, rellenar, vaciar: dos clics), el bloque fantasma (rojo donde no se puede), todos los bloques.
 - Place object: elige grupo y objeto, ves el fantasma, R lo gira. Move: coges un objeto y lo dejas en otro sitio. Remove: lo quitas. Undo o Ctrl+Z deshace.
 - Prueba en tu terreno (se queda), en el de otro poseedor (no deja) y en terreno neutro (aviso; el Parlamento lo vota en su sesión de la tarde y, si lo rechaza, desaparece).
+- Por la tarde, en la hoguera no hay mascotas: esperan en el establo (más grande y alejado) y vuelven con su Tickle al acabar.
