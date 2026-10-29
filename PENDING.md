@@ -240,6 +240,11 @@ owner: a tank can be **bought and found**, both. Plan:
   dark blue stone walls and floor, very little light but the torches (warm pools), and sea creatures going up and
   down the passages (crabs, jellyfish, a turtle, a manta) (1.7's "sea creatures in the sea caves" too).
 
+### 1.8b Birds spread their wings (asked 30 October, done)
+The songbirds and gulls flew with their wings folded. Now each has two wings (strokes, `birdwing`, the colours of its
+kind) hung from the shoulders: spread and beating while it flies (a gull glides between beats), hidden while it sits
+(birds.js).
+
 ### 1.7 Left over from version 50 (smaller; ask the owner before widening any of them)
 
 - More detail: colour variation inside the models (a leafy tree is one green), the water surface, the interiors. Done 30 October for

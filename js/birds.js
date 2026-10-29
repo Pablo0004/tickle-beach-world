@@ -34,6 +34,17 @@
       st.push(S("sphere", [owl ? 10 : 9, owl ? 20 : 34, owl ? 80 : 68], [owl ? 6 : 3.5, 3, owl ? 6 : 3.5], { color: owl ? C("#ffd23f") : eye, mirror: true, offsX: owl ? 10 : 9, layer: 1 }));
       return st;
     }
+    // a wing spread for flight (drawn apart so it can beat): from the shoulder at the origin out along x (variant: the
+    // kind of bird times two, plus the side), the long feathers of its tip darker
+    function birdwing(v) {
+      const L = LOOK[v >> 1], sx = v & 1 ? -1 : 1, st = [], wing = C(L.wing), body = C(L.body), gull = v >> 1 === 6, owl = v >> 1 === 5;
+      const len = gull ? 78 : owl ? 62 : 52;
+      st.push(S("sphere", [sx * len * 0.45, -2, 0], [len * 0.48, gull ? 15 : 18, 4], { color: body }));
+      st.push(S("sphere", [sx * len * 0.85, -8, 0], [len * 0.32, gull ? 12 : 15, 3], { color: wing }));
+      for (const k of [0, 1, 2]) st.push(S("cube", [sx * (len * 0.95 + k * 4), -14 - k * 6, 0], [len * 0.18, 4, 2], { color: wing, rot: [0, 0, sx * (0.2 + k * 0.15)], layer: 1 }));
+      return st;
+    }
+    TB.KIT.birdwing = { name: "Bird Wing", group: "Wildlife", variants: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], build: birdwing, voxel: [2] };
     TB.KIT.songbird = { name: "Songbird", group: "Wildlife", variants: [0, 1, 2, 3, 4, 5, 6], build: songbird, voxel: [3], variantLabel: (v) => ["sunfinch", "meadow warbler", "palm robin", "coral thrush", "turtle dove", "moon owl", "sea gull"][v] };
   }
   if (!G.App) return;
@@ -128,7 +139,18 @@
     for (const [k, w] of want) if (!birds.has(k)) {
       const b = Object.assign(w, { obj: null, next: performance.now() + 1000 + rnd() * w.kind.every[1] * 1000, bobUntil: 0, bobFrom: 0, born: performance.now(), from: { x: w.x + (rnd() - 0.5) * 30, y: w.y + 12, z: w.z + (rnd() - 0.5) * 30 } });
       birds.set(k, b);
-      App.kitMesh("songbird", w.kind.v).then((r) => { if (birds.get(k) !== b) return; const g = new THREE.Group(); g.add(App.centeredMesh(r.md, r.geo, true)); g.scale.setScalar(b.kind.v === 5 ? 2.2 : b.kind.v === 6 ? 2.4 : 1.8); App.scene.add(g); b.obj = g; });
+      App.kitMesh("songbird", w.kind.v).then((r) => { if (birds.get(k) !== b) return; const g = new THREE.Group(); g.add(App.centeredMesh(r.md, r.geo, true)); g.scale.setScalar(b.kind.v === 5 ? 2.2 : b.kind.v === 6 ? 2.4 : 1.8); App.scene.add(g); b.obj = g; addWings(b); });
+    }
+  }
+  // its two wings: hung from the shoulders, out and beating while it flies, folded away (hidden) while it sits
+  function addWings(b) {
+    const S = App.S, v = b.kind.v;
+    b.wings = [];
+    for (const side of [0, 1]) {
+      const pv = new THREE.Group();
+      pv.position.set((side ? -16 : 16) * S, 50 * S, -4 * S); pv.visible = false;
+      b.obj.add(pv); b.wings.push(pv);
+      App.kitMesh("birdwing", v * 2 + side).then((r) => { const m = new THREE.Mesh(r.geo, App.voxMaterial); m.scale.setScalar(r.md.voxel * S); m.position.set(r.md.origin[0] * S, r.md.origin[1] * S, r.md.origin[2] * S); pv.add(m); });
     }
   }
   App.updateBirds = (dt) => {
@@ -149,6 +171,11 @@
         // bobbing its head and tail while it sings
         const singing = now > b.bobFrom && now < b.bobUntil;
         b.obj.rotation.x = singing ? Math.sin(t * 22) * 0.12 - 0.15 : flying ? 0.2 : 0;
+        // the wings: spread and beating in flight (a gull glides between beats), away when it sits
+        if (b.wings) {
+          const beat = b.kind.v === 6 ? Math.max(0, Math.sin(t * 6)) * Math.sin(t * 14) * 0.8 : Math.sin(t * 22) * 0.9;
+          b.wings.forEach((pv, i) => { pv.visible = flying; pv.rotation.z = (i ? -1 : 1) * (flying ? beat : 0); });
+        }
       }
       const W = App.weatherHere && App.weatherHere();
       if (now >= b.next && !st.paused && st.speed > 0 && !(W && (W.rain > 0.25 || W.storm))) { // quiet in the rain
