@@ -219,6 +219,13 @@ owner: a tank can be **bought and found**, both. Plan:
   `weaponShow`), and in the inspect window and the encyclopedia (1.3);
 - NPC divers: with a tank they stay down longer per dive (diving.js `CYCLE`) and find a little more.
 
+### 1.8 Controls in the menu, open caves and mines, dark sea caves (asked 30 October)
+- **Controls**: a "Controls" section in the menu with everything for keyboard and gamepad (and touch), so that no
+  help about controls takes up the screen while playing.
+- **Open caves and mines**: only the dungeons (the Great Underworld) stay labyrinths; the other caves and the mines
+  become open spaces, like the rooms worked on lately (the merged floors).
+- **Sea caves**: walls of dark blue stone, as dark as it should be down there, lit only in spots by torches.
+
 ### 1.7 Left over from version 50 (smaller; ask the owner before widening any of them)
 
 - More detail: colour variation inside the models (a leafy tree is one green), the water surface, the interiors.
