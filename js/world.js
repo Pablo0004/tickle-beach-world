@@ -549,6 +549,9 @@
     const a = ((h - 6) / 12) * Math.PI;
     sun.position.set(Math.cos(a) * 40, Math.max(8, Math.sin(a) * 55), 25);
     water.material.color.setHex(k > 0.5 ? 0x2aa7c9 : 0x1b5f7a);
+    // close up, the water is clear enough to see the bottom through it (the reefs, the wrecks, the fish); from high
+    // up it is the sea's colour as before
+    water.material.opacity = cam.radius < 60 ? 0.42 : cam.radius < 120 ? 0.42 + ((cam.radius - 60) / 60) * 0.26 : 0.68;
     App.isNight = k < 0.4;
     if (!(App.fpOn && App.fpOn())) { const f = App.fogRange(); scene.fog.near = f.near; scene.fog.far = f.far; }
     if (App.weatherLight) App.weatherLight(scene, hemi, sun, k); // cloud, rain, fog and lightning (weather.js)
