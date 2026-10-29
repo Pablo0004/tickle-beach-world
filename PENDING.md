@@ -96,16 +96,13 @@ the bedrooms. Still to do: the same for the other big interiors, and more varied
   read at; a window or picture; a training dummy; chats two by two; the rest stroll up and down), changing every
   hour; lunch and breakfast still round the table; two who chat stand a good step apart (2.4). Also done: the guild halls (each member in a place of its own instead of two rows), the casino (one per seat at the tables, the machines and the stools as before; the other guests stand round the tables watching; those waiting for the tournament in little knots, talking, not in a queue). The Parliament already seats each minister in its own seat.
 
-### 1.5h A guided tour of everything (asked 29 October, done)
-For showing the game to someone (the owner thinks of showing it to the collection's creator): the "Tour" button in
-the top bar (or T) takes the camera through 23 stops with a caption each, Back / Next / Play (every 14 seconds) /
-Close: the island, a town, a fortress, inside the castle, an estate, the Guild Quarter, the arena, the Great
-Underworld (and down below), a mine, a dragon's peak, the lake, a dive site, the casino (inside), the Parliament
-(inside), the prison, an Ether field, wars ("Watch a demo war" starts one), the encyclopedia ("Open it") and the
-tools of "I'm in control" (js/tour.js). Added the same day (asked): "A battle in the arena" (with "Skip to tonight's
-tournament", which moves the clock on to 17:25 and flies to the arena; the battles are fought in front of you
-from 17:30), "Under the water" (a Tickle dives at the site and the view goes down with it; the dive takes about
-half a minute to reach the bottom) and "A sea cave" (inside). 23 stops.
+### 1.5h A guided tour of everything (asked 29 October; taken out the same day, to be redone later)
+A tour for showing the game to someone was built (a "Tour" button, 23 stops) and taken out at the owner's request
+("it is badly done; we will see to it another time"). Weak points seen: slow stops (a dive takes half a minute,
+the tournament means waiting for 17:30), tricks (moving the clock on, a sea cave entered without diving), most
+stops show a quiet place rather than something happening, long captions, the card over the minimap. To be
+redone with the owner when the time comes (perhaps a "see it now" list with buttons). The removed code is in the
+git history (js/tour.js, commit 24a704d).
 
 ### 1.5g The evening in the big places (asked 28 October)
 "At the fire of a mansion or a castle they are too crowded: spread them, or not all of them: some patrolling the

@@ -113,7 +113,3 @@ mando, ni tarjeta gráfica). Ve tachando lo que veas bien y apunta lo que no.
 - Prueba en tu terreno (se queda), en el de otro poseedor (no deja) y en terreno neutro (aviso; el Parlamento lo vota en su sesión de la tarde y, si lo rechaza, desaparece).
 - Por la tarde, en la hoguera no hay mascotas: esperan en el establo (más grande y alejado) y vuelven con su Tickle al acabar.
 
-## Visita guiada
-
-- Pulsa "Tour" (arriba) o T: recorre las 20 paradas con Next o con Play; entra en el castillo, la mazmorra, el casino y el Parlamento; en "Wars" prueba "Watch a demo war"; en la enciclopedia, "Open it".
-- En la visita: "A battle in the arena" (prueba "Skip to tonight's tournament" y espera a las 17:30 allí), "Under the water" (la cámara baja con el buceador; tarda medio minuto en llegar al fondo) y "A sea cave" (entra en la gruta).
