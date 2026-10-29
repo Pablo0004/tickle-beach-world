@@ -102,7 +102,7 @@
   // the catalogue, in groups (the kit's own groups, shown under plain names); living things and whole buildings are left out
   const SKIP = /^(castle|castle2|castle3|palace|wall|walltower|gatehouse|gateleaf|catapultarm|mlodge|mfarm|mkeep|mcaptain|mvilla|mtropic|warren|townhouse|manor|horseleg|griffinwing|tentacle|serpenthump)$/;
   const LIVING = /^(Animals|Creatures|Dragons|Monsters|Lake|Myth|Wildlife)$/;
-  const GROUP_NAME = { Interiors: "Furniture", Village: "Village and fences", Wealth: "Stalls, mounts and boats", Scenery: "Garden and plants", Props: "Decoration", Lights: "Lights", Play: "Play" };
+  const GROUP_NAME = { Interiors: "Furniture", Village: "Village and fences", Wealth: "Stalls, mounts and boats", Scenery: "Garden and plants", Garden: "Garden and extras", Props: "Decoration", Lights: "Lights", Play: "Play" };
   let catalogue = null;
   function buildCatalogue() {
     const G = new Map();

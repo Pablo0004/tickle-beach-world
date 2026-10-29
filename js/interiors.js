@@ -868,6 +868,7 @@
     if (T.kind === "granary" || T.kind === "hall" || T.kind === "house" || T.kind === "guild" || T.kind === "casino" || T.kind === "prison" || T.kind === "parliament" || !maps.has(key)) maps.set(key, T.kind === "parliament" ? chamberMap(T) : T.kind === "prison" ? prisonMap(T) : T.kind === "house" ? houseMap(T) : T.kind === "hall" && T.sc && T.sc.warren ? warrenMap(T) : T.kind === "hall" && T.sc && T.sc.mansion ? mansionMap(T) : T.kind === "hall" ? hallMap(T) : T.kind === "granary" ? granaryMap(T) : T.kind === "guild" ? guildMap(T) : T.kind === "casino" ? casinoMap(T) : T.kind === "dungeon" ? greatUnderworld() : T.kind === "seacave" ? seaCaveMap(T) : mineMap(T));
     const m = maps.get(key);
     m.key = key; m.target = T;
+    if ((T.kind === "house" || T.kind === "hall") && App.applyHomeEdits && !m.edited) { m.edited = true; App.applyHomeEdits(m); }
     return m;
   };
 
@@ -1855,7 +1856,8 @@
     if (cur) cur.who = who;
     const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
     el.hidden = false;
-    el.innerHTML = '<div class="rh-title">' + esc(map.title) + '</div><div class="rh-room">' + esc(R.name) + (() => { const live = map.floors ? null : map.rooms.filter((r) => !r.merged), n = map.floors || live.length, k = map.floors ? ri + 1 : live.indexOf(R) + 1; return n > 1 ? " &middot; " + (map.floors ? "floor " : "room ") + k + " of " + n : ""; })() + (R.zones ? '</div><div class="rh-note">On this floor: ' + esc(R.zones.map((z) => z.name).filter((x, i, A) => A.indexOf(x) === i).join(", ")) : "") + "</div>" +
+    const editBtn = App.canEditHome && App.canEditHome(map) ? ' <button class="btn" style="font-size:11.5px;padding:2px 8px" data-homeedit="1">' + (App.homeEditing && App.homeEditing() ? "Done editing" : "Edit this home") + "</button>" : "";
+    el.innerHTML = '<div class="rh-title">' + esc(map.title) + editBtn + '</div><div class="rh-room">' + esc(R.name) + (() => { const live = map.floors ? null : map.rooms.filter((r) => !r.merged), n = map.floors || live.length, k = map.floors ? ri + 1 : live.indexOf(R) + 1; return n > 1 ? " &middot; " + (map.floors ? "floor " : "room ") + k + " of " + n : ""; })() + (R.zones ? '</div><div class="rh-note">On this floor: ' + esc(R.zones.map((z) => z.name).filter((x, i, A) => A.indexOf(x) === i).join(", ")) : "") + "</div>" +
       (R.note ? '<div class="rh-note">' + esc(R.note) + "</div>" : "") +
       (R.boss ? '<div class="rh-note"><b>Guardian:</b> ' + esc(R.boss.name) + (cur && cur.mons && cur.mons.some((m) => m.mo.boss && m.dead) ? " (beaten! it will rise again)" : "") +
         (map.floors && st.guardians ? (st.guardians[ri] ? " \u00b7 first beaten by " + (st.guardians[ri].chosen ? "the Maker's Chosen" : esc(App.placeName(st.guardians[ri].village, st.guardians[ri].vname))) : " \u00b7 never beaten" + (App.guardianNeed ? " (a party needs about " + Math.round(App.guardianNeed(ri)) + " strength)" : "")) : "") + "</div>" : "") +
@@ -2013,6 +2015,15 @@
     return best || (R ? { kind: "room", room: R, map: cur.map, ri: cur.ri, mons: cur.mons || [] } : null);
   };
   App.MON_NAME = MON_NAME;
+  App.insideFloorAt = (ndc) => {
+    if (!cur) return null;
+    const rc = new THREE.Raycaster(); rc.setFromCamera(new THREE.Vector2(ndc.x, ndc.y), cam);
+    const o = rc.ray.origin, d = rc.ray.direction;
+    if (Math.abs(d.y) < 1e-6) return null;
+    const t = -o.y / d.y;
+    return t > 0 ? { x: o.x + d.x * t, z: o.z + d.z * t } : null;
+  };
+  App.insideRebuild = () => { if (cur) { const ri = cur.ri; build(cur.map, ri); } };
   // drawn instead of the world while inside; the view orbits and zooms as usual, and a drag pans within the room
   App.renderInside = (renderer, camera) => {
     const C = App.cam, R = cur.map.rooms[cur.ri], w = cur.worldCam;

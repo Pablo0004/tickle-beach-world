@@ -249,7 +249,7 @@
   App.onWorldClick = (ndc) => {
     const looking = !ui.tool || ui.tool === "select";
     // inside: whoever or whatever was clicked, in the inspect window (inspect.js)
-    if (App.inside) { if (looking && App.inspectPick) { const o = App.inspectPick(ndc); if (o) App.showInspect(o.fn); else App.closeInspect(); } return; }
+    if (App.inside) { if (App.homeEditClick && App.homeEditClick(ndc)) return; if (looking && App.inspectPick) { const o = App.inspectPick(ndc); if (o) App.showInspect(o.fn); else App.closeInspect(); } return; }
     const r = App.rayFrom(ndc);
     let hit = null, hd = Infinity;
     for (const t of st.tickles) {
@@ -1361,6 +1361,7 @@
       App.initWeather && App.initWeather(saved && saved.weather);
       App.initWar && App.initWar(saved && saved.war);
       App.initBuild && App.initBuild(saved && saved.build);
+      App.initHomes && App.initHomes(saved && saved.homes);
       // buildings moved by hand in an earlier session take their doors (and their residents) with them again
       for (const k in st.moved || {}) { const s = App.sceneryAll[+k]; if (s && s.building && App.syncBuilding) App.syncBuilding(s); }
       if (saved) st.settleDay = saved.settleDay;

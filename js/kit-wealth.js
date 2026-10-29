@@ -651,6 +651,35 @@
     st.push(S("cube", [0, -170, 120], [300, 6, 100], { color: dark, layer: 5 }));
     return st;
   }
+  // ---------- extras for a home's garden (build mode, "Garden and extras") ----------
+  // a flower bed: a low border of stones round dark earth, flowers in the house's colour and others
+  function flowerbed(clan) {
+    const st = [], stone = C("#9a948a"), earth = C("#5a3a1a"), green = C("#3cbf6c"), fl = C(CLANS[clan].color);
+    st.push(S("cube", [0, 0, 22], [200, 90, 22], { color: stone, round: 0.3 }));
+    st.push(S("cube", [0, 0, 40], [185, 76, 8], { color: earth }));
+    for (const x of [-140, -70, 0, 70, 140]) st.push(S("sphere", [x, 0, 70], [34, 30, 26], { color: green, layer: 1 }));
+    for (const [x, c] of [[-140, fl], [-70, C("#ffd23f")], [0, fl], [70, C("#fff4e0")], [140, fl]]) st.push(S("sphere", [x, 10, 100], [18, 18, 14], { color: c, layer: 2 }));
+    return st;
+  }
+  // a clipped hedge, a block of box with a rounded top
+  function hedge() {
+    const st = [], g = C("#2e7a3a"), g2 = C("#3c9a48");
+    st.push(S("cube", [0, 0, 110], [240, 60, 110], { color: g, round: 0.25 }));
+    st.push(S("cube", [0, 0, 222], [236, 56, 10], { color: g2, round: 0.5 }));
+    for (const x of [-160, 0, 160]) st.push(S("sphere", [x, -60, 120], [30, 10, 30], { color: g2, layer: 1 }));
+    return st;
+  }
+  // a porch: a wooden deck on low posts with a little roof over it, to set before a door
+  function porch(clan) {
+    const st = [], wood = C("#a0703a"), wood2 = C("#7a4a24"), roof = C(CLANS[clan].color);
+    st.push(S("cube", [0, 0, 30], [260, 140, 14], { color: wood }));
+    st.push(S("cube", [0, 0, 12], [250, 130, 12], { color: wood2 }));
+    st.push(S("joint", [230, 120, 230], [12, 12, 190], { color: wood2, mirror: true, offsX: 230, layer: 1 }));
+    st.push(S("cube", [0, 40, 440], [280, 120, 20], { color: roof, rot: [0.25, 0, 0], layer: 1 }));
+    st.push(S("cube", [200, 120, 90], [6, 6, 50], { color: wood2, mirror: true, offsX: 200, layer: 2 }));
+    st.push(S("cube", [0, 128, 130], [240, 6, 6], { color: wood, layer: 2 }));
+    return st;
+  }
   // a battering ram: a log with an iron head, slung on chains under a roof on wheels, the front (+y) at the gate
   function ram() {
     const st = [], wood = C("#8a5a30"), wood2 = C("#6b4422"), iron = C("#4a4a4a"), hide = C("#a0703a"), log = C("#7a4a24");
@@ -906,6 +935,9 @@
     catapult: { name: "Catapult", group: "Village", variants: [0], build: catapult, voxel: [8, 20], lazy: true },
     catapultarm: { name: "Catapult Arm", group: "Village", variants: [0], build: catapultarm, voxel: [7] },
     ram: { name: "Battering Ram", group: "Village", variants: [0], build: ram, voxel: [8] },
+    flowerbed: { name: "Flower Bed", group: "Garden", variants: clanV, build: flowerbed, voxel: [6], variantLabel: (v) => CLANS[v].species + " flowers" },
+    hedge: { name: "Hedge", group: "Garden", variants: [0], build: hedge, voxel: [7] },
+    porch: { name: "Porch", group: "Garden", variants: clanV, build: porch, voxel: [7], variantLabel: (v) => CLANS[v].species + " roof" },
     stable: { name: "Stable", group: "Village", variants: clanV, build: stable, voxel: [12, 28], lazy: true, variantLabel: (v) => CLANS[v].species + " roof" },
     mlodge: { name: "Log Lodge (Camping mansion)", group: "Village", variants: clanV, build: mlodge, voxel: [22, 48], lazy: true, variantLabel: (v) => CLANS[v].species + " roof" },
     mfarm: { name: "Country House (Duck Pond mansion)", group: "Village", variants: clanV, build: mfarm, voxel: [22, 48], lazy: true, variantLabel: (v) => CLANS[v].species + " roof" },

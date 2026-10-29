@@ -112,4 +112,4 @@ mando, ni tarjeta gráfica). Ve tachando lo que veas bien y apunta lo que no.
 - Place object: elige grupo y objeto, ves el fantasma, R lo gira. Move: coges un objeto y lo dejas en otro sitio. Remove: lo quitas. Undo o Ctrl+Z deshace.
 - Prueba en tu terreno (se queda), en el de otro poseedor (no deja) y en terreno neutro (aviso; el Parlamento lo vota en su sesión de la tarde y, si lo rechaza, desaparece).
 - Por la tarde, en la hoguera no hay mascotas: esperan en el establo (más grande y alejado) y vuelven con su Tickle al acabar.
-
+- Elige tu poseedor, entra en una de tus casas y pulsa "Edit this home": mueve, gira y quita muebles; añade uno; cambia suelo y paredes; añade una sala; repinta el tejado y sal a verlo. Fuera, en Place object, el grupo "Garden and extras" (flores, setos, porche).

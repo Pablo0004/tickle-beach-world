@@ -178,8 +178,20 @@ owner before building:
   groups (the kit's furniture, village things and fences, stalls, dungeon and mine things, contest and diving
   things, the sea, farming, landscape; and the approved designs), a ghost of the model, R turns it; Move (pick an
   object up, set it down, R turns it); Remove; Undo (button and Ctrl+Z) for all of it. Kit objects are saved with
-  the game (props with `kit`). Still to do: editing homes (inside: furniture, floors, walls; outside: colours,
-  extras, enlarging).
+  the game (props with `kit`).
+- **Editing homes (29 October, js/homeedit.js)**: inside a home on one's own land, "Edit this home" in the room's
+  card opens a panel: click a piece of furniture to choose it, click the floor to move it, Turn, Take away; Add
+  furniture (the kit's Interiors pieces; the new piece comes chosen); floor colours (8) and wall colours (9); Add a
+  room (up to 4, reached by a doormat by the way out); Roof outside: repaint in any of the six species' colours.
+  Garden extras for the build mode's catalogue ("Garden and extras"): flower beds, hedges, a porch (and the fences
+  and plants that were there). Kept with the game (`st.homes`, by the home's key), laid over its rooms each time
+  they are made. Item 1.6 is done; what the owner may still want: more extras attached to the house itself
+  (balcony, chimney) and other colours than the roof outside.
+
+### Note: where the game will live first (said by the owner on 29 October)
+At first the game will be for Discord, where holders' addresses are verified through Vulcan (a verification bot);
+if it grows it will move elsewhere. To keep in mind: playing as a holder (st.wallet) should come from that verified
+address; nothing to build for it yet unless the owner asks.
 
 ### 1.6b Oxygen tanks (asked 24 October, decided with the owner; not started)
 
