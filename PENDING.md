@@ -3,7 +3,9 @@
 Updated 30 October 2026. This repository (`main`) is ahead of version 50, the game published on 24 October
 (https://claude.ai/artifact/Y2NNeAnZA2GCzhpAS2qC6b); nothing since has been published yet. Items are worked in the order
 agreed with the project owner; one item is finished before the next one starts. The browser test scripts and what
-each one checks are in [tests/README.md](tests/README.md); `REVISAR.md` is the owner's checklist (in Spanish).
+each one checks are in [tests/README.md](tests/README.md); `CHECKLIST.md` is the owner's list of things to test.
+This file is the one record of the project: what is pending, what was done and when (it replaces the old Spanish
+log `ESTADO_Y_PENDIENTES.md`, merged in on 30 October).
 
 ---
 
@@ -285,7 +287,7 @@ kind) hung from the shoulders: spread and beating while it flies (a gull glides 
 ## 2. Open questions
 
 - **The menu and the clock**: the world keeps running while the menu is open; should it pause? (Asked in
-  `REVISAR.md`.)
+  `CHECKLIST.md`.)
 - **Breath under water**: decided and built (1.6b): 1 minute 30 seconds without a tank, 10 more minutes with one,
   refilled at the surface.
 - **Waves in the rivers and the lake** (item 8b): the waves at the mouths of the channels were removed (the
@@ -302,6 +304,8 @@ kind) hung from the shoulders: spread and beating while it flies (a gull glides 
 - **A meticulous review of the whole game "as a game designer"** (standing request): done alongside everything
   else, never closed.
 - **Creature tournament fights** may resolve too fast to be watched comfortably.
+- **A crowd at the castle door** in the morning, when hundreds of Tickles leave by one door (more ways out could be
+  given); check whether it still happens now that the residents go in and out by the castle's door.
 
 ## 4. Done in version 50 (approved by the owner and published as the game on 24 October)
 
@@ -397,6 +401,44 @@ kind) hung from the shoulders: spread and beating while it flies (a gull glides 
   (`js/farview.js`: a heightfield of the whole map, coarse copies and stand-ins of the buildings and trees; the
   depth range and the water follow the camera).
 
+## 6. Earlier versions (summary)
+
+- **v48 (weather by zones)**: one weather field carried by the wind over the map: fronts of cloud, rain and storm
+  (rain in one region, sun in the next); lightning, fog on damp mornings; Tickles shelter from storms; tornadoes
+  (about one every 10 days) and very rare tsunamis; the weather card in Adventure.
+- **v47 (sound)**: frogs croak in turns; songbirds in the trees near the view (finch, warbler, robin, thrush, dove;
+  owls at night); Menu > Sound with music, ambience and effects apart.
+- **v46 (fixes)**: the statue's plaque without initials (P.M. only in the stories); Tickles lie properly in bed; no
+  waves in the channels; jetties anchored to the shore; the hand picks up horses, griffins and sea beasts too.
+- **v45 (wealth you can see)**: the Blacksmiths' Guild in every region (forge, paddock, griffin roost); better houses
+  (townhouse, manor); boats of one's own; mounts (pony, saddle horse, white charger, griffin); finer weapons and
+  steel shields; arms that wear and can break; Tickles buy what they want most; the Wealth card.
+- **v44 (sea beasts)**: the Lake Serpent and the Kraken rise some afternoons by a dock or a beach; the armed, the
+  mages and the tamers fight them.
+- **v43 (the open sea)**: the lake, channels and ponds calm; waves break on the beaches of the open sea.
+- **v42 (arms)**: one-handed lifting; the other paw keeps what it holds; a sword arm and a shield arm.
+- **v41 (tamed monsters)**: tamers win monsters of their own (never a guardian) in the Underworld and the mines.
+- **v40 (rock walls)**: mine and dungeon walls of rounded rocks like the on-chain boulder.
+- **v39 (fishing from the jetty)**: no more crowds waiting for the four boats of a dock.
+- **v38 (first person, first version)**: "First person" on any Tickle's card (V); walk your own Tickle yourself.
+- **v37 (diving)**: 18 dive sites with a float and a diver's flag (wrecks, reefs, oyster beds, the drowned temples);
+  water lovers dive in their free time; the Diving card.
+- **v36 (contests of everything)**: a contest a day in every region (fishing derby, surf, regatta, foot race, kart
+  grand prix, strongest Tickle, fashion show, song contest), judges, a podium, entries from the Adventure tab.
+- **v35 (slot machines you can play)**: three reels, one line, pay table; one guest in four prefers the machines.
+- **v32 to v34 (the casino to scale)**: casino rooms, 52 slot machines, the bar with its barmen and waiters (never
+  the player's Tickles as staff), tables at true size with cards and chips.
+- **v31 (casino and statue)**: the creator's name out of the lore (only "P.M."); casinos in all six regions with
+  real poker, blackjack, roulette and bingo; a nightly poker tournament.
+- **v29 to v30 (things in the paws and boats)**: what the paws hold is put away for two-handed work; the village
+  lends rods, boards, weights, balls and skates; surfing on the waves; ferrymen and passengers aboard.
+- **v28 (fights and guilds)**: fights you can watch; mages, healers and warriors; six guilds with halls and ranks;
+  mines with levels, guards, carts and goblin thieves; guardians' special attacks with warnings on the ground.
+- **v22 to v27 (dungeons and the world)**: free music by place, with credits; camera turning; richer interiors;
+  hunting animals; frogs and creatures you can pick up and throw; maze dungeons with monsters; a bigger arena; the
+  Great Underworld under the whole map with a guardian per floor, treasures, Ether crystals and relics; the Golden
+  Tickle at the bottom under the statue.
+
 ---
 
 ## Rules the owner has set (keep to them)
@@ -407,4 +449,4 @@ kind) hung from the shoulders: spread and beating while it flies (a gull glides 
 - The player's own Tickles are never staff of anything; only the player directs them.
 - No animal in the world is one of the nine Tickle species.
 - New scenery is always appended at the end of world generation (saved state is keyed by scenery index).
-- Keep the project log (`ESTADO_Y_PENDIENTES.md`, in Spanish) up to date after every item.
+- Keep this file and `CHECKLIST.md` up to date after every item; everything in the repository is in English.
