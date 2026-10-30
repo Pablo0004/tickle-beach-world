@@ -284,11 +284,12 @@
     if (I.chips && I.chips.length) h += '<div class="insp-chips">' + I.chips.map((c) => "<span>" + esc(c) + "</span>").join("") + "</div>";
     if (I.arms && I.arms.length) h += '<div class="insp-arms"><b>Arms</b> ' + I.arms.map(esc).join(" \u00b7 ") + "</div>";
     if (I.rows && I.rows.length) h += '<div class="kv">' + I.rows.map((r) => '<span class="k">' + esc(r[0]) + "</span><span>" + esc(r[1]) + "</span>").join("") + "</div>";
-    if (I.text) h += '<div class="pc-text">' + I.text + "</div>";
+    if (I.text) h += '<details class="pc-text rh-more"><summary>About it</summary>' + I.text + "</details>"; // (folded away, opened only if wanted)
     btns = (I.buttons || []).concat(I.tickle != null && !I.isTickle ? [{ label: "Its Tickle", act: () => App.selectTickle && App.selectTickle(I.tickle) }] : []);
     if (btns.length) h += '<div class="insp-btns">' + btns.map((b, i) => '<button class="btn" data-ib="' + i + '">' + esc(b.label) + "</button>").join("") + "</div>";
     // only touch the page when something changed (so a button can be clicked while it refreshes)
-    if (el.dataset.html !== h) { el.innerHTML = h; el.dataset.html = h; }
+    // (an opened description stays open while the window refreshes)
+    if (el.dataset.html !== h) { const d0 = el.querySelector("details.pc-text"), open = !!(d0 && d0.open); el.innerHTML = h; el.dataset.html = h; const d1 = el.querySelector("details.pc-text"); if (d1 && open) d1.open = true; }
     el.classList.toggle("inside", !!App.inside);
     el.hidden = false;
   }

@@ -1,8 +1,7 @@
 # Notes for Claude
 
 Tickle Beach World: a browser voxel life sim where all 9,629 on-chain Tickle Beach NFTs live (three.js r128, plain
-JavaScript, no build step). The owner talks in Spanish: answer in Spanish. Everything in the repository is in
-English (code, comments and every document): the repository is shared with the collection's creator.
+JavaScript, no build step).
 
 ## Where to start
 

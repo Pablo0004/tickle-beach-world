@@ -1,7 +1,7 @@
 # Checklist for the owner
 
 Things done that only you can check on your own computer (the test browser has no real mouse, no controller and no
-graphics card). Tick what looks right and note what does not. (This replaces the old Spanish `REVISAR.md`.)
+graphics card). Tick what looks right and note what does not.
 
 ## First person (version 50)
 
@@ -115,7 +115,8 @@ graphics card). Tick what looks right and note what does not. (This replaces the
       air above it. A griffin rider leaving or entering a fortress flies over the wall.
 - [ ] When a war, raid, dragon attack, sea beast, tournament or Underworld expedition you are watching ends: a card at
       the top with the result (who won, the score or the stars, what they take). It closes by itself or with a click.
-- [ ] Inside a place, the long description is folded into "About this place".
+- [ ] The long descriptions are folded: inside a place ("About this place"), in the card of a building outside
+      ("About this place") and in the inspect window ("About it"); opened, they stay open.
 
 ## Build mode and homes (1.6)
 

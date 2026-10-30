@@ -4,8 +4,7 @@ Updated 30 October 2026. This repository (`main`) is ahead of version 50, the ga
 (https://claude.ai/artifact/Y2NNeAnZA2GCzhpAS2qC6b); nothing since has been published yet. Items are worked in the order
 agreed with the project owner; one item is finished before the next one starts. The browser test scripts and what
 each one checks are in [tests/README.md](tests/README.md); `CHECKLIST.md` is the owner's list of things to test.
-This file is the one record of the project: what is pending, what was done and when (it replaces the old Spanish
-log `ESTADO_Y_PENDIENTES.md`, merged in on 30 October).
+This file is the one record of the project: what is pending, what was done and when.
 
 ---
 
@@ -227,8 +226,10 @@ owner: a tank can be **bought and found**, both. Plan:
   world, first person with keyboard, controller and touch, the build tools, inside); off the screen: the keys line
   in first person (only the name and Leave), the dock's hint line, the "drag to look" note inside, the long
   controller toast.
-- **Descriptions folded (asked 30 October)**: the long description of every place in the room's card is folded into
-  "About this place" (and the treasure of a floor into "Treasure on this floor"), opened only if wanted. Done.
+- **Descriptions folded (asked 30 October)**: the long description of every place is folded away, opened only if
+  wanted: inside, in the room's card ("About this place"; the treasure of a floor in "Treasure on this floor");
+  outside, in the card of a building or a landmark ("About this place") and in the inspect window ("About it"), which
+  keeps it open while it refreshes. Done.
 - **First person inside buildings (asked 30 October)**: going into buildings in first person; and a Tickle in first
   person does not get the buttons to go up, down or out until it reaches the door or the stairs that lead there. Done
   30 October (interiors.js, "first person inside"): walking one of your Tickles in first person, E at a door takes
@@ -449,4 +450,4 @@ kind) hung from the shoulders: spread and beating while it flies (a gull glides 
 - The player's own Tickles are never staff of anything; only the player directs them.
 - No animal in the world is one of the nine Tickle species.
 - New scenery is always appended at the end of world generation (saved state is keyed by scenery index).
-- Keep this file and `CHECKLIST.md` up to date after every item; everything in the repository is in English.
+- Keep this file and `CHECKLIST.md` up to date after every item.
