@@ -342,7 +342,8 @@
     ui.doorT = P.enter;
     el.innerHTML = '<div class="pc-head"><div><div class="pc-name">' + esc(P.name) + '</div><div class="pc-sub">' + P.sub + '</div></div><button class="btn" id="placeClose" aria-label="Close">Close</button></div>' +
       (P.rows.length ? '<div class="kv">' + P.rows.map((r) => '<span class="k">' + esc(r[0]) + "</span><span>" + r[1] + "</span>").join("") + "</div>" : "") +
-      '<div class="pc-text">' + P.text + "</div>" + (P.enter ? '<button class="btn primary" id="goInside">Go inside</button>' : "");
+      // (its long description folded away, opened only if wanted)
+      (P.text ? '<details class="pc-text rh-more"><summary>About this place</summary>' + P.text + "</details>" : "") + (P.enter ? '<button class="btn primary" id="goInside">Go inside</button>' : "");
     el.hidden = false;
     $("doorChip").hidden = true;
   }
