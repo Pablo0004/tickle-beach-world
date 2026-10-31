@@ -615,13 +615,23 @@ change bumps the `?v=N` cache-buster on the script tags.
 
 ## 22. Running it locally
 
-The page needs to be served over HTTP (the worker cannot load from `file://`):
+No build step and nothing to install but Python (or Node). Download the repository (Code > Download ZIP, or
+`git clone`), then serve its folder over HTTP (the worker cannot load from `file://`), from inside it:
 
 ```bash
-python -m http.server 8765 --directory tickle-world
+python -m http.server 8765
 ```
 
-Then open <http://localhost:8765>. The first load derives all 9,629 seeds and cuts the on-chain pieces,
+(or `node tests/serve.js`). Then open <http://localhost:8765> in Chrome, Edge or Firefox.
+
+**Playing with every Tickle (developer mode)**: until holders' wallets can be verified, developer mode is on by
+default (Menu > Settings > Developer mode). Press "I'm in control" in the top bar: you can then give orders to any
+Tickle, take any of them into first person (select it and press V; E at a door walks it inside), pick them up with
+the hand, enter them in contests, play at the casino with them, buy things for them, build anywhere (the dock at the
+bottom) and edit any home ("Edit this home" inside). "Tour" of the controls: Menu > Controls. Saved games live in
+the browser.
+
+Updating to the latest version: download it again (or `git pull`) and reload the page. The first load derives all 9,629 seeds and cuts the on-chain pieces,
 which takes a little while. A dedicated GPU helps: near a busy village the scene can reach about two million
 triangles, and pulled back into the sky about two and a half to three million.
 
