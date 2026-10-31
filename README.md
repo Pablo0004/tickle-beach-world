@@ -628,7 +628,7 @@ python -m http.server 8765
 default (Menu > Settings > Developer mode). Press "I'm in control" in the top bar: you can then give orders to any
 Tickle, take any of them into first person (select it and press V; E at a door walks it inside), pick them up with
 the hand, enter them in contests, play at the casino with them, buy things for them, build anywhere (the dock at the
-bottom) and edit any home ("Edit this home" inside). "Tour" of the controls: Menu > Controls. Saved games live in
+bottom) and edit any home ("Edit this home" inside). All the controls are in Menu > Controls. Saved games live in
 the browser.
 
 Updating to the latest version: download it again (or `git pull`) and reload the page. The first load derives all 9,629 seeds and cuts the on-chain pieces,
