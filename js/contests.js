@@ -1103,7 +1103,7 @@
   App.enterContest = (key, id) => {
     const c = st.contests[key];
     if (!c || c.done) return "That contest is over.";
-    if (!(App.isMine && App.isMine(id))) return "You can only enter your own Tickles.";
+    if (!(App.canUse ? App.canUse(id) : App.isMine && App.isMine(id))) return "You can only enter your own Tickles.";
     if (st.T > c.gather - 5) return "Entries are closed: the " + KINDS[c.kind].name + " is about to start.";
     if (c.entrants.includes(id)) return nm(id) + " is already in it.";
     if (idx.get(id) && idx.get(id).c !== c) return nm(id) + " is already down for the " + KINDS[idx.get(id).c.kind].name + " today.";
@@ -1175,7 +1175,7 @@
     let h = "";
     if (w) h += '<span class="k">Medals</span><span>' + w[0] + " gold, " + w[1] + " silver, " + w[2] + " bronze</span>";
     if (cur) h += '<span class="k">Today</span><span>' + (cur.role === "in" ? "Competing in" : cur.role === "judge" ? "Judging" : "Watching") + " the " + esc(KINDS[cur.c.kind].name) + " at " + hm(cur.c.go - cur.c.day * DAY) + "</span>";
-    if (o) h += '<span class="k">Wearing</span><span>' + esc(o) + ((!st.wallet || (App.isMine && App.isMine(id))) ? ' <button class="btn" data-outfit-reset="' + id + '">Back to its on-chain look</button>' : "") + "</span>";
+    if (o) h += '<span class="k">Wearing</span><span>' + esc(o) + ((!st.wallet || (App.canUse ? App.canUse(id) : App.isMine && App.isMine(id))) ? ' <button class="btn" data-outfit-reset="' + id + '">Back to its on-chain look</button>' : "") + "</span>";
     return h;
   };
   App.contestActionText = (t) => {

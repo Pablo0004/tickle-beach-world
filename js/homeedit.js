@@ -18,6 +18,7 @@
   App.canEditHome = (map) => {
     const T = map && map.target;
     if (!T || !T.sc || (T.kind !== "house" && T.kind !== "hall") || !App.editRight) return false;
+    if (App.devMode && App.devMode()) return true; // (developer mode: every home)
     return App.editRight(T.sc.x, T.sc.z).right === "own";
   };
 

@@ -53,7 +53,7 @@
       if (d < k.r && d + bias < bd) { bd = d + bias; best = k; }
     }
     if (!best) return false;
-    if (best.kind === "tickle" && st.wallet && !App.isMine(best.obj.id)) { App.toast("Only its owner can pick up " + best.obj.name + "."); return false; }
+    if (best.kind === "tickle" && st.wallet && !(App.canUse ? App.canUse(best.obj.id) : App.isMine(best.obj.id))) { App.toast("Only its owner can pick up " + best.obj.name + "."); return false; }
     pending = best;
     return true;
   };

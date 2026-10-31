@@ -150,3 +150,8 @@ graphics card). Tick what looks right and note what does not.
       still in first person outside. Esc: the room view.
 - [ ] Birds in flight (arriving at their tree, or the gulls over the sea) spread and beat their wings.
 - [ ] Trees and bushes in several greens.
+
+## Developer mode (31 October)
+
+- [ ] Menu > Settings > Developer mode is on: in "I'm in control" any Tickle takes orders and goes into first person;
+      you can build and edit homes anywhere. Switch it off: only your chosen holder's Tickles and land again.

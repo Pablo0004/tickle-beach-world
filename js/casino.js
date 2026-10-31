@@ -705,7 +705,7 @@
   // the player enters one of its Tickles for tonight's tournament
   App.casinoRegister = (Cs, id) => {
     const R = tourOf(Cs, Math.floor(st.T / DAY));
-    if (App.isMine && !App.isMine(id)) return "You can only enter one of your own Tickles.";
+    if (App.isMine && !(App.canUse ? App.canUse(id) : App.isMine(id))) return "You can only enter one of your own Tickles.";
     if (R.started || R.done) return "Tonight's tournament has already started.";
     if (R.reg.size >= 27) return "The tournament is full.";
     if (R.reg.has(id)) return null;
@@ -771,7 +771,7 @@
     const T = tablesOf(Cs).find((t) => t.key === key);
     if (!T || id == null) return "No such table.";
     if (T.def.tour) return App.casinoRegister(Cs, id);
-    if (App.isMine && !App.isMine(id)) return "You can only play with one of your own Tickles.";
+    if (App.isMine && !(App.canUse ? App.canUse(id) : App.isMine(id))) return "You can only play with one of your own Tickles.";
     if (st.casinoMe) App.casinoLeave();
     for (const t of tablesOf(Cs)) { const k = seated(t, id); if (k >= 0) stand(t, k); }
     if (sh(id) < (T.kind === "poker" ? 8 : 2)) return App.nameOf(id) + " has too few shells for this table.";
@@ -1239,7 +1239,7 @@
   }
   // the player at its machine
   App.casinoSlotSit = (Cs, id) => {
-    if (App.isMine && !App.isMine(id)) return "You can only play with one of your own Tickles.";
+    if (App.isMine && !(App.canUse ? App.canUse(id) : App.isMine(id))) return "You can only play with one of your own Tickles.";
     if (st.casinoMe) App.casinoLeave();
     st.casinoMe = { c: Cs.i, slot: true, id };
     machinesOf(Cs)[MY_SLOT].id = id;

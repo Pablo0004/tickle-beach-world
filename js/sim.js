@@ -610,7 +610,7 @@
   }
 
   // orders from the player (only your own Tickles when you play as a holder)
-  App.canOrder = (t) => st.mode === "manual" && (!st.wallet || App.isMine(t.id));
+  App.canOrder = (t) => st.mode === "manual" && ((App.devMode && App.devMode()) || !st.wallet || App.isMine(t.id));
   App._startDo = (t, ad, order, until) => startDo(t, ad, order, until); // for testing by hand
   App.startDo = startDo; App.startTravel = startTravel; App.walkTo = walkTo; // for the contests, diving and first person
   App.order = (t, what) => {

@@ -189,6 +189,13 @@ owner before building:
   they are made. Item 1.6 is done; what the owner may still want: more extras attached to the house itself
   (balcony, chimney) and other colours than the roof outside.
 
+### Developer mode (asked 31 October, done)
+Until the game is published and holders' wallets can be verified (Vulcan, on Discord), every Tickle can be used:
+orders and first person ("I'm in control"), the hand, contests and the casino, buying for them, and building and
+editing homes anywhere with no Parliament vote. On by default; Menu > Settings > Developer mode turns it off, and
+then the holder rules apply again (`App.devMode`, `App.canUse` in ui.js). To be switched off (or removed) when the
+verified wallets arrive.
+
 ### Note: where the game will live first (said by the owner on 29 October)
 At first the game will be for Discord, where holders' addresses are verified through Vulcan (a verification bot);
 if it grows it will move elsewhere. To keep in mind: playing as a holder (st.wallet) should come from that verified
