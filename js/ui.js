@@ -50,6 +50,11 @@
   const setPref = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* storage blocked */ } };
   let lastInput = -1e9;
   for (const ev of ["pointerdown", "keydown"]) window.addEventListener(ev, () => { lastInput = performance.now(); }, true);
+  // developer mode (asked 31 October): until the game is published and holders' wallets are verified (Vulcan, on
+  // Discord), every Tickle can be used: orders, first person, the hand, contests, the casino, buying, building and
+  // editing anywhere. On by default; Menu > Settings turns it off (then the holder rules apply again)
+  App.devMode = (on) => { if (on != null) setPref("tbw-dev", on ? "1" : "0"); return pref("tbw-dev", "1") === "1"; };
+  App.canUse = (id) => App.devMode() || (App.isMine ? App.isMine(id) : false);
   App.notifyOn = (on) => { if (on != null) setPref("tbw-notify", on ? "1" : "0"); return pref("tbw-notify", "1") === "1"; };
   const quiet = () => !App.notifyOn() && performance.now() - lastInput > 1500;
   const dismissable = (el) => { el.title = "Click to dismiss"; el.addEventListener("click", () => el.remove()); };
@@ -156,6 +161,9 @@
     $("menu-settings").innerHTML = '<h3>Notifications</h3><div class="soundrow"><b>Activity</b><label class="row" style="gap:6px"><input type="checkbox" id="set-notify"' + (App.notifyOn() ? " checked" : "") + '> on</label>' +
       '<span class="note">the messages at the bottom of the screen about what is going on (a dragon attacking, a party going down, a sea beast rising...). Off, you still get the answers to what you do yourself, and everything stays in the log. A click on a message takes it away.</span></div>';
     $("set-notify").onchange = (e) => { App.notifyOn(e.target.checked); if (!e.target.checked) $("toasts").innerHTML = ""; };
+    $("menu-settings").insertAdjacentHTML("beforeend", '<h3>Developer mode</h3><div class="soundrow"><b>Every Tickle</b><label class="row" style="gap:6px"><input type="checkbox" id="set-dev"' + (App.devMode() ? " checked" : "") + '> on</label>' +
+      '<span class="note">Until holders can prove their wallets (when the game is published), you can use every Tickle: give orders, first person, the hand, contests and the casino, buying for them, and building and editing homes anywhere (no Parliament vote). Off, only your own holder\'s Tickles and land.</span></div>');
+    $("set-dev").onchange = (e) => { App.devMode(e.target.checked); App.toast(e.target.checked ? "Developer mode on: every Tickle is yours to use." : "Developer mode off: only your own holder's Tickles."); };
     // graphics quality (gfx.js)
     const L = App.GFX_LEVELS || {};
     $("menu-settings").insertAdjacentHTML("beforeend", '<h3>Graphics</h3><div class="soundrow"><b>Quality</b><div class="seg" role="group" aria-label="Graphics quality" id="set-gfx">' +

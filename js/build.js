@@ -16,6 +16,7 @@
 
   // ---------- who may build where ----------
   App.editRight = (x, z) => {
+    if (App.devMode && App.devMode()) return { right: "own", place: null }; // (developer mode: anywhere, no vote)
     for (const v of App.gridNear ? App.gridNear("lot", x, z, 140) : []) {
       if (Math.hypot(v.x - x, v.z - z) > (v.r || 20) + 3) continue;
       if (v.vacant || (!v.holder && v.kind !== "town")) return { right: "neutral", place: v };

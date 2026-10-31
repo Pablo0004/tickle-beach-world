@@ -891,7 +891,7 @@
 
   // ---------- the panels ----------
   App.wealthRowHTML = (id) => {
-    const txt = App.wealthText(id), mine = (App.isMine && App.isMine(id)) || (st.mode === "manual" && !st.wallet);
+    const txt = App.wealthText(id), mine = (App.isMine && App.isMine(id)) || (st.mode === "manual" && !st.wallet) || (App.devMode && App.devMode());
     let h = '<span class="k">Belongings</span><span>' + (txt ? esc(txt) : '<span class="note">nothing more than its house and what it carries</span>') + "</span>";
     if (mine) {
       const list = allNext(id), purse = App.shellsOf(id);
