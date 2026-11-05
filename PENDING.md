@@ -257,6 +257,16 @@ owner: a tank can be **bought and found**, both. Plan:
   the sea caves are open caverns: the corners of the rock rounded off, the walls inside taken down but for a few
   outcrops of rock (short slabs, never one that cuts a part off); what lay in the dead ends (ore veins, treasure) now
   lies in the nooks (the corners and the lee of an outcrop). The Great Underworld is still a labyrinth.
+  **Changed 5 November (the owner: "neither exact labyrinths nor plain open spaces", like the caves of the Pokemon
+  games, though a few caves can be open):** the mines and the sea grotto are now passages with halls big and small
+  on them (`o.poke` in `mazeFloor`), more than one way round, rope bridges over chasms (first person keeps to the
+  bridge), and ways shut by a fallen rock, a flooded stretch or a bare chasm, never on the only way to the stairs or
+  out, mostly closing a side passage with a chest at its end (30 to 60 shells; a vein of gold in a mine). Your own
+  Tickle in first person opens them with E using what it can do: a rock, a mage's spell, a warrior's strength or a
+  tamed Earth creature pushing it; water, a fire mage dries it, a frost mage freezes it, a flying creature (or its
+  griffin) carries it over, a water creature swims it across, or an oxygen tank; a chasm, a flying creature or a
+  mage's blink, and a rope bridge is tied across. The pearl chamber of a sea cave stays one open cave. The mines are
+  a little bigger (10 by 7 cells at the top). The Great Underworld is unchanged.
 - **Sea caves**: walls of dark blue stone, as dark as it should be down there, lit only in spots by torches. Done 30 October:
   dark blue stone walls and floor, very little light but the torches (warm pools), and sea creatures going up and
   down the passages (crabs, jellyfish, a turtle, a manta) (1.7's "sea creatures in the sea caves" too).
