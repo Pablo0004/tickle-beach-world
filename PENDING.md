@@ -20,7 +20,9 @@ birds' wings, first person inside buildings. Still to do, in this order:
    hunts a wild animal, fishes at the water's edge; skills Taming, Hunting, Fishing, Fighting, Diving and Riding grow
    by doing, up to 50, and make things likelier to go well; shown in the Tickle's window; a tamed griffin (the
    wild creature) is now a flying mount for its tamer: M to get on, Space up and C down, in first person or, with
-   the wheel pulled back, in third (done 5 November)); things for your own Tickle to find or catch under the sea; more detail
+   the wheel pulled back, in third (done 5 November)); under the sea, B searches the bottom (once every 4 seconds): at a dive site
+   what that site gives (pearls, coins, coral, Ethernum, now and then a chest or an old tank), elsewhere now and then
+   a shell; the diving skill helps (done 5 November); things for your own Tickle to find or catch under the sea; more detail
    on the water surface and in the interiors.
 2. **1.8 Open caves and mines**: only the dungeons stay labyrinths.
 3. Smaller ends: the guided tour to redo (1.5h, on hold); the other things held in the paws (1.5c); extras attached

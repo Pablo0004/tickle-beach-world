@@ -162,3 +162,5 @@ graphics card). Tick what looks right and note what does not.
       doing them), shown in the Tickle's window.
 - [ ] A Tickle whose main creature is a tamed griffin: in first person M gets on it and it flies (Space up, C down);
       the wheel pulls the view back to see it in third person; the griffin is not also walking beside it.
+- [ ] Diving in first person: B searches the bottom; at a dive site you find its treasure (pearls, coins, coral...),
+      elsewhere now and then a shell.

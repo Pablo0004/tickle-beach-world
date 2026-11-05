@@ -229,6 +229,17 @@
     for (const [key, p] of FINDS[s.kind]) { acc += p; if (u < acc) return key; }
     return null;
   }
+  // first person (firstperson.js): your own Tickle searches the bottom where it is. At a dive site, what that site
+  // gives (its diving skill makes a find likelier); anywhere else under the sea, now and then a shell
+  App.diveSearch = (id, x, z) => {
+    let s = null, bd = 32;
+    for (const q of SITES) { const d = Math.hypot(q.x - x, q.z - z); if (d < bd) { bd = d; s = q; } }
+    const sk = App.skillOf ? App.skillOf(id, "dive") : 0, u = Math.random();
+    if (!s) { if (u < 0.12 + sk * 0.005) { App.pay(id, 1); return "a pretty shell"; } return null; }
+    let acc = 0;
+    for (const [key, p] of FINDS[s.kind]) { acc += p * (1.2 + sk * 0.03); if (u < acc) return credit(id, key, s); }
+    return null;
+  };
   function credit(id, key, s) {
     const I = ITEM[key], v = App.villageOfToken(id), L = st.diveLog;
     L.finds = (L.finds || 0) + 1;
