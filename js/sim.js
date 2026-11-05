@@ -610,6 +610,17 @@
   }
 
   // orders from the player (only your own Tickles when you play as a holder)
+  // ---------- skills, grown by doing (asked 30 October: in first person every activity improves them) ----------
+  // tame, hunt, fish, fight, dive, ride: 0 to 50 each; each point makes the thing a little likelier to go well
+  const SKILLS = (App.SKILLS = { tame: "Taming", hunt: "Hunting", fish: "Fishing", fight: "Fighting", dive: "Diving", ride: "Riding" });
+  App.skillOf = (id, k) => ((st.skills && st.skills[id] && st.skills[id][k]) || 0);
+  App.addSkill = (id, k, n) => {
+    st.skills = st.skills || {};
+    const o = (st.skills[id] = st.skills[id] || {}), before = Math.floor(o[k] || 0);
+    o[k] = Math.min(50, (o[k] || 0) + (n || 1));
+    if (Math.floor(o[k]) > before && App.pop.agent[id]) App.toast(App.nameOf(id) + ": " + SKILLS[k] + " " + Math.floor(o[k]));
+  };
+  App.skillsText = (id) => Object.keys(SKILLS).filter((k) => App.skillOf(id, k) >= 1).map((k) => SKILLS[k] + " " + Math.floor(App.skillOf(id, k))).join(" \u00b7 ");
   App.canOrder = (t) => st.mode === "manual" && ((App.devMode && App.devMode()) || !st.wallet || App.isMine(t.id));
   App._startDo = (t, ad, order, until) => startDo(t, ad, order, until); // for testing by hand
   App.startDo = startDo; App.startTravel = startTravel; App.walkTo = walkTo; // for the contests, diving and first person
@@ -2358,7 +2369,7 @@
       dex: st.dex || {},
       villages: App.saveVillages(), raidDay: st.raidDay, dragonDay: st.dragonDay, shareDay: st.shareDay,
       plots: App.plotsSave ? App.plotsSave() : null,
-      creatures: App.saveCreatures(), tourneyDay: st.tourneyDay, creatureDay: st.creatureDay, dungeons: App.saveDungeons(), settleDay: st.settleDay, fate: App.saveFate(), factions: App.saveFactions ? App.saveFactions() : null, rampage: App.saveRampage ? App.saveRampage() : null, lairs: App.saveLairs ? App.saveLairs() : null, faith: App.saveFaith ? App.saveFaith() : null, mines: App.saveMines ? App.saveMines() : null, guilds: App.saveGuilds ? App.saveGuilds() : null, casinos: App.saveCasinos ? App.saveCasinos() : null, parliament: App.saveParliament ? App.saveParliament() : null, contests: App.saveContests ? App.saveContests() : null, diving: App.saveDiving ? App.saveDiving() : null, seabeasts: App.saveSeaBeasts ? App.saveSeaBeasts() : null, war: App.saveWar ? App.saveWar() : null, build: App.saveBuild ? App.saveBuild() : null, homes: App.saveHomes ? App.saveHomes() : null, wealth: App.saveWealth ? App.saveWealth() : null, weather: App.saveWeather ? App.saveWeather() : null,
+      creatures: App.saveCreatures(), tourneyDay: st.tourneyDay, creatureDay: st.creatureDay, dungeons: App.saveDungeons(), settleDay: st.settleDay, fate: App.saveFate(), factions: App.saveFactions ? App.saveFactions() : null, rampage: App.saveRampage ? App.saveRampage() : null, lairs: App.saveLairs ? App.saveLairs() : null, faith: App.saveFaith ? App.saveFaith() : null, mines: App.saveMines ? App.saveMines() : null, guilds: App.saveGuilds ? App.saveGuilds() : null, casinos: App.saveCasinos ? App.saveCasinos() : null, parliament: App.saveParliament ? App.saveParliament() : null, contests: App.saveContests ? App.saveContests() : null, diving: App.saveDiving ? App.saveDiving() : null, seabeasts: App.saveSeaBeasts ? App.saveSeaBeasts() : null, war: App.saveWar ? App.saveWar() : null, skills: st.skills || {}, build: App.saveBuild ? App.saveBuild() : null, homes: App.saveHomes ? App.saveHomes() : null, wealth: App.saveWealth ? App.saveWealth() : null, weather: App.saveWeather ? App.saveWeather() : null,
     };
   };
   App.restoreNeeds = (s) => { try { const f = unb64f(s); if (f.length === App.pop.needs.length) App.pop.needs.set(f); } catch (e) { /* ignore */ } };

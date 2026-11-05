@@ -1369,6 +1369,7 @@
       App.initWealth && App.initWealth(saved && saved.wealth);
       App.initWeather && App.initWeather(saved && saved.weather);
       App.initWar && App.initWar(saved && saved.war);
+      st.skills = (saved && saved.skills) || {};
       App.initBuild && App.initBuild(saved && saved.build);
       App.initHomes && App.initHomes(saved && saved.homes);
       // buildings moved by hand in an earlier session take their doors (and their residents) with them again

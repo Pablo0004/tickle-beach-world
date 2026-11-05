@@ -110,6 +110,7 @@
     if (e.code === "Space") fp.jump = true;
     else if (SLOT_KEYS[e.code]) fp.act = SLOT_KEYS[e.code];
     else if (e.code === "KeyT") fp.act = "talk";
+    else if (e.code === "KeyB") fp.act = "use";
   });
   document.addEventListener("click", (e) => { const b = e.target.closest && e.target.closest("#fpBar button"); if (b && fp && fp.drive) fp.act = b.dataset.act; });
   document.addEventListener("mousemove", (e) => { if (locked()) App.fpLook(e.movementX || 0, e.movementY || 0, 0.7); });
@@ -428,6 +429,57 @@
   // T: a few words with the Tickle in front; it turns to answer. They get on a little better, and both feel less lonely
   const HELLO = ["Hi there, ", "Nice day, isn't it, ", "How's it going, ", "Good to see you, ", "Fancy meeting you here, "];
   const REPLY = [["Oh! Hello.", "Do I know you?", "Hi\u2026 nice hat."], ["Hey! All good here.", "Not bad, you?", "Lovely day for it!"], ["My friend! Come here!", "There you are!", "Always a pleasure!"]];
+  // ---------- B: use what is in front, as any Tickle would ----------
+  // a wild creature: try to tame it (with a snack); a wild animal: hunt it (food for the granary); the water's edge:
+  // fish (a fish for the granary, a few shells). Each grows its skill and gives experience; the better the skill, the
+  // likelier it goes well.
+  function use(t, a) {
+    const now = performance.now();
+    if (now - (a.useAt || 0) < 1500 || a.fishing) return;
+    a.useAt = now;
+    const yaw = t.heading + fp.look, fx = Math.sin(yaw), fz = Math.cos(yaw);
+    const ahead = (x, z, r) => { const dx = x - t.pos.x, dz = z - t.pos.z, d = Math.hypot(dx, dz); return d <= r && (dx * fx + dz * fz) > d * 0.5 ? d : -1; };
+    // a wild creature
+    const cre = (App.creatureBodiesNear ? App.creatureBodiesNear(t.pos.x, t.pos.z, 6) : []).filter((b) => b.wild && !b.busy && ahead(b.x, b.z, 4) >= 0)[0];
+    if (cre && App.fpTame) {
+      App.say(t, "Here, have a snack\u2026", 2);
+      const r = App.fpTame(t, cre);
+      setTimeout(() => {
+        if (r === "full") App.say(t, "I already have three\u2026", 2.5);
+        else if (r) { App.say(t, "Welcome to the family, " + r.nick + "!", 3); App.sfx && App.sfx.cheer && App.sfx.cheer(); }
+        else App.say(t, "Aww, it ran off.", 2.5);
+      }, 900);
+      App.addSkill(t.id, "tame", r ? 1.5 : 0.6); App.giveXP && App.giveXP(t.id, r ? 12 : 3);
+      return;
+    }
+    // a wild animal
+    const an = (App.animalsNear ? App.animalsNear(t.pos.x, t.pos.z, 7) : []).filter((x) => x.wild && ahead(x.x, x.z, 3.5) >= 0)[0];
+    if (an && App.catchPrey) {
+      t.throwAt = now;
+      const ok = Math.random() < Math.min(0.9, 0.4 + App.skillOf(t.id, "hunt") * 0.025) && App.catchPrey(an);
+      if (ok) { const v = App.villageOfToken(t.id); if (v) v.food += 3; App.say(t, "Got it! Food for the granary.", 2.5); }
+      else App.say(t, "Too quick for me\u2026", 2);
+      App.addSkill(t.id, "hunt", ok ? 1.2 : 0.4); App.giveXP && App.giveXP(t.id, ok ? 8 : 2);
+      return;
+    }
+    // the water's edge, in front
+    const wx = t.pos.x + fx * 2.6, wz = t.pos.z + fz * 2.6;
+    if (!a.water && !App.isLand(wx, wz)) {
+      a.fishing = true;
+      App.say(t, "Let's see what bites\u2026", 2);
+      const wait = Math.max(1200, 4000 - App.skillOf(t.id, "fish") * 50);
+      setTimeout(() => {
+        a.fishing = false;
+        if (!fp || fp.id !== t.id) return;
+        const ok = Math.random() < Math.min(0.92, 0.5 + App.skillOf(t.id, "fish") * 0.02);
+        if (ok) { const v = App.villageOfToken(t.id); if (v) v.food += 1; if (App.pay) App.pay(t.id, 2); App.say(t, "A fish! (the granary +1, 2 shells)", 2.5); }
+        else App.say(t, "Nothing this time.", 2);
+        App.addSkill(t.id, "fish", ok ? 1 : 0.4); App.giveXP && App.giveXP(t.id, ok ? 5 : 1);
+      }, wait);
+      return;
+    }
+    App.say(t, "Nothing to do here.", 1.5);
+  }
   function talk(t, a) {
     const now = performance.now();
     if (now - (a.talkAt || 0) < 2500) return;
@@ -527,6 +579,7 @@
     if (moving) fp.bobPh += dtReal * (run ? 11 : 7.5);
     // M: into the saddle or out of it (wealth.js keeps the mount under it)
     const mDown = keys.has("KeyM") || !!(P && P.mount);
+    if (t.riding && App.addSkill) App.addSkill(t.id, "ride", dtReal / 60);
     if (mDown && !a.mWas && App.mountOf && App.mountOf(t.id)) { a.ride = !a.ride; if (!a.ride) { a.alt = 0; t.flyY = null; } if (fp) showHud(t); }
     a.mWas = mDown;
     const M = a.ride && App.fpSaddle ? App.fpSaddle(t, true) : null;
@@ -537,7 +590,7 @@
     if (fp.jump && !M && !a.water && !(a.jy > 0)) { a.vy = 7; a.jy = 0.001; }
     fp.jump = false;
     // F and T (or the touch buttons): a blow at the monster in front, a word with the Tickle in front
-    if (fp.act === "talk") talk(t, a); else if (fp.act) cast(t, a, fp.act);
+    if (fp.act === "talk") talk(t, a); else if (fp.act === "use") use(t, a); else if (fp.act) { cast(t, a, fp.act); if (App.addSkill && inFront(t).mon) App.addSkill(t.id, "fight", 0.25); }
     fp.act = null;
     if (foeBack(t, a)) return;
     // in the water: down with C, up with Space; its breath runs out down there
@@ -549,6 +602,7 @@
       a.dive = Math.min(a.dive || 0, room);
       t.flyY = a.dive > 0.05 ? surf - a.dive : null;
       const under = a.dive > 0.6;
+      if (under && App.addSkill) App.addSkill(t.id, "dive", dtReal / 30);
       // a minute and a half of breath; with an oxygen tank, ten more minutes first; both fill again at the surface
       const tank = App.hasTank && App.hasTank(t.id);
       if (tank && a.tank == null) a.tank = 1;

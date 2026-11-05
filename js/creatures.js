@@ -80,6 +80,22 @@
   App.creatureLabel = (c) => (c.nick ? c.nick + " the " : "") + SPECIES[c.sp].name + " Lv " + c.lvl;
 
   // ---------- who tames ----------
+  // first person (firstperson.js): your Tickle offers a snack to the wild creature in front; its taming skill helps
+  App.fpTame = (t, w) => {
+    if (!w || w.gone > st.T || w.busy || !w.wild) return null;
+    const mine = (st.tamed[t.id] = st.tamed[t.id] || []);
+    if (mine.length >= 3) return "full";
+    const chance = clamp(0.3 + App.skillOf(t.id, "tame") * 0.025 + (App.levelOf ? App.levelOf(t.id) * 0.02 : 0) - (w.data.lvl - 2) * 0.05, 0.08, 0.92);
+    if (rnd() < chance) {
+      const c = newCreature(w.sp, w.data.lvl, t.id, t.id * 31 + Math.floor(st.T));
+      mine.push(c);
+      w.gone = st.T + 720;
+      App.log("creature", t.name + " tamed a wild " + SPECIES[w.sp].name + " (Lv " + c.lvl + ") and named it " + c.nick + ".", "In first person, with a snack and patience.");
+      return c;
+    }
+    w.gone = st.T + 240;
+    return false;
+  };
   App.isTamer = (id) => hash2(id, 61, 3) < 0.3 || !!(st.tamed && st.tamed[id] && st.tamed[id].length > 0);
   App.creaturesOf = (id) => (st.tamed && st.tamed[id]) || [];
   App.leadCreature = (id) => (st.tamed && st.tamed[id] && st.tamed[id][0]) || null;
