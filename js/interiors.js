@@ -588,10 +588,16 @@
     const { r, W, H, loops, entry, name, look, last, kind } = o;
     const m = carve(r, W, H, loops, entry, o.active);
     if (o.open) openCave(m, r, [entry].concat((o.exits || []).map((e) => e.cell)));
+    // a cave like those of the Pokemon games (asked 5 November): halls big and small along the passages, more than
+    // one way round, rope bridges over chasms, and ways shut by a fallen rock, by water or by a chasm
+    if (o.poke) {
+      const SZ = [[3, 3], [2, 2], [2, 2], [3, 2], [2, 3], [2, 1], [1, 2]], n = Math.max(2, Math.round((W * H) / 30));
+      for (let k = 0; k < n; k++) { const [w, h] = SZ[k === 0 ? 0 : Math.floor(r() * SZ.length)]; chamber(m, Math.floor(r() * Math.max(1, W - w + 1)), Math.floor(r() * Math.max(1, H - h + 1)), w, h); }
+    }
     const In = (x, y) => m.seen.has(x + "," + y);
     let cells = [...m.seen].map((k) => k.split(",").map(Number));
     // chambers (a big floor gets more of them)
-    const nCh = o.big ? Math.round(cells.length / 140) : kind === "mine" ? 2 : 1 + (r() < 0.5 ? 1 : 0);
+    const nCh = o.poke ? 1 : o.big ? Math.round(cells.length / 140) : kind === "mine" ? 2 : 1 + (r() < 0.5 ? 1 : 0);
     const chambers = [];
     for (let k = 0; k < nCh; k++) { const [x, y] = cells[Math.floor(r() * cells.length)]; if (In(x + 1, y) && In(x, y + 1) && In(x + 1, y + 1)) { chamber(m, x, y, 2, 2); chambers.push([x, y]); } }
     // the ways out of the first floor: one for every cave mouth, each on the maze
@@ -618,6 +624,29 @@
       if (o.bossCell) far = o.bossCell;
       else { let best = c, bd = -1; for (let x = x0; x < x0 + k; x++) for (let y = y0; y < y0 + k; y++) { const d = Math.abs(x - door[0]) + Math.abs(y - door[1]); if (d > bd) { bd = d; best = [x, y]; } } far = best; }
     }
+    // the shut ways: only in a passage one cell wide, never on the only way to the stairs or out (whoever cannot open
+    // them goes round); first the ones that close off a side passage (its treasure behind), then shortcuts
+    const blocks = [], key = (c) => c[0] + "," + c[1];
+    if (o.poke) {
+      const setEdge = (x, y, dx, v) => { if (dx) m.E[x][y] = v; else m.S[x][y] = v; };
+      const cand = [];
+      for (const [x, y] of cells) for (const [dx, dy] of [[1, 0], [0, 1]]) if (openTo(m, x, y, dx, dy)) cand.push([x, y, dx, dy]);
+      for (let i = cand.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [cand[i], cand[j]] = [cand[j], cand[i]]; }
+      const kinds = o.blockKinds || ["boulder", "flood", "chasm"], want = o.nBlocks || 2;
+      const nearWay = (c) => from.concat([far]).some((q) => Math.abs(q[0] - c[0]) + Math.abs(q[1] - c[1]) < 2) || (hall && hall.has(c));
+      for (const pass of [0, 1]) for (const [x, y, dx, dy] of cand) {
+        if (blocks.length >= want) break;
+        const a = [x, y], b = [x + dx, y + dy];
+        if (nearWay(a) || nearWay(b) || blocks.some((q) => Math.abs(q.a[0] - x) + Math.abs(q.a[1] - y) < 3)) continue;
+        const sides = dx ? [[0, 1], [0, -1]] : [[1, 0], [-1, 0]];
+        if (sides.some(([sx, sy]) => openTo(m, x, y, sx, sy) || openTo(m, b[0], b[1], sx, sy))) continue;
+        setEdge(x, y, dx, true);
+        const D = bfs(m, entry).dist;
+        const cut = cells.filter((c) => !D.has(key(c)) && !blocks.some((q) => q.region.has(key(c))));
+        if (!D.has(key(far)) || !outs.every((e) => D.has(key(e.cell))) || (pass === 0 && cut.length < 2)) { setEdge(x, y, dx, false); continue; }
+        blocks.push({ type: kinds[blocks.length % kinds.length], a, b, dx, dy, region: new Set(cut.map(key)), cut, inner: D.has(key(b)) ? a : b });
+      }
+    }
     const R = room(name, W * CS, H * CS, { floor: look.floor, wall: look.wall, trim: look.wall2, dark: true, h: 4.2 });
     R.maze = m; R.cs = CS; R.entry = entry; R.exit = far; R.look = look; R.mons = []; R.big = !!o.big; R.cells = cells; R.outs = outs; R.last = !!last;
     const cx = (x) => (x + 0.5) * CS - R.w / 2, cz = (y) => (y + 0.5) * CS - R.d / 2;
@@ -627,6 +656,35 @@
     if (hall) for (let x = hall.x0; x < hall.x0 + hall.k; x++) for (let y = hall.y0; y < hall.y0 + hall.k; y++) used.add(x + "," + y);
     R.hall = hall ? { x0: cx(hall.x0) - CS / 2 + 1.5, z0: cz(hall.y0) - CS / 2 + 1.5, size: hall.k * CS - 3, door: { x: cx(hall.door[0]), z: cz(hall.door[1]) } } : null;
     const put = (it) => { R.items.push(it); return it; };
+    // the shut ways and what they keep; the rope bridges over the chasms
+    R.blocks = []; R.blockEdge = new Set(); R.chasmAt = new Map();
+    for (const B of blocks) {
+      R.blockEdge.add(B.a[0] + "," + B.a[1] + (B.dx ? "E" : "S"));
+      R.blocks.push({ type: B.type, a: B.a, dx: B.dx, dy: B.dy, x: cx(B.a[0]) + B.dx * CS / 2, z: cz(B.a[1]) + B.dy * CS / 2, rot: B.dx ? Math.PI / 2 : 0, v: kind === "seacave" ? 1 : 0, cleared: false });
+      if (B.cut.length) {
+        // its reward, at the far end of the passage it closes: a chest (and in a mine a vein of gold)
+        const D = bfs(m, B.inner).dist;
+        let best = B.inner, bd = -1;
+        for (const c of B.cut) { const d = D.has(key(c)) ? D.get(key(c)) : 0; if (d > bd) { bd = d; best = c; } }
+        used.add(key(best));
+        const sd = wallSide(m, best[0], best[1], r) || [0, -1], a = { x: cx(best[0]) + sd[0] * (CS / 2 - 1.4), z: cz(best[1]) + sd[1] * (CS / 2 - 1.4), rot: Math.atan2(-sd[0], -sd[1]) };
+        put({ k: "chest", v: 0, x: a.x, z: a.z, rot: a.rot, chest: true, reward: true });
+        if (kind === "mine") put({ k: "orevein", v: 2, x: cx(best[0]) - sd[0] * 1.2 + sd[1] * 1.6, z: cz(best[1]) - sd[1] * 1.2 + sd[0] * 1.6, rot: a.rot, tag: "face" });
+        else put({ k: "oyster", x: cx(best[0]) - sd[0] * 1.4, z: cz(best[1]) - sd[1] * 1.4, rot: a.rot });
+      }
+    }
+    if (o.poke) {
+      // the bridges: on a straight stretch of passage, away from the ways in and out
+      const nB = o.nBridges == null ? 1 : o.nBridges;
+      const near = (c) => from.concat([far]).some((q) => Math.abs(q[0] - c[0]) + Math.abs(q[1] - c[1]) < 2) || (hall && hall.has(c)) || blocks.some((B) => key(B.a) === key(c) || key(B.b) === key(c));
+      const thru = (c, dx, dy) => openTo(m, c[0], c[1], dx, dy) && openTo(m, c[0], c[1], -dx, -dy) && !openTo(m, c[0], c[1], dy, dx) && !openTo(m, c[0], c[1], -dy, -dx);
+      const straight = cells.filter((c) => !used.has(key(c)) && !near(c) && (thru(c, 1, 0) || thru(c, 0, 1)));
+      for (let k = 0; k < nB && straight.length; k++) {
+        const c = straight.splice(Math.floor(r() * straight.length), 1)[0], horiz = thru(c, 1, 0);
+        used.add(key(c)); R.chasmAt.set(key(c), { horiz });
+        put({ k: "chasmbridge", v: kind === "seacave" ? 1 : 0, x: cx(c[0]), z: cz(c[1]), rot: horiz ? Math.PI / 2 : 0 });
+      }
+    }
     const against = (x, y, side, inset) => ({ x: cx(x) + side[0] * (CS / 2 - (inset || 0.9)), z: cz(y) + side[1] * (CS / 2 - (inset || 0.9)), rot: Math.atan2(-side[0], -side[1]) });
     // torches along the walls (a few of them cast real light near the camera); none where the sky is open above
     for (const [x, y] of cells) {
@@ -854,10 +912,10 @@
     const names = ["Upper galleries", "Lower galleries", "The old workings", "The flooded drifts"].slice(0, nF - 1).concat(["The deep vein"]);
     let entry = [3, 4];
     for (let f = 0; f < nF; f++) {
-      const W = 8 + f, H = 5 + f, last = f === nF - 1;
+      const W = 10 + f, H = 7 + f, last = f === nF - 1;
       entry = f === 0 ? [Math.floor(W / 2), H - 1] : [Math.min(W - 1, rooms[f - 1].exit[0]), Math.min(H - 1, rooms[f - 1].exit[1])];
       const ore = (i) => last && M.orichalcum && i % 4 === 0 ? 3 : i % 3 === 0 ? 6 : (rich.length ? rich[i % rich.length] : 0);
-      const R = mazeFloor({ r, W, H, loops: 0.28, entry, open: true, kind: "mine", look: MINE_LOOK, last, first: f === 0, index: f, monsters: [2, 3, 3, 4, 4][f], ore, deep: f > 0,
+      const R = mazeFloor({ r, W, H, loops: 0.07, entry, poke: true, nBlocks: 2 + (f > 0 ? 1 : 0), nBridges: 1 + (f % 2), blockKinds: f === 3 ? ["flood", "chasm", "boulder"] : [["boulder", "flood", "chasm"], ["chasm", "boulder", "flood"], ["flood", "boulder", "chasm"]][f % 3], kind: "mine", look: MINE_LOOK, last, first: f === 0, index: f, monsters: [2, 3, 3, 4, 4][f], ore, deep: f > 0,
         name: names[f], outLabel: "Out of the mine", upLabel: "Up to the " + names[f - 1 < 0 ? 0 : f - 1].toLowerCase(), downLabel: "Down to the " + (names[f + 1] || "").toLowerCase(),
         pick: (k) => (f === 0 ? ["goblin", 1] : (k % 2 ? ["spider", 0] : ["goblin", 1])), boss: last ? { k: "troll", v: 1, scale: 1, name: "the rock troll" } : null });
       // rails along the main tunnel, from the way in to the way down
@@ -878,11 +936,11 @@
     const c = T.cave, r = rngOf(c.i * 977 + 13), rooms = [], names = ["The grotto", "The pearl chamber"];
     let entry = null;
     for (let f = 0; f < 2; f++) {
-      const W = 6 + f * 2, H = 5 + f, last = f === 1;
+      const W = f ? 8 : 9, H = f ? 6 : 7, last = f === 1;
       entry = f === 0 ? [Math.floor(W / 2), H - 1] : [Math.min(W - 1, rooms[0].exit[0]), Math.min(H - 1, rooms[0].exit[1])];
       // its creatures go up and down the passages: crabs, jellyfish, a turtle, a manta in the bigger chamber
       const SEA_MON = [["seacrab", 0], ["jelly", 0], ["seacrab", 0], ["seaturtle", 0], ["jelly", 0], ["manta", 0]];
-      const R = mazeFloor({ r, W, H, loops: 0.35, entry, open: true, kind: "seacave", look: SEA_LOOK, last, first: f === 0, index: f, monsters: 3 + f * 2, name: names[f],
+      const R = mazeFloor({ r, W, H, loops: 0.07, entry, open: last, poke: !last, nBlocks: 2, nBridges: 1, blockKinds: ["flood", "chasm", "boulder"], kind: "seacave", look: SEA_LOOK, last, first: f === 0, index: f, monsters: 3 + f * 2, name: names[f],
         outLabel: "Swim out of the cave", upLabel: "Up to the grotto", downLabel: "Down to the pearl chamber", pick: (k) => SEA_MON[(k + f) % SEA_MON.length], boss: null });
       R.note = f === 0 ? "A cave in the sea floor that only divers ever find: walls of dark blue stone, dark but where a torch burns, coral and sponges over everything, crabs and jellyfish in the passages. Treasure lies in the dead ends." : "The deepest chamber, where the oysters grow big and the oldest chests lie half buried in the sand.";
       if (last) for (let k = 0; k < 6; k++) R.items.push({ k: "oyster", x: R.cx(R.exit[0]) + Math.cos(k) * 2.6, z: R.cz(R.exit[1]) + Math.sin(k) * 2.6, rot: k });
@@ -1068,7 +1126,7 @@
       im.count = c;
       g.add(im);
     }
-    if (R.maze) buildMaze(R, g, token);
+    if (R.maze) { buildMaze(R, g, token); for (const b of R.blocks || []) blockMesh(b, g, token); }
     else {
       // the back and side walls (the front is left open, like a doll's house), with a skirting board
       const wb = box(R.w + 1.2, R.h, 0.6, R.wall); wb.position.set(0, R.h / 2, -R.d / 2 - 0.3); g.add(wb);
@@ -1290,8 +1348,9 @@
     const m = R.maze, H = 3.4, boxes = [], In = (x, y) => m.seen.has(x + "," + y), forest = !!(R.look && R.look.forest), cold = !!(R.look && R.look.cold);
     for (const [x, y] of R.cells) {
       // east and south sides always; west and north only where nothing of the maze is beyond
-      if (!openTo(m, x, y, 1, 0)) boxes.push([(x + 1) * CS - R.w / 2, R.cz(y), 1, CS + 1]);
-      if (!openTo(m, x, y, 0, 1)) { const front = !In(x, y + 1); const door = front && !R.big && R.warps[0] && R.warps[0].to.outside && Math.abs(R.cx(x) - R.warps[0].x) < 0.1; if (!door) boxes.push([R.cx(x), (y + 1) * CS - R.d / 2, CS + 1, 1, front && !R.big ? 1.2 : 0]); }
+      const shutE = R.blockEdge && R.blockEdge.has(x + "," + y + "E"), shutS = R.blockEdge && R.blockEdge.has(x + "," + y + "S");
+      if (!openTo(m, x, y, 1, 0) && !shutE) boxes.push([(x + 1) * CS - R.w / 2, R.cz(y), 1, CS + 1]);
+      if (!openTo(m, x, y, 0, 1) && !shutS) { const front = !In(x, y + 1); const door = front && !R.big && R.warps[0] && R.warps[0].to.outside && Math.abs(R.cx(x) - R.warps[0].x) < 0.1; if (!door) boxes.push([R.cx(x), (y + 1) * CS - R.d / 2, CS + 1, 1, front && !R.big ? 1.2 : 0]); }
       if (!In(x - 1, y)) boxes.push([x * CS - R.w / 2, R.cz(y), 1, CS + 1]);
       if (!In(x, y - 1)) boxes.push([R.cx(x), y * CS - R.d / 2, CS + 1, 1]);
     }
@@ -2061,6 +2120,8 @@
       if (!R._cellSet.has(ix + "," + iy)) return false;
       if (ix !== jx || iy !== jy) { if (Math.abs(ix - jx) + Math.abs(iy - jy) !== 1 || !openTo(R.maze, jx, jy, ix - jx, iy - jy)) return false; }
       const u = x + R.w / 2 - ix * cs, v = z + R.d / 2 - iy * cs, M = 0.55;
+      const ch = R.chasmAt && R.chasmAt.get(ix + "," + iy);
+      if (ch && Math.abs((ch.horiz ? v : u) - cs / 2) > 1.1) return false;
       if ((u < M && !openTo(R.maze, ix, iy, -1, 0)) || (u > cs - M && !openTo(R.maze, ix, iy, 1, 0)) || (v < M && !openTo(R.maze, ix, iy, 0, -1)) || (v > cs - M && !openTo(R.maze, ix, iy, 0, 1))) return false;
     }
     return true;
@@ -2088,19 +2149,77 @@
   // and then an old oxygen tank (kept if it has none, sold for 25 shells if it has one)
   function ifpChest() {
     const I = cur.ifp, R = cur.map.rooms[cur.ri], T = cur.map.target;
-    if (!T || T.kind !== "seacave") return;
-    const ch = R.items.find((it) => it.chest && Math.hypot(it.x - I.x, it.z - I.z) < 2.2);
+    if (!T) return;
+    const ch = R.items.find((it) => it.chest && (T.kind === "seacave" || it.reward) && Math.hypot(it.x - I.x, it.z - I.z) < 2.2);
     if (!ch) return;
     const day = Math.floor(st.T / DAY), key = (T.cave ? T.cave.i : 0) + ":" + cur.ri + ":" + Math.round(ch.x) + ":" + Math.round(ch.z);
     st.seaChests = st.seaChests || {};
     if (st.seaChests[key] === day) { App.toast("Empty: it fills again tomorrow."); return; }
     st.seaChests[key] = day;
-    const shells = 10 + Math.floor(hash2(day, Math.round(ch.x * 7 + ch.z), 931) * 31), tank = hash2(day, Math.round(ch.z * 7 + ch.x), 933) < 0.15;
+    const shells = (ch.reward ? 30 : 10) + Math.floor(hash2(day, Math.round(ch.x * 7 + ch.z), 931) * 31), tank = hash2(day, Math.round(ch.z * 7 + ch.x), 933) < 0.15;
     if (App.pay) App.pay(I.id, shells);
     let what = shells + " shells";
     if (tank) { if (App.giveTank && App.giveTank(I.id)) what += " and an old oxygen tank, still sound"; else { if (App.pay) App.pay(I.id, 25); what += " and an old oxygen tank (sold for 25 shells: it has one)"; } }
     App.toast((App.nameOf ? App.nameOf(I.id) : "It") + " opened the chest: " + what + ".");
     if (App.giveXP) App.giveXP(I.id, 4);
+  }
+  // a shut way in a cave, opened by your own Tickle in first person with what it can do (asked 5 November: with
+  // spells, or riding a tamed creature, so that a Tickle that is no mage gets through too):
+  //   a fallen rock: a mage's spell lifts it, a warrior or a strong creature (Earth: a pebblit, a golem...) pushes it;
+  //   water: a fire mage dries it, a frost mage freezes it, a flying creature carries it over, a water creature
+  //   swims it across, or it dives through with an oxygen tank;
+  //   a chasm: a flying creature (or its griffin) carries it over, or a mage blinks across; then a rope bridge is tied.
+  // It stays open while the game is (this visit).
+  const BLOCK_HELP = {
+    boulder: "A fallen rock shuts the way. A mage's spell, a warrior's strength or a strong creature (Earth) could move it.",
+    flood: "The passage is flooded. A fire mage could dry it, a frost mage freeze it; a flying or water creature, or an oxygen tank, gets you across.",
+    chasm: "A chasm cuts the way. A flying creature (a griffin, a bat) could carry you over, or a mage blink across.",
+  };
+  function ifpBlockNear() { const I = cur.ifp, R = cur.map.rooms[cur.ri]; return (R.blocks || []).find((b) => !b.cleared && Math.hypot(b.x - I.x, b.z - I.z) < 3.4); }
+  function ifpObstacle() {
+    const I = cur.ifp, R = cur.map.rooms[cur.ri], b = ifpBlockNear();
+    if (!b) return false;
+    const id = I.id, role = App.combatRole ? App.combatRole(id) : null, school = App.mageSchool ? App.mageSchool(id) : null, nm = App.nameOf ? App.nameOf(id) : "It";
+    const c = App.leadCreature ? App.leadCreature(id) : null, ty = c && App.CREATURES && App.CREATURES[c.sp] ? App.CREATURES[c.sp].type : null, cn = c ? c.nick : "";
+    const M = App.mountOf ? App.mountOf(id) : null, wings = (c && ty === "Air") || (M && M.fly);
+    const flyer = c && ty === "Air" ? cn : "its griffin";
+    let how = null, after = null;
+    if (b.type === "boulder") {
+      if (role === "mage") how = nm + " casts a spell: the rock lifts, drifts aside and settles against the wall.";
+      else if (role === "warrior") how = nm + " sets its shoulder to the rock and pushes it out of the way.";
+      else if (c && ty === "Earth") how = cn + " puts its weight to the rock and rolls it aside for " + nm + ".";
+    } else if (b.type === "flood") {
+      if (school === "fire") how = nm + " calls up the fire: the water hisses away to steam and the passage is dry.";
+      else if (school === "frost") { how = nm + " freezes the water: ice to walk over."; after = 2; }
+      else if (wings) { how = nm + " climbs on " + flyer + " and flies over the water."; after = b.v; }
+      else if (c && ty === "Water") { how = nm + " holds on to " + cn + ", who swims it across."; after = b.v; }
+      else if (App.hasTank && App.hasTank(id)) { how = nm + " puts on its oxygen tank and swims through."; after = b.v; }
+    } else {
+      if (wings) how = nm + " climbs on " + flyer + ", flies over the chasm and ties a rope bridge across.";
+      else if (role === "mage") how = nm + " blinks across the chasm and ties a rope bridge for the way back.";
+      if (how) after = b.v;
+    }
+    if (!how) { App.toast(BLOCK_HELP[b.type]); return true; }
+    b.cleared = true;
+    if (b.dx) R.maze.E[b.a[0]][b.a[1]] = false; else R.maze.S[b.a[0]][b.a[1]] = false;
+    if (b.mesh && b.mesh.parent) b.mesh.parent.remove(b.mesh);
+    b.mesh = null; b.after = after;
+    if (after != null) blockMesh(b, cur.group, cur.token);
+    App.toast(how);
+    if (App.giveXP) App.giveXP(id, 6);
+    if (c && how.indexOf(cn) >= 0 && App.addSkill) App.addSkill(id, "ride", 0.5);
+    return true;
+  }
+  // its model: the rock, the water (or the ice, or the water swum through), the chasm (or the bridge tied over it)
+  function blockMesh(b, g, token) {
+    if (b.cleared && b.after == null) return;
+    const k = b.type === "boulder" ? "rockblock" : b.type === "flood" ? "floodwater" : "chasmbridge";
+    const v = b.cleared ? b.after : b.type === "chasm" ? b.v + 2 : b.v;
+    App.kitMesh(k, v || 0).then((mk) => {
+      if (cur.token !== token) return;
+      const h = new THREE.Group(), mesh = App.centeredMesh(mk.md, mk.geo, true);
+      mesh.userData.shared = true; h.add(mesh); h.position.set(b.x, 0, b.z); h.rotation.y = b.rot; g.add(h); b.mesh = h;
+    });
   }
   function ifpNearWarps(R) { const I = cur.ifp; return R.warps.filter((w) => Math.hypot(w.x - I.x, w.z - I.z) < 2.6); }
   function ifpStep(dt) {
@@ -2123,6 +2242,8 @@
     }
     if (fig) { fig.holder.position.set(I.x, 0, I.z); fig.holder.rotation.y = I.yaw; fig.moving = ml > 0; }
     // the ways on, in the card only when it stands at them
+    const nb = ifpBlockNear();
+    if (nb && I.hinted !== nb) { I.hinted = nb; App.toast(BLOCK_HELP[nb.type] + " (E)"); }
     const sig = ifpNearWarps(R).map((w) => w.id).join(",");
     if (sig !== I.near) { I.near = sig; hud(cur.map, cur.ri, cur.who || []); }
   }
@@ -2130,7 +2251,7 @@
     if (!cur || !cur.ifp) return;
     if (/^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || "")) return;
     if (e.code === "Escape") { ifpEnd(); e.stopPropagation(); return; }
-    if (e.code === "KeyE") { const w = ifpNearWarps(cur.map.rooms[cur.ri])[0]; if (w) take(w); else ifpChest(); e.preventDefault(); e.stopPropagation(); return; }
+    if (e.code === "KeyE") { const w = ifpNearWarps(cur.map.rooms[cur.ri])[0]; if (w) take(w); else if (!ifpObstacle()) ifpChest(); e.preventDefault(); e.stopPropagation(); return; }
     ifpKeys.add(e.code);
     if (/^(KeyW|KeyA|KeyS|KeyD|Arrow)/.test(e.code)) { e.preventDefault(); e.stopPropagation(); }
   }, true);

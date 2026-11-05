@@ -167,5 +167,8 @@ graphics card). Tick what looks right and note what does not.
 
 ## Open caves and mines (5 November)
 
-- [ ] Go into a mine and a sea cave: one open cavern per floor (no corridors), with a few outcrops of rock; ore
-      veins and treasure in the corners; the stairs down still at the far end. The Great Underworld is still a maze.
+- [ ] Go into a mine and a sea cave: passages with halls big and small, more than one way round, rope bridges over
+      chasms; the pearl chamber of a sea cave is one open cave. The Great Underworld is still a maze.
+- [ ] In first person, walk up to a fallen rock, a flooded passage or a bare chasm: a notice says who could open it;
+      try E with a mage, a warrior, a fire or frost mage, a Tickle with a tamed griffin (or another flying, water or
+      Earth creature) and one with an oxygen tank. Behind it, a chest (E): 30 to 60 shells.

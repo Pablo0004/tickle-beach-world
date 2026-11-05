@@ -319,6 +319,37 @@
     st.push(S("cube", [0, -140, 175], [22, 22, 22], { color: gem, rot: [0.7854, 0.6155, 0], layer: 2 }));
     return st;
   }
+  // ---------- the ways of a cave (asked 5 November, caves like those of the Pokemon games) ----------
+  // a fallen rock that fills a passage: a spell lifts it aside, a warrior or a strong creature pushes it
+  function rockblock() {
+    const st = [], rock = C("#8a8178"), rock2 = C("#6a625a"), crack = C("#2e2a26");
+    st.push(S("sphere", [0, 0, 250], [330, 300, 250], { color: rock }));
+    st.push(S("sphere", [-260, 90, 110], [120, 110, 110], { color: rock2 }));
+    st.push(S("sphere", [250, -80, 90], [110, 100, 90], { color: rock2 }));
+    st.push(S("cube", [60, -290, 300], [10, 14, 120], { color: crack, layer: 1 }));
+    st.push(S("cube", [-80, -280, 220], [70, 12, 8], { color: crack, layer: 1 }));
+    return st;
+  }
+  // a flooded stretch of a passage: 0 the murky water of a mine, 1 the sea, 2 frozen (a frost mage's ice)
+  function floodwater(v) {
+    const st = [], W = [["#2f4f5f", "#4f7f8f"], ["#0f2f5a", "#2f5f9a"], ["#cfeeff", "#ffffff"]][v || 0];
+    st.push(S("cube", [0, 0, 22], [420, 480, 22], { color: C(W[0]) }));
+    st.push(S("cube", [0, 0, 6], [440, 500, 6], { color: C(W[0]) }));
+    for (let k = 0; k < 4; k++) st.push(S("cube", [((k * 173) % 500) - 250, ((k * 311) % 700) - 350, 46], [90 - k * 12, 10, 3], { color: C(W[1]), layer: 1 }));
+    return st;
+  }
+  // a chasm across the floor (the way runs along y): 0 rock and 1 the sea floor with a rope bridge over it; 2 and 3
+  // the bare chasm, crossed only flying (a griffin, a bat) or with a mage's blink, who then ties a bridge across
+  function chasmbridge(v) {
+    const b = (v || 0) % 2, st = [], pit = C(["#08080a", "#030a16"][b]), rim = C(["#4a3d30", "#1c2c50"][b]), plank = C("#8a6a44"), plank2 = C("#6e5232"), rope = C("#c9b27a");
+    st.push(S("cube", [0, 0, 3], [470, 380, 3], { color: pit }));
+    st.push(S("cube", [0, 0, 1], [480, 400, 1], { color: rim }));
+    if ((v || 0) >= 2) { st.push(S("sphere", [380, 300, 10], [60, 50, 14], { color: rim, layer: 1 })); st.push(S("sphere", [-360, -320, 10], [50, 46, 12], { color: rim, layer: 1 })); return st; }
+    for (let k = 0; k < 9; k++) st.push(S("cube", [0, -400 + k * 100, 24], [190, 38, 10], { color: k % 2 ? plank : plank2, layer: 1 }));
+    st.push(S("cube", [205, 0, 120], [6, 470, 6], { color: rope, mirror: true, offsX: 205, layer: 2 }));
+    for (const y of [-440, 0, 440]) st.push(S("cube", [205, y, 70], [12, 12, 70], { color: plank2, mirror: true, offsX: 205, layer: 2 }));
+    return st;
+  }
   const D = { group: "Dungeons" };
   Object.assign(TB.KIT, {
     minotaur: Object.assign({ name: "Minotaur", variants: [0], build: minotaur, voxel: [12] }, D),
@@ -343,5 +374,8 @@
     crate: Object.assign({ name: "Crate", variants: [0], build: crate, voxel: [8] }, D),
     orepile: Object.assign({ name: "Ore Heap", variants: [0, 1, 2, 3, 4, 5, 6, 7], build: orepile, voxel: [7], variantLabel: (v) => ["stone", "iron", "gold", "orichalcum", "copper", "silver", "coal", "gems"][v] }, D),
     puddle: Object.assign({ name: "Puddle", variants: [0], build: puddle, voxel: [6] }, D),
+    rockblock: Object.assign({ name: "Fallen Rock", variants: [0], build: rockblock, voxel: [12] }, D),
+    floodwater: Object.assign({ name: "Flooded Passage", variants: [0, 1, 2], build: floodwater, voxel: [20], variantLabel: (v) => ["mine water", "sea water", "frozen"][v] }, D),
+    chasmbridge: Object.assign({ name: "Chasm", variants: [0, 1, 2, 3], build: chasmbridge, voxel: [20], variantLabel: (v) => ["rope bridge over a chasm", "rope bridge over a sea trench", "a bare chasm", "a bare sea trench"][v] }, D),
   });
 })(typeof self !== "undefined" ? self : this);
