@@ -2060,6 +2060,24 @@
   }
   function ifpEnd() { if (!cur || !cur.ifp) return; const f = cur.figures.find((x) => x.id === cur.ifp.id && x.pose === "ifp"); if (f) { f.holder.visible = false; f.gone = true; } cur.ifp = null; if (document.pointerLockElement && document.exitPointerLock) document.exitPointerLock(); hud(cur.map, cur.ri, cur.who || []); }
   App.insideFPOn = () => !!(cur && cur.ifp);
+  // a chest at hand in a sea cave, opened with E by your own Tickle in first person (once a day each): shells, and now
+  // and then an old oxygen tank (kept if it has none, sold for 25 shells if it has one)
+  function ifpChest() {
+    const I = cur.ifp, R = cur.map.rooms[cur.ri], T = cur.map.target;
+    if (!T || T.kind !== "seacave") return;
+    const ch = R.items.find((it) => it.chest && Math.hypot(it.x - I.x, it.z - I.z) < 2.2);
+    if (!ch) return;
+    const day = Math.floor(st.T / DAY), key = (T.cave ? T.cave.i : 0) + ":" + cur.ri + ":" + Math.round(ch.x) + ":" + Math.round(ch.z);
+    st.seaChests = st.seaChests || {};
+    if (st.seaChests[key] === day) { App.toast("Empty: it fills again tomorrow."); return; }
+    st.seaChests[key] = day;
+    const shells = 10 + Math.floor(hash2(day, Math.round(ch.x * 7 + ch.z), 931) * 31), tank = hash2(day, Math.round(ch.z * 7 + ch.x), 933) < 0.15;
+    if (App.pay) App.pay(I.id, shells);
+    let what = shells + " shells";
+    if (tank) { if (App.giveTank && App.giveTank(I.id)) what += " and an old oxygen tank, still sound"; else { if (App.pay) App.pay(I.id, 25); what += " and an old oxygen tank (sold for 25 shells: it has one)"; } }
+    App.toast((App.nameOf ? App.nameOf(I.id) : "It") + " opened the chest: " + what + ".");
+    if (App.giveXP) App.giveXP(I.id, 4);
+  }
   function ifpNearWarps(R) { const I = cur.ifp; return R.warps.filter((w) => Math.hypot(w.x - I.x, w.z - I.z) < 2.6); }
   function ifpStep(dt) {
     const I = cur.ifp, R = cur.map.rooms[cur.ri];
@@ -2088,7 +2106,7 @@
     if (!cur || !cur.ifp) return;
     if (/^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || "")) return;
     if (e.code === "Escape") { ifpEnd(); e.stopPropagation(); return; }
-    if (e.code === "KeyE") { const w = ifpNearWarps(cur.map.rooms[cur.ri])[0]; if (w) take(w); e.preventDefault(); e.stopPropagation(); return; }
+    if (e.code === "KeyE") { const w = ifpNearWarps(cur.map.rooms[cur.ri])[0]; if (w) take(w); else ifpChest(); e.preventDefault(); e.stopPropagation(); return; }
     ifpKeys.add(e.code);
     if (/^(KeyW|KeyA|KeyS|KeyD|Arrow)/.test(e.code)) { e.preventDefault(); e.stopPropagation(); }
   }, true);

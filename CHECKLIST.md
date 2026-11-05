@@ -155,3 +155,5 @@ graphics card). Tick what looks right and note what does not.
 
 - [ ] Menu > Settings > Developer mode is on: in "I'm in control" any Tickle takes orders and goes into first person;
       you can build and edit homes anywhere. Switch it off: only your chosen holder's Tickles and land again.
+- [ ] In a sea cave with your Tickle in first person: walk to a chest and press E: shells, and now and then an old
+      oxygen tank; the same chest is empty until the next day.
