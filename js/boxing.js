@@ -8,7 +8,7 @@
   const App = window.App, st = App.st;
   const rnd = Math.random;
   const V = new THREE.Vector3();
-  App.ringAt = (x, z) => { for (const ar of App.arenas || []) if (ar && Math.hypot(x - ar.x, z - ar.z) < 6.2) return ar; return null; };
+  App.ringAt = (x, z) => { for (const ar of App.arenas || []) if (ar && Math.hypot(x - ar.x, z - ar.z) < App.ARENA.pit - 0.3) return ar; return null; };
   function hpEl() {
     const el = document.createElement("div");
     el.className = "hpbar";

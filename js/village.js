@@ -34,9 +34,19 @@
   // creatures, Ethernum, medals, mounts and boats) and starts what belongs to the old villages afresh (granaries,
   // ruins, things moved by hand, the Underworld's progress by village). A save from this layout keeps everything:
   // when ownership has changed since, App.reconcilePlots carries each place's things over to where it is now.
-  App.LAYOUT = "plots-3"; // plots-2: the sizes of 16 October (houses, small plots, a mansion for every 20); plots-3: the Maker's Isle grown for the Parliament, and the prison
+  App.LAYOUT = "plots-4"; // plots-4: the arenas half as big again (5 November)
+  const LAYOUT_OLD = "plots-3"; // plots-2: the sizes of 16 October (houses, small plots, a mansion for every 20); plots-3: the Maker's Isle grown for the Parliament, and the prison
   App.migrateLayout = (S) => {
     if (S.layout === App.LAYOUT) return false;
+    if (S.layout === LAYOUT_OLD) {
+      // the villages and the plots are as they were; what stands after the arenas may have moved, so the things moved
+      // by hand go back, and short-lived business round them starts afresh
+      S.moved = {};
+      if (S.factions) { S.factions.hunts = {}; S.factions.trades = {}; }
+      S.log = (S.log || []).concat([{ t: S.T || 0, kind: "world", text: "The arenas have been rebuilt, half as big again, with four rows of seats.", why: "Asked for by the owner." }]);
+      S.layout = App.LAYOUT;
+      return true;
+    }
     S.moved = {};
     S.villages = null;
     if (S.fate) S.fate = { fallen: S.fate.fallen || {}, rituals: {}, ruins: {}, broken: {} };

@@ -178,3 +178,5 @@ graphics card). Tick what looks right and note what does not.
 - [ ] At an arena during the evening tournament: the tamers waiting and the bettors sit round the stone steps (they
       walk round them to their seat, never across the sand); on the sand only the two tamers fighting and their
       creatures; the other creatures, horses and griffins wait outside the arena.
+- [ ] The arenas are half as big again, with four rows of seats, and never on a field, an orchard or a road. Nobody
+      walks through their walls: they go in and out by the gates (or the wide opening at the front).

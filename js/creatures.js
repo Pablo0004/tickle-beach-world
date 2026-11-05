@@ -278,10 +278,10 @@
         const k = Math.floor(App.hash2(b.data.owner, 517, 3) * 15), fx = Math.sin(Sb.rot || 0), fz = Math.cos(Sb.rot || 0), sc = Sb.scale || 1, lx = ((k % 5) - 2) * 1.3 * sc, fwd = (k < 3 ? 1.9 : 3.3 + Math.floor((k - 3) / 5) * 1.4) * sc;
         ox = Sb.x + fz * lx + fx * fwd; oz = Sb.z - fx * lx + fz * fwd;
         if (Math.hypot(ox - b.x, oz - b.z) < 0.5) b.h = Math.atan2(fx, fz);
-      } else if (!inside && !(t.step && t.step.k === "train") && (App.arenas || []).some((A) => A && Math.hypot(t.pos.x - A.x, t.pos.z - A.z) < 15)) {
+      } else if (!inside && !(t.step && t.step.k === "train") && (App.arenas || []).some((A) => A && Math.hypot(t.pos.x - A.x, t.pos.z - A.z) < App.ARENA.out + 3)) {
         // (asked 5 November: no creature goes into an arena unless it is to fight; it waits outside, behind its Tickle)
-        const A = App.arenas.find((q) => q && Math.hypot(t.pos.x - q.x, q.z - t.pos.z) < 15), a = Math.atan2(t.pos.x - A.x, t.pos.z - A.z) + (App.hash2(b.data.owner, 519, 3) - 0.5) * 0.3;
-        ox = A.x + Math.sin(a) * 17; oz = A.z + Math.cos(a) * 17;
+        const A = App.arenas.find((q) => q && Math.hypot(t.pos.x - q.x, q.z - t.pos.z) < App.ARENA.out + 3), a = Math.atan2(t.pos.x - A.x, t.pos.z - A.z) + (App.hash2(b.data.owner, 519, 3) - 0.5) * 0.3;
+        ox = A.x + Math.sin(a) * (App.ARENA.out + 6.5); oz = A.z + Math.cos(a) * (App.ARENA.out + 6.5);
       } else { ox = inside ? t.home.x + 1.2 : t.pos.x - Math.sin(t.heading) * 1.4 + Math.cos(t.heading) * 0.9; oz = inside ? t.home.z + 0.6 : t.pos.z - Math.cos(t.heading) * 1.4 - Math.sin(t.heading) * 0.9; }
       const d = Math.hypot(ox - b.x, oz - b.z);
       if (d > 45) { b.x = ox; b.z = oz; } // (from the stable it runs back to its Tickle when the gathering is over)
@@ -547,7 +547,7 @@
     const finishPair = (w) => { tr.nextRound.push(w); tr.current = null; if (!tr.queue.length) { tr.alive = tr.nextRound; tr.queue = null; } };
     if (b == null) return finishPair(a);
     const ta = App.pop.agent[a], tb = App.pop.agent[b], pa = App.petOf(a), pb = App.petOf(b), ca = App.leadCreature(a), cb = App.leadCreature(b);
-    if (!ta || !tb || !pa || !pb || !ca || !cb || Math.hypot(ta.pos.x - ar.x, ta.pos.z - ar.z) > 14 || Math.hypot(tb.pos.x - ar.x, tb.pos.z - ar.z) > 14) {
+    if (!ta || !tb || !pa || !pb || !ca || !cb || Math.hypot(ta.pos.x - ar.x, ta.pos.z - ar.z) > App.ARENA.out + 1 || Math.hypot(tb.pos.x - ar.x, tb.pos.z - ar.z) > App.ARENA.out + 1) {
       const w = ca && cb ? App.simulateBattle(ca, cb) : ca ? 0 : 1;
       if (ca && cb) reward(w === 0 ? ca : cb, w === 0 ? cb : ca);
       tr.matches.push([a, b, w === 0 ? a : b]);
@@ -555,9 +555,9 @@
     }
     tr.current = [a, b];
     // the two tamers step into the ring
-    ta.action = { kind: "duel", spot: { x: ar.x - 4.2, z: ar.z }, started: st.T };
-    tb.action = { kind: "duel", spot: { x: ar.x + 4.2, z: ar.z }, started: st.T };
-    pa.x = ar.x - 2.6; pa.z = ar.z; pb.x = ar.x + 2.6; pb.z = ar.z;
+    ta.action = { kind: "duel", spot: { x: ar.x - 6.2, z: ar.z }, started: st.T };
+    tb.action = { kind: "duel", spot: { x: ar.x + 6.2, z: ar.z }, started: st.T };
+    pa.x = ar.x - 3.4; pa.z = ar.z; pb.x = ar.x + 3.4; pb.z = ar.z;
     App.say(ta, "Let's go, " + (ca.nick || "buddy") + "!", 2.5); App.say(tb, "You're on!", 2.5);
     const bets = App.placeBets ? App.placeBets(ar.x, ar.z, ta.name, tb.name, 0.5 + (ca.lvl - cb.lvl) * 0.06, [ta, tb]) : [];
     App.startBattle({ c: ca, b: pa, owner: ta }, { c: cb, b: pb, owner: tb }, "arena", (w) => {

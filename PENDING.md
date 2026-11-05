@@ -34,7 +34,19 @@ birds' wings, first person inside buildings. Still to do, in this order:
    population.js): the tamers waiting for their turn and the bettors walk to their seat round the steps (never
    across the sand) and sit there; a creature not fighting, and a horse or griffin, waits outside behind its
    Tickle's seat; in the middle only the two tamers of the match and their creatures (and a training session's).
-   (b) Make the arenas bigger. (c) Better attacks in the battles: today they are very basic.
+   (b) Bigger arenas. Done 5 November: half as big again (`App.ARENA`, population.js: a sand floor of 9.5, four
+   rows of seats, the model at 6.4); the layout tag is now `plots-4` (village.js; from plots-3 only the things moved
+   by hand go back); placed clear of villages, roads, fields and orchards (a grid search for a crowded region, as
+   Duck Pond). The third on-chain arena model (`arena_1`) is walled all round with no way in, so the arenas use
+   `arena_0` (a gate on every side) and `arena_2` (open at the front). Nobody walks through an arena's wall any
+   more: the wall and its openings are measured from the model itself (sim.js `arenaShape`), a Tickle (and your own
+   in first person) is stopped by it, and the ways in and out go round the steps or the outside to an opening; the
+   ramp at the front is used only from the sand. Spectators sit in the three lower rows.
+   **Left (stopped by the owner on 5 November):** in a test of 192 ways in and out, 4 still get stuck by the ramp
+   (leaving the sand up the ramp towards a side gate); not yet watched live with the pane showing.
+   (c) Better attacks in the battles: today they are very basic. Not started.
+   (d) No wall, wall of a building or rock anywhere may be walked through (the owner saw it at the arena; check the
+   rest of the world too). Not started beyond the arenas.
 5. **1.10 Animals off the walls (asked 5 November)**: horses and other animals cannot patrol the wall walks; at most
    those that fly can fly over them.
 

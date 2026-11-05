@@ -117,7 +117,7 @@
       else out.enter = doorAt(s.x + Math.sin(s.rot) * 3, s.z + Math.cos(s.rot) * 3);
     } else if (s.type.startsWith("arena_")) {
       const ar = (App.arenas || []).find((a) => a && Math.hypot(a.x - s.x, a.z - s.z) < 3);
-      out.name = ar ? ar.name : "Creature Arena"; out.sub = "A colosseum sunk into the earth, with three rows of stone seats round the sand";
+      out.name = ar ? ar.name : "Creature Arena"; out.sub = "A colosseum sunk into the earth, with four rows of stone seats round the sand";
       const tr = ar && st.tourneys && st.tourneys[day + ":" + ar.region], ch = ar && st.champs && st.champs[ar.region];
       out.rows.push(["Tonight", tr ? (tr.done ? "the tournament is over: " + esc(App.nameOf(tr.champ)) + " won" : tr.players.length + " tamers in the tournament at " + App.clock(day * 1440 + App.tourneyWindow.start).short) : "no tournament"]);
       if (ch) out.rows.push(["Champion", esc(App.nameOf(ch.id)) + (ch.creature ? " with " + esc(ch.creature) : "")]);
