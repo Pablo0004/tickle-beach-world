@@ -193,6 +193,20 @@
   }
   const workCache = new Map();
   // a seat round an arena (an angle from its front), keeping clear of the ramp down to the gate
+  // the way to a seat in the stands (asked 5 November: they crowded the sand in the middle, where only those who
+  // fight belong): from outside, in to the ring of seats where it stands; on the steps, round them to its seat; on
+  // the sand, straight back up. Null once it is at its seat.
+  App.ARENA_PIT = 6.3;
+  App.arenaWay = (ar, from, to) => {
+    const r0 = Math.hypot(from.x - ar.x, from.z - ar.z), r1 = Math.hypot(to.x - ar.x, to.z - ar.z);
+    const a0 = Math.atan2(from.x - ar.x, from.z - ar.z), a1 = Math.atan2(to.x - ar.x, to.z - ar.z);
+    const at = (a, r) => ({ x: ar.x + Math.sin(a) * r, z: ar.z + Math.cos(a) * r, label: to.label || "to the stands" });
+    if (r0 > 12.6 || r0 < App.ARENA_PIT) return at(a0, r1);
+    let d = a1 - a0;
+    while (d > Math.PI) d -= 6.283; while (d < -Math.PI) d += 6.283;
+    if (Math.abs(d) > 0.35) return at(a0 + Math.sign(d) * Math.min(Math.abs(d), 0.7), r1);
+    return Math.hypot(to.x - from.x, to.z - from.z) > 0.6 ? Object.assign({ label: "to the stands" }, to) : null;
+  };
   App.arenaSeatAngle = (ar, u) => (ar.rot || 0) + 0.55 + u * (6.283 - 1.1);
   App.workplaceOf = (id) => {
     if (workCache.has(id)) return workCache.get(id);

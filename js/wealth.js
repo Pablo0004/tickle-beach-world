@@ -662,6 +662,9 @@
       if (indoors) { if (Math.hypot(t.pos.x - t.home.x, t.pos.z - t.home.z) < 6 && (!m.goal || !m.goal.stable)) m.goal = Object.assign(stableSpot(t.id), { stable: true }); }
       else if (m.park && (!m.goal || m.goal.stable) && Math.hypot(m.park.x - t.pos.x, m.park.z - t.pos.z) > 10 && !(App.ISLE && Math.hypot(t.pos.x - App.ISLE.x, t.pos.z - App.ISLE.z) < App.ISLE.r + 12)) { /* (no mount follows its rider over the lake to the Maker's Isle) */ const px = Math.cos(t.heading), pz = -Math.sin(t.heading); m.goal = { x: t.pos.x + px * 2.6 - Math.sin(t.heading) * 1.5, z: t.pos.z + pz * 2.6 - Math.cos(t.heading) * 1.5, h: t.heading }; }
       if (!m.park) m.park = m.goal ? { x: m.goal.x, z: m.goal.z, h: m.goal.h } : { x: t.pos.x + 2.4, z: t.pos.z, h: t.heading };
+      // never inside an arena: it waits outside, behind its rider's seat (asked 5 November)
+      const Ar = (App.arenas || []).find((q) => q && Math.hypot(m.park.x - q.x, m.park.z - q.z) < 15.5);
+      if (Ar && (!m.goal || Math.hypot(m.goal.x - Ar.x, m.goal.z - Ar.z) < 15.5)) { const a = Math.atan2(m.park.x - Ar.x, m.park.z - Ar.z); m.goal = { x: Ar.x + Math.sin(a) * 17.5, z: Ar.z + Math.cos(a) * 17.5, h: a + Math.PI }; }
       let moving = false;
       const goal = m.goal;
       if (goal) {

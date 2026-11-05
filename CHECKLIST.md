@@ -172,3 +172,9 @@ graphics card). Tick what looks right and note what does not.
 - [ ] In first person, walk up to a fallen rock, a flooded passage or a bare chasm: a notice says who could open it;
       try E with a mage, a warrior, a fire or frost mage, a Tickle with a tamed griffin (or another flying, water or
       Earth creature) and one with an oxygen tank. Behind it, a chest (E): 30 to 60 shells.
+
+## The arenas (5 November)
+
+- [ ] At an arena during the evening tournament: the tamers waiting and the bettors sit round the stone steps (they
+      walk round them to their seat, never across the sand); on the sand only the two tamers fighting and their
+      creatures; the other creatures, horses and griffins wait outside the arena.

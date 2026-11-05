@@ -366,7 +366,8 @@
       return { act: DRILL, face, until: st.T + 4 };
     }
     if (step.k === "bet") {
-      if (far) return { travel: p, why: "to the arena" };
+      const ar = App.arenas[t.village ? t.village.region : 0], way = ar && App.arenaWay(ar, t.pos, p);
+      if (way) return { travel: way, why: "to the arena" };
       if (rnd() < 0.06) App.say(t, pick(["Who's the favourite?", "Tonight's my night!", "Just one more bet..."]), 3);
       return { act: BETTING, face: { x: p.cx, z: p.cz }, until: st.T + 5 };
     }
