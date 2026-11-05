@@ -20,7 +20,9 @@ birds' wings, first person inside buildings. Still to do, in this order:
    on the water surface and in the interiors.
 2. **1.8 Open caves and mines**: only the dungeons stay labyrinths.
 3. Smaller ends: the guided tour to redo (1.5h, on hold); the other things held in the paws (1.5c); extras attached
-   to a house and more outside colours (1.6); a tank now and then in the sea caves' chests (1.6b).
+   to a house and more outside colours (1.6). (Done 5 November: in a sea cave your own Tickle in first person opens
+   a chest with E, once a day each: 10 to 40 shells, and one time in seven an old oxygen tank, sold for 25 shells if
+   it has one already; the opened chests are remembered for the session only.)
 
 ### 1.3 An encyclopedia (asked 22-23 October)
 
