@@ -196,14 +196,22 @@
   // the way to a seat in the stands (asked 5 November: they crowded the sand in the middle, where only those who
   // fight belong): from outside, in to the ring of seats where it stands; on the steps, round them to its seat; on
   // the sand, straight back up. Null once it is at its seat.
-  App.ARENA_PIT = 6.3;
+  // its measures (geo.js digs it, the model is scaled to it): the sand floor, the width of a row of seats, the rows
+  App.ARENA = { pit: 9.5, tw: 2, rows: 4, scale: 6.4 }; // (scale: the model's)
+  App.ARENA.out = App.ARENA.pit + App.ARENA.tw * App.ARENA.rows; // (the top of the stands)
+  App.arenaRow = (k) => App.ARENA.pit + App.ARENA.tw * (k + 0.5); // (the middle of a row of seats, 0 the lowest)
+  App.ARENA_PIT = App.ARENA.pit - 0.2;
   App.arenaWay = (ar, from, to) => {
     const r0 = Math.hypot(from.x - ar.x, from.z - ar.z), r1 = Math.hypot(to.x - ar.x, to.z - ar.z);
     const a0 = Math.atan2(from.x - ar.x, from.z - ar.z), a1 = Math.atan2(to.x - ar.x, to.z - ar.z);
     const at = (a, r) => ({ x: ar.x + Math.sin(a) * r, z: ar.z + Math.cos(a) * r, label: to.label || "to the stands" });
-    if (r0 > 12.6 || r0 < App.ARENA_PIT) return at(a0, r1);
+    if (r0 > App.ARENA.out + 0.3 || r0 < App.ARENA_PIT) return at(a0, r1);
     let d = a1 - a0;
     while (d > Math.PI) d -= 6.283; while (d < -Math.PI) d += 6.283;
+    // never across the ramp at the front (its sides are too steep): the long way round instead
+    const rel = (x) => { let q = x - (ar.rot || 0); while (q > Math.PI) q -= 6.283; while (q < -Math.PI) q += 6.283; return q; };
+    const e0 = rel(a0), e1 = rel(a1);
+    if (Math.sign(e0) !== Math.sign(e1) && Math.abs(e0) + Math.abs(e1) < Math.PI) d -= Math.sign(d) * 6.283;
     if (Math.abs(d) > 0.35) return at(a0 + Math.sign(d) * Math.min(Math.abs(d), 0.7), r1);
     return Math.hypot(to.x - from.x, to.z - from.z) > 0.6 ? Object.assign({ label: "to the stands" }, to) : null;
   };
@@ -411,7 +419,7 @@
     if (tour) {
       const ar = App.arenas[tour.region], a = App.arenaSeatAngle(ar, App.hash2(id, day, 91));
       const walk = (Math.hypot(ar.x - home.x, ar.z - home.z) * 1.2) / SPEED;
-      steps = overlay(steps, { k: "arena", s: Math.max(14 * 60, App.tourneyWindow.start - walk - 15), e: App.tourneyWindow.end + 5, p: { x: ar.x + Math.sin(a) * 7.4, z: ar.z + Math.cos(a) * 7.4, label: ar.name + " (tournament)", cx: ar.x, cz: ar.z } });
+      steps = overlay(steps, { k: "arena", s: Math.max(14 * 60, App.tourneyWindow.start - walk - 15), e: App.tourneyWindow.end + 5, p: { x: ar.x + Math.sin(a) * App.arenaRow(0), z: ar.z + Math.cos(a) * App.arenaRow(0), label: ar.name + " (tournament)", cx: ar.x, cz: ar.z } });
     }
     // the factions: dragon hunts, creature training, bets at the tournament, trade runs and the night
     const F = App.factionOf ? App.factionOf(id) : null;
@@ -428,7 +436,7 @@
     }
     const bar = F === "gamblers" && App.arenas[v.region];
     if (bar && Math.hypot(bar.x - v.x, bar.z - v.z) < 260 && App.hash2(id, day, 177) < 0.55) {
-      const a = App.arenaSeatAngle(bar, App.hash2(id, day, 179)), rr = App.hash2(id, day, 181) < 0.5 ? 9.2 : 11;
+      const a = App.arenaSeatAngle(bar, App.hash2(id, day, 179)), rr = App.arenaRow(1 + Math.floor(App.hash2(id, day, 181) * 2)); // (the top row is up against the wall)
       steps = overlay(steps, { k: "bet", s: Math.max(lunchE, App.tourneyWindow.start - walkTo(bar.x, bar.z) - 10), e: App.tourneyWindow.end, p: { x: bar.x + Math.sin(a) * rr, z: bar.z + Math.cos(a) * rr, label: bar.name + " (betting)", cx: bar.x, cz: bar.z } });
     }
     const tr = F === "merchants" && App.tradeOf(id, day);
@@ -741,7 +749,7 @@
   let shadowMesh = null;
   let scnSig = "";
   App.sceneryVisible = [];
-  const FRAG_SCALE = { waterfall: 2.3, boulders: 1.7, pier: 1.25, arena_0: 4.2, arena_1: 4.2, arena_2: 4.2, dungeon_0: 2.6, dungeon_1: 2.6, dungeon_2: 2.6, dungeon_3: 2.6, maker_0: 6, mine_0: 1.6, mine_1: 1.6, mine_2: 1.6, mine_3: 1.6 };
+  const FRAG_SCALE = { waterfall: 2.3, boulders: 1.7, pier: 1.25, arena_0: App.ARENA.scale, arena_1: App.ARENA.scale, arena_2: App.ARENA.scale, dungeon_0: 2.6, dungeon_1: 2.6, dungeon_2: 2.6, dungeon_3: 2.6, maker_0: 6, mine_0: 1.6, mine_1: 1.6, mine_2: 1.6, mine_3: 1.6 };
   App.FRAG_SCALE = FRAG_SCALE; // (the far view, farview.js)
   const SC = new THREE.Vector3();
   const NEAR_LOD = 70;

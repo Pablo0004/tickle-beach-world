@@ -1060,6 +1060,93 @@
     return /^arena/.test(f.sc.type) ? [L(0, ez), L(0, -ez), L(ex, 0), L(-ex, 0)] : [L(0, ez)];
   }
   App.doorsOf = (s0) => { const f = (footprintsOf(s0) || [])[0]; return f ? doorsOf(f) : []; };
+  // ---------- the arenas: a ring of wall with a gate on each side (asked 5 November: they walked through it) ----------
+  // The ring stands between the top of the stands and the edge of the model; the four gates are the only ways
+  // through it. In and out, a Tickle goes round inside the ring to the gate on its way, then straight through it.
+  // The wall and its openings are measured from the arena's own model (they differ: one has a gate on every side,
+  // another a wide opening at the front), once, by casting rays out from the sand at a Tickle's height.
+  const arShapes = {};
+  const wrapA = (d) => { while (d > Math.PI) d -= 6.283; while (d < -Math.PI) d += 6.283; return d; };
+  function arenaShape(A) {
+    const key = A.type || "arena_0";
+    if (arShapes[key]) return arShapes[key];
+    const F = App.frag && App.frag[key];
+    if (!F) return null;
+    const k = App.ARENA.scale, mesh = new THREE.Mesh(F.geo, new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }));
+    mesh.matrixAutoUpdate = false; mesh.matrix.copy(new THREE.Matrix4().makeScale(k, k, k).multiply(F.local)); mesh.updateMatrixWorld(true);
+    const rc = new THREE.Raycaster(), N = 120, open = [], P = new THREE.Vector3(), D = new THREE.Vector3();
+    let rIn = 99, rOut = 0;
+    for (let i = 0; i < N; i++) {
+      const a = (i / N) * 6.283;
+      let hit = false;
+      for (const y of [0.8, 1.6, 2.4]) {
+        rc.set(P.set(Math.sin(a) * 12, y, Math.cos(a) * 12), D.set(Math.sin(a), 0, Math.cos(a))); rc.far = 16;
+        const h = rc.intersectObject(mesh)[0];
+        if (h) { hit = true; rIn = Math.min(rIn, 12 + h.distance); }
+        rc.set(P.set(Math.sin(a) * 30, y, Math.cos(a) * 30), D.set(-Math.sin(a), 0, -Math.cos(a))); rc.far = 16;
+        const g = rc.intersectObject(mesh)[0];
+        if (g) rOut = Math.max(rOut, 30 - g.distance);
+      }
+      open.push(!hit);
+    }
+    // (kept clear of the jambs: an opening counts only where the steps either side of it are open too)
+    const runAt = (i, dir) => { let n = 0; while (n < N && open[(i + dir * (n + 1) + N * 4) % N]) n++; return n; };
+    const clear = open.map((v, i) => { if (!v) return false; const l = runAt(i, -1), r = runAt(i, 1), m = l + r + 1 >= 8 ? 3 : 1; return l >= m && r >= m; }); // (a narrow gate: its middle; a wide opening: well clear of its ends)
+    return (arShapes[key] = { rIn: Math.max(App.ARENA.out - 2, rIn - 0.3), rOut: rOut + 0.4, N, open: clear });
+  }
+  const openAt = (A, S, a) => S.open[(Math.round((wrapA(a - (A.rot || 0)) / 6.283) * S.N) + S.N) % S.N];
+  App.arenaWallAt = (x, z) => {
+    for (const A of App.arenas || []) {
+      if (!A) continue;
+      const dx = x - A.x, dz = z - A.z, r = Math.hypot(dx, dz);
+      if (r < 14 || r > 24) continue;
+      const S = arenaShape(A);
+      if (S && r >= S.rIn && r <= S.rOut && !openAt(A, S, Math.atan2(dx, dz))) return true;
+    }
+    return false;
+  };
+  // the leg of the way that gets past the wall: round it (inside or out) to the opening on the way, then through;
+  // the front, where the ramp runs down to the sand, only from the sand (its sides are too steep)
+  function arenaLeg(t, target) {
+    for (const A of App.arenas || []) {
+      if (!A) continue;
+      const r0 = Math.hypot(t.pos.x - A.x, t.pos.z - A.z), r1 = Math.hypot(target.x - A.x, target.z - A.z);
+      if (r0 > 60) continue;
+      const S = arenaShape(A);
+      if (!S) continue;
+      const Rin = S.rIn, Rout = S.rOut, rot = A.rot || 0;
+      const ang = (p) => Math.atan2(p.x - A.x, p.z - A.z), at = (a, r) => ({ x: A.x + Math.sin(a) * r, z: A.z + Math.cos(a) * r });
+      const pit = r0 < App.ARENA.pit || r1 < App.ARENA.pit || (r0 < App.ARENA.pit + 3 && Math.abs(wrapA(ang(t.pos) - rot)) < 0.5); // (on the ramp)
+      const usable = (a) => openAt(A, S, a) && (pit || Math.abs(wrapA(a - rot)) > 0.32);
+      const gateBy = (a) => { for (let k = 0; k <= S.N / 2; k++) for (const sg of [1, -1]) { const b = a + sg * (k / S.N) * 6.283; if (usable(b)) return b; } return null; };
+      const a0 = ang(t.pos), in0 = r0 < Rin, in1 = r1 < Rin;
+      if (in0 && in1) return null;
+      if (in0) {
+        const g = gateBy(ang(target));
+        if (g == null) return null;
+        const d = wrapA(g - a0);
+        if (Math.abs(d) > 0.06) return at(a0 + Math.sign(d) * Math.min(Math.abs(d), 0.25), Math.min(Math.max(r0, App.ARENA.pit + 1), Rin - 1)); // (along the steps, never across the sand)
+        return at(g, Rout + 3);
+      }
+      if (r0 <= Rout) {
+        // in the opening itself: on through it, in or out
+        const g = gateBy(a0);
+        return g == null ? null : in1 ? at(g, Rin - 1.5) : at(g, Rout + 3);
+      }
+      if (in1) {
+        const g = gateBy(a0);
+        if (g == null) return null;
+        const d = wrapA(g - a0);
+        return Math.abs(d) < 0.05 ? at(g, Rin - 1.5) : at(a0 + Math.sign(d) * Math.min(Math.abs(d), 0.4), Math.max(r0, Rout + 3));
+      }
+      // both outside: round the wall if the straight way would cut through it
+      if (r0 > Rout && r1 > Rout) {
+        const dx = target.x - t.pos.x, dz = target.z - t.pos.z, L2 = dx * dx + dz * dz || 1, u = Math.max(0, Math.min(1, ((A.x - t.pos.x) * dx + (A.z - t.pos.z) * dz) / L2));
+        if (Math.hypot(t.pos.x + dx * u - A.x, t.pos.z + dz * u - A.z) < Rout + 1) { const d = wrapA(ang(target) - a0); return at(a0 + Math.sign(d || 1) * Math.min(Math.abs(d), 0.4), Math.max(r0, Rout + 3)); }
+      }
+    }
+    return null;
+  }
   function doorway(t, target) {
     const fT = App.buildingAt(target.x, target.z), fS = App.buildingAt(t.pos.x, t.pos.z);
     if (fT === fS || (fT && fS && fT.sc === fS.sc)) return null;
@@ -1077,6 +1164,7 @@
     // into a building or out of it: by its door
     const door = doorway(t, target);
     if (door) target = door;
+    else if (App.arenas) { const w = arenaLeg(t, target); if (w) target = w; }
     // follow a planned detour first, if there is one for this target
     if (t.detour && (t.detour.tx !== target.x || t.detour.tz !== target.z)) t.detour = null;
     let goal = target;
@@ -1092,7 +1180,7 @@
     // a way round that crosses water is swum
     const swim = water || !!(t.detour && t.detour.wet);
     const blocked = (x, z) => (!swim && !App.isLand(x, z) && App.isLand(t.pos.x, t.pos.z)) || (!swim && !App.canFloat(t) && App.pondWater(x, z) && !App.pondWater(t.pos.x, t.pos.z)) ||
-      !App.climbOK(t.pos.x, t.pos.z, x, z) || acrossBuilding(x, z);
+      !App.climbOK(t.pos.x, t.pos.z, x, z) || acrossBuilding(x, z) || (App.arenaWallAt(x, z) && !App.arenaWallAt(t.pos.x, t.pos.z));
     // (the whole stretch of the step is looked at, not just where it ends: a rider covers more than a wall is thick)
     function acrossBuilding(x, z) {
       const ddx = x - t.pos.x, ddz = z - t.pos.z, n = Math.max(1, Math.ceil(Math.hypot(ddx, ddz) / 0.5));

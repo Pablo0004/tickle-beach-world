@@ -801,30 +801,54 @@
       } else sc("trough_0", x - gx * (w - 1.2), z - gz * (d - 1.2), back + Math.PI / 2, { building: true });
     }
     // one creature arena per region, on open flat ground away from the villages
+    function putArena(R, x, z, h) {
+      const ar = { region: R.i, x, z, h, name: R.name + " Arena" }, rot = Math.atan2(R.cx - x, R.cz - z);
+      // the sand floor lies four blocks down, with four rows of stone seats round it and a ramp down to the gate
+      // (made half as big again on 5 November)
+      gadd("field", { kind: "arena", x, z, w: 21, d: 21, h, sunk: { pit: App.ARENA.pit, tiers: 4, tw: App.ARENA.tw, rim: 0.8, ramp: 12, rampW: 2.6, depth: 4, fx: Math.sin(rot), fz: Math.cos(rot), floor: B.SAND, edge: B.STONE } }, x - 34, z - 34, x + 34, z + 34);
+      // (the third of the three on-chain arena models is walled all round, with no way in: the arenas use the one with a
+      // gate on every side and the one open at the front; changed 5 November)
+      ar.type = ["arena_0", "arena_2", "arena_2", "arena_0", "arena_0", "arena_2"][R.i % 6];
+      sc(ar.type, x, z, rot, { building: true });
+      ar.rot = rot;
+      App.arenas[R.i] = ar;
+    }
     App.arenas = [];
     for (const R of regions) {
       const r = rng(R.i * 4111 + 9);
       // every region gets one: if no flat open spot turns up, try again less fussily
-      for (let tries = 0; tries < 1200; tries++) {
-        const easy = tries >= 400;
-        const a = r() * 6.28, d = 40 + r() * (easy ? 420 : 320), x = Math.round(R.cx + Math.cos(a) * d), z = Math.round(R.cz + Math.sin(a) * d);
-        if (regionField(x, z).r !== R.i || placeDist(x, z) < (easy ? 18 : 25)) continue;
+      for (let tries = 0; tries < 3000; tries++) {
+        const easy = tries >= 400, easier = tries >= 1200, last = tries >= 2200; // (never on a road, a field or an orchard, whatever the tries)
+        const a = r() * 6.28, d = 40 + r() * (easier ? 520 : easy ? 420 : 320), x = Math.round(R.cx + Math.cos(a) * d), z = Math.round(R.cz + Math.sin(a) * d);
+        if (regionField(x, z).r !== R.i || placeDist(x, z) < (easier ? 24 : easy ? 26 : 33)) continue;
         const h = genColumn(x, z).h;
         if (h < SEA + 1) continue;
         let flat = true;
-        for (let k = 0; k < 8 && flat; k++) { const b = (k / 8) * 6.28; if (Math.abs(genColumn(x + Math.cos(b) * 10, z + Math.sin(b) * 10).h - h) > (easy ? 3 : 2)) flat = false; }
+        for (let k = 0; k < 12 && flat; k++) { const b = (k / 12) * 6.28; if (Math.abs(genColumn(x + Math.cos(b) * 15, z + Math.sin(b) * 15).h - h) > (easier ? 6 : easy ? 3 : 2)) flat = false; }
         if (!flat) continue;
-        if (villages.some((v) => Math.hypot(v.x - x, v.z - z) < v.r + 22)) continue;
-        if (App.gridNear("road", x, z, 30).some((rd) => segDist(x, z, rd) < 15)) continue;
-        if (App.gridNear("field", x, z, 40).some((f) => Math.abs(f.x - x) < f.w + 14 && Math.abs(f.z - z) < f.d + 14)) continue;
-        if (App.gridNear("poi", x, z, 50).some((p) => Math.hypot(p.x - x, p.z - z) < (p.lake ? p.lake.r + 22 : p.hill ? p.hill.r + 14 : 22))) continue;
-        const ar = { region: R.i, x, z, h, name: R.name + " Arena" }, rot = Math.atan2(R.cx - x, R.cz - z);
-        // the sand floor lies three blocks down, with stone steps round it and a ramp down to the gate
-        gadd("field", { kind: "arena", x, z, w: 14, d: 14, h, sunk: { pit: 6.5, tiers: 3, tw: 1.8, rim: 0.6, ramp: 9, rampW: 2.2, depth: 3, fx: Math.sin(rot), fz: Math.cos(rot), floor: B.SAND, edge: B.STONE } }, x - 24, z - 24, x + 24, z + 24);
-        sc("arena_" + (R.i % 3), x, z, rot, { building: true });
-        ar.rot = rot;
-        App.arenas[R.i] = ar;
+        if (villages.some((v) => Math.hypot(v.x - x, v.z - z) < v.r + (last ? 21 : easier ? 24 : 30))) continue;
+        if (App.gridNear("road", x, z, 36).some((rd) => segDist(x, z, rd) < 22)) continue;
+        if (App.gridNear("field", x, z, 60).some((f) => Math.abs(f.x - x) < f.w + 26 && Math.abs(f.z - z) < f.d + 26)) continue;
+        if (App.gridNear("poi", x, z, 60).some((p) => Math.hypot(p.x - x, p.z - z) < (p.lake ? p.lake.r + (easier ? 24 : 30) : p.hill ? p.hill.r + (easier ? 16 : 22) : easier ? 24 : 30))) continue;
+        putArena(R, x, z, h);
         break;
+      }
+      // a crowded region (all villages and water): the open spot furthest from both, on a grid, never on a road, a field
+      // or an orchard (the arena flattens its own ground)
+      if (!App.arenas[R.i]) {
+        let best = null, bs = -1;
+        for (let gx = R.cx - 640; gx <= R.cx + 640; gx += 6) for (let gz = R.cz - 640; gz <= R.cz + 640; gz += 6) {
+          if (regionField(gx, gz).r !== R.i) continue;
+          const pd = placeDist(gx, gz), vd = Math.min(1e9, ...villages.map((v) => Math.hypot(v.x - gx, v.z - gz) - v.r));
+          if (pd < 22 || vd < 21 || Math.min(pd, vd) <= bs) continue;
+          const h = genColumn(gx, gz).h;
+          if (h < SEA + 1) continue;
+          if (App.gridNear("road", gx, gz, 36).some((rd) => segDist(gx, gz, rd) < 22)) continue;
+          if (App.gridNear("field", gx, gz, 60).some((f) => Math.abs(f.x - gx) < f.w + 26 && Math.abs(f.z - gz) < f.d + 26)) continue;
+          if (App.gridNear("poi", gx, gz, 60).some((p) => Math.hypot(p.x - gx, p.z - gz) < (p.lake ? p.lake.r + 24 : p.hill ? p.hill.r + 16 : 24))) continue;
+          bs = Math.min(pd, vd); best = { x: gx, z: gz, h };
+        }
+        if (best) putArena(R, best.x, best.z, best.h);
       }
     }
     // two dungeon caves per region, out in the wilds
