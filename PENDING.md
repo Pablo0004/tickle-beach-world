@@ -29,6 +29,14 @@ birds' wings, first person inside buildings. Still to do, in this order:
    to a house and more outside colours (1.6). (Done 5 November: in a sea cave your own Tickle in first person opens
    a chest with E, once a day each: 10 to 40 shells, and one time in seven an old oxygen tank, sold for 25 shells if
    it has one already; the opened chests are remembered for the session only.)
+4. **1.9 The arenas (asked 5 November)**: (a) the stands: the Tickles crowded the sand in the middle; only those who
+   fight belong there, and no creature or animal goes in unless it is to fight. Done 5 November (`App.arenaWay`,
+   population.js): the tamers waiting for their turn and the bettors walk to their seat round the steps (never
+   across the sand) and sit there; a creature not fighting, and a horse or griffin, waits outside behind its
+   Tickle's seat; in the middle only the two tamers of the match and their creatures (and a training session's).
+   (b) Make the arenas bigger. (c) Better attacks in the battles: today they are very basic.
+5. **1.10 Animals off the walls (asked 5 November)**: horses and other animals cannot patrol the wall walks; at most
+   those that fly can fly over them.
 
 ### 1.3 An encyclopedia (asked 22-23 October)
 

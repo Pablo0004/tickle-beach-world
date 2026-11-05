@@ -278,6 +278,10 @@
         const k = Math.floor(App.hash2(b.data.owner, 517, 3) * 15), fx = Math.sin(Sb.rot || 0), fz = Math.cos(Sb.rot || 0), sc = Sb.scale || 1, lx = ((k % 5) - 2) * 1.3 * sc, fwd = (k < 3 ? 1.9 : 3.3 + Math.floor((k - 3) / 5) * 1.4) * sc;
         ox = Sb.x + fz * lx + fx * fwd; oz = Sb.z - fx * lx + fz * fwd;
         if (Math.hypot(ox - b.x, oz - b.z) < 0.5) b.h = Math.atan2(fx, fz);
+      } else if (!inside && !(t.step && t.step.k === "train") && (App.arenas || []).some((A) => A && Math.hypot(t.pos.x - A.x, t.pos.z - A.z) < 15)) {
+        // (asked 5 November: no creature goes into an arena unless it is to fight; it waits outside, behind its Tickle)
+        const A = App.arenas.find((q) => q && Math.hypot(t.pos.x - q.x, q.z - t.pos.z) < 15), a = Math.atan2(t.pos.x - A.x, t.pos.z - A.z) + (App.hash2(b.data.owner, 519, 3) - 0.5) * 0.3;
+        ox = A.x + Math.sin(a) * 17; oz = A.z + Math.cos(a) * 17;
       } else { ox = inside ? t.home.x + 1.2 : t.pos.x - Math.sin(t.heading) * 1.4 + Math.cos(t.heading) * 0.9; oz = inside ? t.home.z + 0.6 : t.pos.z - Math.cos(t.heading) * 1.4 - Math.sin(t.heading) * 0.9; }
       const d = Math.hypot(ox - b.x, oz - b.z);
       if (d > 45) { b.x = ox; b.z = oz; } // (from the stable it runs back to its Tickle when the gathering is over)
@@ -526,7 +530,8 @@
   // a tamer at the arena: wait in the stands until called down for a match
   App.arenaBrain = (t, step) => {
     const ar = App.arenas[App.villageOfToken(t.id).region];
-    if (Math.hypot(step.p.x - t.pos.x, step.p.z - t.pos.z) > 3) return { travel: step.p };
+    const way = App.arenaWay(ar, t.pos, step.p);
+    if (way) return { travel: way };
     return { wait: true, face: ar };
   };
   // the live tournament: matches are fought one after another in the ring
