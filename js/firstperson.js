@@ -439,6 +439,16 @@
     a.useAt = now;
     const yaw = t.heading + fp.look, fx = Math.sin(yaw), fz = Math.cos(yaw);
     const ahead = (x, z, r) => { const dx = x - t.pos.x, dz = z - t.pos.z, d = Math.hypot(dx, dz); return d <= r && (dx * fx + dz * fz) > d * 0.5 ? d : -1; };
+    // under the water: search the bottom (pearls, coins, coral, old treasure at a dive site; a shell elsewhere)
+    if (a.water && (a.dive || 0) > 0.6 && App.diveSearch) {
+      if (now - (a.searchAt || 0) < 4000) return; // (a good look round takes a moment)
+      a.searchAt = now;
+      const got = App.diveSearch(t.id, t.pos.x, t.pos.z);
+      App.say(t, got ? "Found " + got + "!" : "Just sand down here\u2026", 2.5);
+      if (App.addSkill) App.addSkill(t.id, "dive", got ? 1 : 0.3);
+      if (App.giveXP) App.giveXP(t.id, got ? 4 : 1);
+      return;
+    }
     // a wild creature
     const cre = (App.creatureBodiesNear ? App.creatureBodiesNear(t.pos.x, t.pos.z, 6) : []).filter((b) => b.wild && !b.busy && ahead(b.x, b.z, 4) >= 0)[0];
     if (cre && App.fpTame) {
