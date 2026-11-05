@@ -24,7 +24,7 @@ birds' wings, first person inside buildings. Still to do, in this order:
    what that site gives (pearls, coins, coral, Ethernum, now and then a chest or an old tank), elsewhere now and then
    a shell; the diving skill helps (done 5 November); things for your own Tickle to find or catch under the sea; more detail
    on the water surface and in the interiors.
-2. **1.8 Open caves and mines**: only the dungeons stay labyrinths.
+2. ~~1.8 Open caves and mines~~ (done 5 November).
 3. Smaller ends: the guided tour to redo (1.5h, on hold); the other things held in the paws (1.5c); extras attached
    to a house and more outside colours (1.6). (Done 5 November: in a sea cave your own Tickle in first person opens
    a chest with E, once a day each: 10 to 40 shells, and one time in seven an old oxygen tank, sold for 25 shells if
@@ -253,7 +253,10 @@ owner: a tank can be **bought and found**, both. Plan:
   furniture; the ways on show in the room's card only when it stands at them ("... (E)"), E takes them (up, down,
   out); out of the door it is still yours in first person outside; Esc gives the room view back.
 - **Open caves and mines**: only the dungeons (the Great Underworld) stay labyrinths; the other caves and the mines
-  become open spaces, like the rooms worked on lately (the merged floors).
+  become open spaces, like the rooms worked on lately (the merged floors). Done 5 November (interiors.js, `openCave`): the mines and
+  the sea caves are open caverns: the corners of the rock rounded off, the walls inside taken down but for a few
+  outcrops of rock (short slabs, never one that cuts a part off); what lay in the dead ends (ore veins, treasure) now
+  lies in the nooks (the corners and the lee of an outcrop). The Great Underworld is still a labyrinth.
 - **Sea caves**: walls of dark blue stone, as dark as it should be down there, lit only in spots by torches. Done 30 October:
   dark blue stone walls and floor, very little light but the torches (warm pools), and sea creatures going up and
   down the passages (crabs, jellyfish, a turtle, a manta) (1.7's "sea creatures in the sea caves" too).

@@ -551,6 +551,29 @@
     const In = (x, y) => m.seen.has(x + "," + y);
     for (let x = x0; x < x0 + w; x++) for (let y = y0; y < y0 + h; y++) { if (!In(x, y)) continue; if (x < x0 + w - 1 && In(x + 1, y)) m.E[x][y] = false; if (y < y0 + h - 1 && In(x, y + 1)) m.S[x][y] = false; }
   }
+  // an open cave (asked 30 October: only the dungeons stay labyrinths): the corners of the rock rounded off, every
+  // wall inside taken down but for a few outcrops of rock (short slabs), and never one that cuts a part off
+  function openCave(m, r, keep) {
+    const { W, H } = m, kept = keep.map((c) => c + "");
+    for (const [x, y] of [[0, 0], [W - 1, 0], [0, H - 1], [W - 1, H - 1]]) if (r() < 0.7 && !kept.includes(x + "," + y)) m.seen.delete(x + "," + y);
+    const In = (x, y) => m.seen.has(x + "," + y);
+    for (let x = 0; x < W; x++) for (let y = 0; y < H; y++) { m.E[x][y] = !(In(x, y) && In(x + 1, y)); m.S[x][y] = !(In(x, y) && In(x, y + 1)); }
+    const all = () => bfs(m, keep[0]).dist.size === m.seen.size;
+    const nOut = Math.max(2, Math.round((W * H) / 9));
+    for (let k = 0, tries = 0; k < nOut && tries < 60; tries++) {
+      let x = 1 + Math.floor(r() * (W - 2)), y = 1 + Math.floor(r() * (H - 2));
+      const horiz = r() < 0.5, len = 1 + (r() < 0.5 ? 1 : 0), done = [];
+      for (let j = 0; j < len; j++) {
+        const X = horiz ? x + j : x, Y = horiz ? y : y + j;
+        if (!In(X, Y)) break;
+        if (horiz && In(X, Y + 1) && !m.S[X][Y]) { m.S[X][Y] = true; done.push(["S", X, Y]); }
+        else if (!horiz && In(X + 1, Y) && !m.E[X][Y]) { m.E[X][Y] = true; done.push(["E", X, Y]); }
+      }
+      if (!done.length) continue;
+      if (!all()) { for (const [s, X, Y] of done) m[s][X][Y] = false; continue; }
+      k++;
+    }
+  }
   const exits = (m, x, y) => DIRS.filter(([dx, dy]) => openTo(m, x, y, dx, dy)).length;
   // a wall side of a cell, for things that stand against a wall (torches, veins, cobwebs)
   function wallSide(m, x, y, r) {
@@ -564,6 +587,7 @@
   function mazeFloor(o) {
     const { r, W, H, loops, entry, name, look, last, kind } = o;
     const m = carve(r, W, H, loops, entry, o.active);
+    if (o.open) openCave(m, r, [entry].concat((o.exits || []).map((e) => e.cell)));
     const In = (x, y) => m.seen.has(x + "," + y);
     let cells = [...m.seen].map((k) => k.split(",").map(Number));
     // chambers (a big floor gets more of them)
@@ -613,7 +637,7 @@
       put({ k: kind === "mine" ? "lantern" : "torch", x: a.x, z: a.z, rot: a.rot, light: true });
     }
     // dead ends: treasure, bones, cages; ore veins in a mine
-    const ends = cells.filter(([x, y]) => exits(m, x, y) === 1 && !used.has(x + "," + y));
+    const ends = cells.filter(([x, y]) => exits(m, x, y) <= (o.open ? 2 : 1) && !used.has(x + "," + y));
     ends.forEach(([x, y], i) => {
       used.add(x + "," + y);
       const sd = wallSide(m, x, y, r) || [0, -1], a = against(x, y, sd, 1.4);
@@ -833,7 +857,7 @@
       const W = 8 + f, H = 5 + f, last = f === nF - 1;
       entry = f === 0 ? [Math.floor(W / 2), H - 1] : [Math.min(W - 1, rooms[f - 1].exit[0]), Math.min(H - 1, rooms[f - 1].exit[1])];
       const ore = (i) => last && M.orichalcum && i % 4 === 0 ? 3 : i % 3 === 0 ? 6 : (rich.length ? rich[i % rich.length] : 0);
-      const R = mazeFloor({ r, W, H, loops: 0.28, entry, kind: "mine", look: MINE_LOOK, last, first: f === 0, index: f, monsters: [2, 3, 3, 4, 4][f], ore, deep: f > 0,
+      const R = mazeFloor({ r, W, H, loops: 0.28, entry, open: true, kind: "mine", look: MINE_LOOK, last, first: f === 0, index: f, monsters: [2, 3, 3, 4, 4][f], ore, deep: f > 0,
         name: names[f], outLabel: "Out of the mine", upLabel: "Up to the " + names[f - 1 < 0 ? 0 : f - 1].toLowerCase(), downLabel: "Down to the " + (names[f + 1] || "").toLowerCase(),
         pick: (k) => (f === 0 ? ["goblin", 1] : (k % 2 ? ["spider", 0] : ["goblin", 1])), boss: last ? { k: "troll", v: 1, scale: 1, name: "the rock troll" } : null });
       // rails along the main tunnel, from the way in to the way down
@@ -858,7 +882,7 @@
       entry = f === 0 ? [Math.floor(W / 2), H - 1] : [Math.min(W - 1, rooms[0].exit[0]), Math.min(H - 1, rooms[0].exit[1])];
       // its creatures go up and down the passages: crabs, jellyfish, a turtle, a manta in the bigger chamber
       const SEA_MON = [["seacrab", 0], ["jelly", 0], ["seacrab", 0], ["seaturtle", 0], ["jelly", 0], ["manta", 0]];
-      const R = mazeFloor({ r, W, H, loops: 0.35, entry, kind: "seacave", look: SEA_LOOK, last, first: f === 0, index: f, monsters: 3 + f * 2, name: names[f],
+      const R = mazeFloor({ r, W, H, loops: 0.35, entry, open: true, kind: "seacave", look: SEA_LOOK, last, first: f === 0, index: f, monsters: 3 + f * 2, name: names[f],
         outLabel: "Swim out of the cave", upLabel: "Up to the grotto", downLabel: "Down to the pearl chamber", pick: (k) => SEA_MON[(k + f) % SEA_MON.length], boss: null });
       R.note = f === 0 ? "A cave in the sea floor that only divers ever find: walls of dark blue stone, dark but where a torch burns, coral and sponges over everything, crabs and jellyfish in the passages. Treasure lies in the dead ends." : "The deepest chamber, where the oysters grow big and the oldest chests lie half buried in the sand.";
       if (last) for (let k = 0; k < 6; k++) R.items.push({ k: "oyster", x: R.cx(R.exit[0]) + Math.cos(k) * 2.6, z: R.cz(R.exit[1]) + Math.sin(k) * 2.6, rot: k });

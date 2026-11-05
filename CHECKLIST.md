@@ -164,3 +164,8 @@ graphics card). Tick what looks right and note what does not.
       the wheel pulls the view back to see it in third person; the griffin is not also walking beside it.
 - [ ] Diving in first person: B searches the bottom; at a dive site you find its treasure (pearls, coins, coral...),
       elsewhere now and then a shell.
+
+## Open caves and mines (5 November)
+
+- [ ] Go into a mine and a sea cave: one open cavern per floor (no corridors), with a few outcrops of rock; ore
+      veins and treasure in the corners; the stairs down still at the far end. The Great Underworld is still a maze.
