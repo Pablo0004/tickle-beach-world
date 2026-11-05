@@ -157,3 +157,6 @@ graphics card). Tick what looks right and note what does not.
       you can build and edit homes anywhere. Switch it off: only your chosen holder's Tickles and land again.
 - [ ] In a sea cave with your Tickle in first person: walk to a chest and press E: shells, and now and then an old
       oxygen tank; the same chest is empty until the next day.
+- [ ] First person, B (use): in front of a wild creature it tries to tame it; in front of a wild deer or boar it hunts it;
+      at the water's edge it fishes. Each grows a skill (Taming, Hunting, Fishing; also Fighting, Diving, Riding by
+      doing them), shown in the Tickle's window.

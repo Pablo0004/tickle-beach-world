@@ -16,7 +16,10 @@ big places, 1.6 editing homes and the build mode, 1.6b oxygen tanks, 1.8 control
 birds' wings, first person inside buildings. Still to do, in this order:
 
 1. **1.7 What is left over**: first person able to do everything a Tickle does (dive, tame, hunt, attack, ride,
-   fish...), improving skills and experience; things for your own Tickle to find or catch under the sea; more detail
+   fish...), improving skills and experience (started 5 November: B uses what is in front: tames a wild creature,
+   hunts a wild animal, fishes at the water's edge; skills Taming, Hunting, Fishing, Fighting, Diving and Riding grow
+   by doing, up to 50, and make things likelier to go well; shown in the Tickle's window; next: riding a tamed
+   griffin creature and flying with it, in first or third person); things for your own Tickle to find or catch under the sea; more detail
    on the water surface and in the interiors.
 2. **1.8 Open caves and mines**: only the dungeons stay labyrinths.
 3. Smaller ends: the guided tour to redo (1.5h, on hold); the other things held in the paws (1.5c); extras attached

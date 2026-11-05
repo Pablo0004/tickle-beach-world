@@ -29,6 +29,7 @@
     const step = App.planStep(id, st.T).step;
     out.rows.push(["Now", t && App.actionText ? App.actionText(t) : App.stepLabel(step.k) || step.k]);
     out.rows.push(["Today", (App.stepLabel(step.k) || step.k) + (step.p && step.p.label ? " \u00b7 " + step.p.label : "")]);
+    if (App.skillsText && App.skillsText(id)) out.rows.push(["Skills", App.skillsText(id)]);
     out.rows.push(["Holder", (short(App.ownerOf(id)) || "nobody") + (App.isMine && App.isMine(id) ? " (you)" : "")]);
     if (v) out.rows.push(["Home", v.name + (App.placeKindText ? ": " + App.placeKindText(v) : "")]);
     // what it can do
