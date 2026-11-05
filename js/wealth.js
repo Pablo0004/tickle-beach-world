@@ -74,6 +74,8 @@
       if (Gm) return { tier: "roost", kind: "griffin", mul: Gm.mul, fly: true, scale: Gm.scale, coat: 3, name: "a griffin of " + hv.name + "'s roost", seat: 2.45, roost: true };
     }
     const c = App.leadCreature && App.leadCreature(id), R = c && App.MOUNT_MONSTERS && App.MOUNT_MONSTERS[c.sp];
+    // a tamed griffin (the wild creature, tamed) carries its tamer and flies, like a griffin from the roost (asked 5 November)
+    if (c && c.sp === "griffin") { const Gm = CAT.mount.find((m) => m && m.fly); if (Gm) return { tier: "c:griffin", kind: "griffin", sp: "griffin", mul: Gm.mul, fly: true, scale: Gm.scale, coat: 3, seat: 2.45, pet: true, nick: c.nick || "its griffin", name: c.nick ? c.nick + " the griffin" : "its tamed griffin" }; }
     if (R) return { tier: "c:" + c.sp, kind: "monster", sp: c.sp, mul: R.mul, fly: false, scale: R.s, coat: 0, dz: R.dz, biped: !!R.biped, seat: R.back * R.s * 0.85 * S, pet: true, nick: c.nick || App.CREATURES[c.sp].name, name: (c.nick ? c.nick + " the " : "its ") + App.CREATURES[c.sp].name };
     const b = beastOf(id);
     if (b) { const B = BEASTS[b]; return { tier: "b:" + b, kind: "beast", sp: b, mul: B.mul, fly: false, scale: B.s, coat: 0, dz: 0, seat: B.back * B.s * 0.85 * S, name: B.short }; }

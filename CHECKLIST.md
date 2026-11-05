@@ -160,3 +160,5 @@ graphics card). Tick what looks right and note what does not.
 - [ ] First person, B (use): in front of a wild creature it tries to tame it; in front of a wild deer or boar it hunts it;
       at the water's edge it fishes. Each grows a skill (Taming, Hunting, Fishing; also Fighting, Diving, Riding by
       doing them), shown in the Tickle's window.
+- [ ] A Tickle whose main creature is a tamed griffin: in first person M gets on it and it flies (Space up, C down);
+      the wheel pulls the view back to see it in third person; the griffin is not also walking beside it.
