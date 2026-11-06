@@ -182,3 +182,4 @@ graphics card). Tick what looks right and note what does not.
       walks through their walls: they go in and out by the gates (or the wide opening at the front).
 - [ ] The maps: the six casinos show as a magenta chip (with its name on the big map, and in the legend); a click on one
       takes you there.
+- [ ] A Tickle surfing or carrying its board: the board alone, without the stand of the on-chain model.

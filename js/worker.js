@@ -41,7 +41,9 @@ self.onmessage = (ev) => {
         out = { mesh: meshOf(vox, transfer), traits: T.traits, anchor: T.anchor, seed };
       }
     } else if (type === "ground") {
-      const vox = TB.voxelize(TB.compile(TB.groundLayers(ev.data.index, ev.data.theme)), { voxel: ev.data.voxel || 10, colors: TB.colorOf });
+      const gl = TB.groundLayers(ev.data.index, ev.data.theme);
+      if (ev.data.keep) gl[0].subparts = gl[0].subparts.slice(0, ev.data.keep); // (only the first strokes of the model: the surfboard off its stand)
+      const vox = TB.voxelize(TB.compile(gl), { voxel: ev.data.voxel || 10, colors: TB.colorOf });
       out = { mesh: meshOf(vox, transfer) };
     } else if (type === "fragment") {
       const layers = TB.fragmentLayers(ev.data.key);

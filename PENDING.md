@@ -49,6 +49,9 @@ birds' wings, first person inside buildings. Still to do, in this order:
    rest of the world too). Not started beyond the arenas.
    (Done 6 November: the six casinos are on the maps, a magenta chip with its name on the big map, in the legends; they
    were on no map before. Click it to go there.)
+   (Done 6 November: the on-chain Surfs Up stands on legs; in use only its first six strokes are drawn, the board and
+   its fins with its own colours, without the stand (`keep` in the worker's ground job). Left: on a wave the surfer
+   and the board sit inside the water and the foam; raising them, and a bigger board, were offered to the owner.)
 5. **1.10 Animals off the walls (asked 5 November)**: horses and other animals cannot patrol the wall walks; at most
    those that fly can fly over them.
 
