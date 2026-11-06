@@ -492,6 +492,7 @@
       const live = tr && !tr.done && m >= App.tourneyWindow.start && m < App.tourneyWindow.end;
       out.push({ kind: "arena", x: ar.x, z: ar.z, name: ar.name, sub: "Creature arena \u00b7 " + (!tr ? "no tournament tonight" : tr.done ? "tonight's champion: " + App.nameOf(tr.champ) : live ? "tournament on now" : "tournament at " + App.clock(day * 1440 + App.tourneyWindow.start).short), live });
     }
+    for (const C of App.casinos || []) if (C) out.push({ kind: "casino", x: C.x, z: C.z, name: C.name, sub: "Casino of " + App.regions[C.region].name + " \u00b7 cards, roulette and slot machines. Click it, then Go inside" });
     for (const L of App.lairs) {
       const s = App.dragonState(L, st.T);
       out.push({ kind: "lair", x: L.x, z: L.z, name: L.name, sub: "Dragon lair \u00b7 " + TB.DRAGON_LOOKS[L.look].name.toLowerCase() + " dragon" + (s.mode === "slain" ? ": empty, its dragon was slain" : s.mode === "hidden" ? " in hiding (beaten by the Guild)" : App.huntOn && App.huntOn(L) ? " (the Guild is hunting it today)" : s.mode === "perch" ? " asleep" : " out") });
@@ -512,6 +513,11 @@
       ctx.strokeStyle = m.live ? "#ff6b5e" : "#ffd23f"; ctx.lineWidth = 1.8 * s;
       ctx.beginPath(); ctx.arc(x, y, 3.6 * s * pulse, 0, 6.283); ctx.stroke();
       ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(x, y, 1.3 * s, 0, 6.283); ctx.fill();
+    } else if (m.kind === "casino") {
+      // a gaming chip: magenta with a white ring and a dark edge
+      ctx.fillStyle = "#e0309a"; ctx.strokeStyle = "#3a0a28"; ctx.lineWidth = 1 * s;
+      ctx.beginPath(); ctx.arc(x, y, 3.8 * s, 0, 6.283); ctx.fill(); ctx.stroke();
+      ctx.strokeStyle = "#ffffff"; ctx.beginPath(); ctx.arc(x, y, 2 * s, 0, 6.283); ctx.stroke();
     } else if (m.kind === "lair") {
       ctx.fillStyle = "#3a1a14"; ctx.strokeStyle = "#ff3b2f";
       ctx.beginPath(); ctx.moveTo(x, y - 4 * s); ctx.lineTo(x + 3.6 * s, y + 2.6 * s); ctx.lineTo(x - 3.6 * s, y + 2.6 * s); ctx.closePath(); ctx.fill(); ctx.stroke();
@@ -538,7 +544,7 @@
       ctx.fillStyle = "#ff3b2f"; ctx.beginPath(); ctx.arc(x, y, 3.2 * s, 0, 6.283); ctx.fill();
     }
   }
-  const ORDER = { village: 0, bridge: 1, dock: 1.5, cave: 2, mine: 2.5, ether: 2.6, isle: 2.7, arena: 3, lair: 4, ferry: 4.5, dragon: 5 };
+  const ORDER = { village: 0, bridge: 1, dock: 1.5, cave: 2, mine: 2.5, ether: 2.6, isle: 2.7, arena: 3, casino: 3.5, lair: 4, ferry: 4.5, dragon: 5 };
   function drawMap(ctx, w, h, big) {
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(big ? landImage(400, Math.round(400 * h / w)) : landImage(w, h), 0, 0, w, h);
@@ -561,7 +567,7 @@
       ctx.font = "700 " + fs + "px system-ui, sans-serif";
       const clash = (r) => r.x0 < 2 || r.x1 > w - 2 || r.y0 < 2 || r.y1 > h - 2 || placed.some((q) => r.x0 < q.x1 && r.x1 > q.x0 && r.y0 < q.y1 && r.y1 > q.y0);
       for (const m of marks) {
-        if (m.kind !== "arena" && m.kind !== "cave" && m.kind !== "lair" && m.kind !== "mine" && m.kind !== "isle" && m.kind !== "ether") continue;
+        if (m.kind !== "arena" && m.kind !== "casino" && m.kind !== "cave" && m.kind !== "lair" && m.kind !== "mine" && m.kind !== "isle" && m.kind !== "ether") continue;
         const [x, y] = xy(m.x, m.z), tw = ctx.measureText(m.name).width, g = 6 * s;
         const tries = [[x + g, y + fs * 0.35, "left"], [x - g, y + fs * 0.35, "right"], [x, y - g - 2, "center"], [x, y + g + fs, "center"]];
         for (const [tx, ty, al] of tries) {
@@ -570,7 +576,7 @@
           placed.push(r);
           ctx.textAlign = al;
           ctx.lineWidth = 3; ctx.strokeStyle = "rgba(0,0,0,0.7)"; ctx.strokeText(m.name, tx, ty);
-          ctx.fillStyle = m.kind === "arena" ? "#ffe9a0" : m.kind === "cave" ? "#e4d4ff" : m.kind === "mine" ? "#f0c890" : m.kind === "isle" ? "#ffd23f" : m.kind === "ether" ? "#d9c4ff" : "#ffb3a8"; ctx.fillText(m.name, tx, ty);
+          ctx.fillStyle = m.kind === "arena" ? "#ffe9a0" : m.kind === "casino" ? "#ffb0dc" : m.kind === "cave" ? "#e4d4ff" : m.kind === "mine" ? "#f0c890" : m.kind === "isle" ? "#ffd23f" : m.kind === "ether" ? "#d9c4ff" : "#ffb3a8"; ctx.fillText(m.name, tx, ty);
           break;
         }
       }
