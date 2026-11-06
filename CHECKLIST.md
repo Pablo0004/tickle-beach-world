@@ -180,3 +180,5 @@ graphics card). Tick what looks right and note what does not.
       creatures; the other creatures, horses and griffins wait outside the arena.
 - [ ] The arenas are half as big again, with four rows of seats, and never on a field, an orchard or a road. Nobody
       walks through their walls: they go in and out by the gates (or the wide opening at the front).
+- [ ] The maps: the six casinos show as a magenta chip (with its name on the big map, and in the legend); a click on one
+      takes you there.

@@ -47,6 +47,8 @@ birds' wings, first person inside buildings. Still to do, in this order:
    (c) Better attacks in the battles: today they are very basic. Not started.
    (d) No wall, wall of a building or rock anywhere may be walked through (the owner saw it at the arena; check the
    rest of the world too). Not started beyond the arenas.
+   (Done 6 November: the six casinos are on the maps, a magenta chip with its name on the big map, in the legends; they
+   were on no map before. Click it to go there.)
 5. **1.10 Animals off the walls (asked 5 November)**: horses and other animals cannot patrol the wall walks; at most
    those that fly can fly over them.
 
