@@ -673,9 +673,9 @@
 
   // ---------- personal items (each Tickle's on-chain Ground item lives in its inventory) ----------
   const groundGeo = new Map();
-  App.itemMesh = (index, theme) => {
-    const k = index + ":" + theme;
-    if (!groundGeo.has(k)) groundGeo.set(k, App.job("ground", { index, theme: theme < 0 ? null : theme, voxel: 10 }).then((r) => ({ md: r.mesh, geo: App.makeVoxMesh(r.mesh).geometry })));
+  App.itemMesh = (index, theme, keep) => {
+    const k = index + ":" + theme + ":" + (keep || 0);
+    if (!groundGeo.has(k)) groundGeo.set(k, App.job("ground", { index, theme: theme < 0 ? null : theme, voxel: 10, keep: keep || 0 }).then((r) => ({ md: r.mesh, geo: App.makeVoxMesh(r.mesh).geometry })));
     return groundGeo.get(k);
   };
   App.items = new Map(); // kept empty: items are no longer left lying around

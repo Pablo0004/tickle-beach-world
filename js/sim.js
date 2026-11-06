@@ -552,7 +552,8 @@
     }
     const lent = nm !== t.ground, idx = lent ? groundIndex(nm) : P.ground[t.id];
     if (idx < 0) return;
-    App.itemMesh(idx, lent ? -1 : P.gtheme[t.id]).then(({ md, geo }) => {
+    // (the on-chain Surfs Up stands on a stand of legs: in use only the board, its first six strokes, with its own colours)
+    App.itemMesh(idx, lent ? -1 : P.gtheme[t.id], nm === "Surfs Up" ? 6 : 0).then(({ md, geo }) => {
       if (t.itemMode !== mode || t.itemObj || !t.group.parent) return;
       const g = new THREE.Group();
       g.add(App.centeredMesh(md, geo, true));
