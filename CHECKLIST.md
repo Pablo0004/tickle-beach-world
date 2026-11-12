@@ -183,3 +183,11 @@ graphics card). Tick what looks right and note what does not.
 - [ ] The maps: the six casinos show as a magenta chip (with its name on the big map, and in the legend); a click on one
       takes you there.
 - [ ] A Tickle surfing or carrying its board: the board alone, without the stand of the on-chain model.
+
+## Spearfishing and the rod (12 November)
+
+- [ ] Your Tickle in first person, swimming in the open sea: C to dive down near a school of fish, look at a fish and
+      press B: the harpoon flies out, strikes the fish and comes back with it on the point ("Speared a parrotfish!",
+      shells and food). A miss: it flies past and comes back empty. Looking at the sand: it searches the bottom as before.
+- [ ] A fisher with a rod at a pier or a pond: now and then a fish comes up on the line at the pull of the rod.
+- [ ] Menu > Encyclopedia > Arms: the Harpoon.

@@ -52,6 +52,17 @@ birds' wings, first person inside buildings. Still to do, in this order:
    (Done 6 November: the on-chain Surfs Up stands on legs; in use only its first six strokes are drawn, the board and
    its fins with its own colours, without the stand (`keep` in the worker's ground job). Left: on a wave the surfer
    and the board sit inside the water and the foam; raising them, and a bigger board, were offered to the owner.)
+7. **1.12 Spearfishing (asked 11 November, done 12 November)**: diving in first person, B throws a harpoon at a fish
+   ahead (one of the schools of the open sea, sea.js, within eight blocks and in the line of sight): it flies to the
+   fish, following it, strikes or misses, and comes back on its cord with the fish on the point; a struck fish is
+   food for the granary (a parrotfish three, a sardine one, the others two) and three shells, grows the fishing skill,
+   and is gone from its school for four hours. The harpoon is a kit model (`harpoon`, group Diving; in the
+   encyclopedia under Arms). Looking at the sand with no fish ahead, B still searches the bottom. Nothing like the rod
+   fishing from the shore. Not done, asked once in the same breath and then interrupted: metal fish (mithril and the
+   game's precious metals) as a resource for arms and shields, with rarity rates; ask before doing it.
+   Also 12 November: a fish on the rod's line. Rod fishers (the Fishing Rod job) now bring a fish up out of the
+   water at the pull of the rod now and then (about one cast in three; `t.forceCatch` makes the next one sure, for
+   the film): up the line to the tip, then gone into the basket, "Got one!", food for the granary.
 6. **1.11 A film of the whole game (asked 11 November, for the TickleBedge account)**: a video showing everything the
    game has, each thing from its best camera angle (fishing, taming, hunting, wars between holders, the Underworld,
    the casino, the arena, the sea beasts, surfing, diving, dragons, the contests, the Parliament, the mines, first

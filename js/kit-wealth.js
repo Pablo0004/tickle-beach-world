@@ -660,6 +660,17 @@
     st.push(S("cube", [0, 0, 292], [50, 10, 8], { color: steel, layer: 1 }));
     return st;
   }
+  // a harpoon (spearfishing in first person, sim.js and firstperson.js): an ash shaft with a steel point and two
+  // barbs, the cord wrapped round the butt; stands on its butt (z up), 2.6 blocks long
+  function harpoon() {
+    const st = [], wood = C("#a0703a"), steel = C("#c8d0d8"), dark = C("#3a3a3a"), cord = C("#e8443a");
+    st.push(S("cylinder", [0, 0, 170], [8, 8, 170], { color: wood }));
+    st.push(S("cylinder", [0, 0, 34], [11, 11, 30], { color: cord }));
+    st.push(S("cylinder", [0, 0, 350], [9, 9, 14], { color: dark }));
+    st.push(S("cylinder", [0, 0, 392], [8, 8, 36], { color: steel, cone: 1, layer: 1 }));
+    st.push(S("cylinder", [14, 0, 372], [3, 3, 16], { color: steel, rot: dir(0.45, 0, 1), mirror: true, offsX: 14, layer: 1 }));
+    return st;
+  }
   // ---------- extras for a home's garden (build mode, "Garden and extras") ----------
   // a flower bed: a low border of stones round dark earth, flowers in the house's colour and others
   function flowerbed(clan) {
@@ -945,6 +956,7 @@
     catapultarm: { name: "Catapult Arm", group: "Village", variants: [0], build: catapultarm, voxel: [7] },
     ram: { name: "Battering Ram", group: "Village", variants: [0], build: ram, voxel: [8] },
     oxytank: { name: "Oxygen Tank", group: "Diving", variants: [0], build: oxytank, voxel: [4] },
+    harpoon: { name: "Harpoon", group: "Diving", variants: [0], build: harpoon, voxel: [4] },
     flowerbed: { name: "Flower Bed", group: "Garden", variants: clanV, build: flowerbed, voxel: [6], variantLabel: (v) => CLANS[v].species + " flowers" },
     hedge: { name: "Hedge", group: "Garden", variants: [0], build: hedge, voxel: [7] },
     porch: { name: "Porch", group: "Garden", variants: clanV, build: porch, voxel: [7], variantLabel: (v) => CLANS[v].species + " roof" },
