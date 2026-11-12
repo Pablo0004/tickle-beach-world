@@ -52,6 +52,17 @@ birds' wings, first person inside buildings. Still to do, in this order:
    (Done 6 November: the on-chain Surfs Up stands on legs; in use only its first six strokes are drawn, the board and
    its fins with its own colours, without the stand (`keep` in the worker's ground job). Left: on a wave the surfer
    and the board sit inside the water and the foam; raising them, and a bigger board, were offered to the owner.)
+6. **1.11 A film of the whole game (asked 11 November, for the TickleBedge account)**: a video showing everything the
+   game has, each thing from its best camera angle (fishing, taming, hunting, wars between holders, the Underworld,
+   the casino, the arena, the sea beasts, surfing, diving, dragons, the contests, the Parliament, the mines, first
+   person...). Harpoon fishing does not exist in the game (asked once, then interrupted): the film shows the fishing
+   there is. Plan, under way: a director's script `tools/film.js` (not part of the game) that moves the camera from
+   scene to scene (the clock set for each: dawn, the siege at the gate, the tournament at 17:40, the casino at night...)
+   and records the canvas with MediaRecorder (MP4, 1920x1080, titles and fades drawn over it, the HUD left out),
+   sending it in chunks to the dev server, which writes it under `film/`. Done so far (12 November): `tests/serve.js`
+   takes `POST /film/<name>` (appends) and serves `film.html` (the game with `tools/film-hook.js` loaded first, an audio
+   tap so the music and sounds go into the video); `film/` is ignored by git. Next: write `tools/film.js` (the scenes),
+   test each scene with the pane showing, record, check the MP4 plays, hand it over.
 5. **1.10 Animals off the walls (asked 5 November)**: horses and other animals cannot patrol the wall walks; at most
    those that fly can fly over them.
 
