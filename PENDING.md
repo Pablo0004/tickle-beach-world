@@ -60,6 +60,10 @@ birds' wings, first person inside buildings. Still to do, in this order:
    encyclopedia under Arms). Looking at the sand with no fish ahead, B still searches the bottom. Nothing like the rod
    fishing from the shore. Not done, asked once in the same breath and then interrupted: metal fish (mithril and the
    game's precious metals) as a resource for arms and shields, with rarity rates; ask before doing it.
+   **Pending (asked 12 November): rates everywhere.** Everything that appears must have an appearance rate, and the
+   fish a rate of being caught (by kind: a sardine common and easy, a parrotfish rarer and harder, and the metal fish
+   above rarer still), so that it plays like a game and nothing is predictable. Today the harpoon strikes 50% of the
+   time plus the skill, whatever the fish, and the schools are always the same; the rod catches one cast in three.
    Also 12 November: a fish on the rod's line. Rod fishers (the Fishing Rod job) now bring a fish up out of the
    water at the pull of the rod now and then (about one cast in three; `t.forceCatch` makes the next one sure, for
    the film): up the line to the tip, then gone into the basket, "Got one!", food for the granary.
