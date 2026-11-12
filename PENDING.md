@@ -74,6 +74,18 @@ birds' wings, first person inside buildings. Still to do, in this order:
    takes `POST /film/<name>` (appends) and serves `film.html` (the game with `tools/film-hook.js` loaded first, an audio
    tap so the music and sounds go into the video); `film/` is ignored by git. Next: write `tools/film.js` (the scenes),
    test each scene with the pane showing, record, check the MP4 plays, hand it over.
+   **12 November, later:** `tools/film.js` written (28 scenes, about 2 min 55 s in all; `tools/FILM.md` says how it is
+   run); `tests/serve.py` is the dev server now (no Node on this machine: the preview runs `python tests/serve.py`).
+   The owner's rules for it: **three minutes at most**; the fishing scenes (rod and harpoon) **must show the catch**
+   (the fish out of the water, the harpoon striking the fish) and may end right there; **three or four fishers at
+   most** in those scenes and nothing in the way of the view; **no controls or HUD** in first person (nothing of the
+   HUD is recorded anyway: only the canvas); **never a shot with the land or the models still loading**: the
+   recorder is paused while each scene is set up and waits for the world to load (`ready()`), so the film is one
+   file made of finished parts; the owner expects it to be shot in parts and joined, which this does. Tested so far:
+   the intro aerial needs the far view built (`App.farViewReady()`, a minute or two after the page loads: wait for it
+   before `FILM.run()`); a wide shot of the fortress at a radius of 230 looks complete after ten seconds. Next: make
+   `ready()` stricter (no jobs pending for a second and a half running, and the fine models loaded), preview every
+   scene (`FILM.preview(id)`) and fix what each needs, then record with the pane on view and check the MP4.
 5. **1.10 Animals off the walls (asked 5 November)**: horses and other animals cannot patrol the wall walks; at most
    those that fly can fly over them.
 
