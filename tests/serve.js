@@ -17,7 +17,7 @@ http.createServer((q, r) => {
     return;
   }
   // film.html: the game with the recorder's audio tap loaded first (tools/film-hook.js)
-  if (url === '/film.html') return fs.readFile(path.join(root, 'index.html'), 'utf8', (e, d) => { if (e) { r.writeHead(404); return r.end(); } r.writeHead(200, { 'content-type': 'text/html' }); r.end(d.replace(/<head[^>]*>/i, (h) => h + '<script src="tools/film-hook.js"></script>')); });
+  if (url === '/film.html') return fs.readFile(path.join(root, 'index.html'), 'utf8', (e, d) => { if (e) { r.writeHead(404); return r.end(); } r.writeHead(200, { 'content-type': 'text/html' }); r.end(d.replace(/<script/i, '<script src="tools/film-hook.js"></script><script')); });
   const p = path.join(root, url.replace(/^\/$/, '/index.html'));
   fs.readFile(p, (e, d) => { if (e) { r.writeHead(404); return r.end(); } r.writeHead(200, { 'content-type': T[path.extname(p)] || 'application/octet-stream' }); r.end(d); });
 }).listen(port);
