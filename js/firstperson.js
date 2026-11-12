@@ -73,7 +73,7 @@
   App.exitFP = () => {
     if (!fp) return;
     const t = agentOf(fp.id);
-    if (t) { t.mesh.visible = true; if (t.tagEl) t.tagEl.style.visibility = ""; if (t.action && t.action.kind === "fp") t.action = null; }
+    if (t) { t.mesh.visible = true; if (t.tagEl) t.tagEl.style.visibility = ""; if (t.action && t.action.kind === "fp") t.action = null; if (App.dropSpear) App.dropSpear(t); }
     fp = null;
     if (document.pointerLockElement && document.exitPointerLock) document.exitPointerLock();
     App.camera.fov = FOV0; App.camera.updateProjectionMatrix();
@@ -440,6 +440,26 @@
     const yaw = t.heading + fp.look, fx = Math.sin(yaw), fz = Math.cos(yaw);
     const ahead = (x, z, r) => { const dx = x - t.pos.x, dz = z - t.pos.z, d = Math.hypot(dx, dz); return d <= r && (dx * fx + dz * fz) > d * 0.5 ? d : -1; };
     // under the water: search the bottom (pearls, coins, coral, old treasure at a dive site; a shell elsewhere)
+    if (a.water && (a.dive || 0) > 0.6 && App.seaFishNear && App.spearCast) {
+      // spearfishing (asked 11 November): a fish ahead within reach takes the harpoon; the catch is food for the
+      // granary and a few shells, and grows the fishing skill. (Looking at the sand: a search of the bottom, below.)
+      if (t.spearCast) return;
+      const cp = Math.cos(fp.pitch), dx = Math.sin(yaw) * cp, dy = Math.sin(fp.pitch), dz = Math.cos(yaw) * cp, ey = t.pos.y + (t.height || 3) * 0.8;
+      const fish = App.seaFishNear(t.pos.x, ey, t.pos.z, 8).find((q) => ((q.x - t.pos.x) * dx + (q.y - ey) * dy + (q.z - t.pos.z) * dz) / Math.max(0.1, q.d) > 0.55);
+      if (fish) {
+        const ok = !!t.forceHit || Math.random() < Math.min(0.9, 0.5 + App.skillOf(t.id, "fish") * 0.02);
+        t.forceHit = false;
+        App.spearCast(t, fish, ok, (hit, v) => {
+          if (!fp || fp.id !== t.id) return;
+          const F = App.SEA_FISH || { names: [], food: [] }, name = F.names[v] || "fish", food = F.food[v] || 2;
+          if (hit) { const vl = App.villageOfToken(t.id); if (vl) vl.food += food; if (App.pay) App.pay(t.id, 3); App.say(t, "Speared a " + name + "! (the granary +" + food + ", 3 shells)", 3); }
+          else App.say(t, "Missed it\u2026", 2);
+          if (App.addSkill) App.addSkill(t.id, "fish", hit ? 1.5 : 0.5);
+          if (App.giveXP) App.giveXP(t.id, hit ? 8 : 1);
+        });
+        return;
+      }
+    }
     if (a.water && (a.dive || 0) > 0.6 && App.diveSearch) {
       if (now - (a.searchAt || 0) < 4000) return; // (a good look round takes a moment)
       a.searchAt = now;
@@ -602,6 +622,8 @@
     // F and T (or the touch buttons): a blow at the monster in front, a word with the Tickle in front
     if (fp.act === "talk") talk(t, a); else if (fp.act === "use") use(t, a); else if (fp.act) { cast(t, a, fp.act); if (App.addSkill && inFront(t).mon) App.addSkill(t.id, "fight", 0.25); }
     fp.act = null;
+    // a harpoon in the air: from the hand, by the eyes (sim.js)
+    if (t.spearCast && App.spearStep) { const rl = Math.hypot(DIR.x, DIR.z) || 1; App.spearStep(t, dtReal, { x: EYE.x + DIR.x * 0.5 + (DIR.z / rl) * 0.35, y: EYE.y - 0.3 + DIR.y * 0.5, z: EYE.z + DIR.z * 0.5 - (DIR.x / rl) * 0.35 }); }
     if (foeBack(t, a)) return;
     // in the water: down with C, up with Space; its breath runs out down there
     if (a.water && !M) {

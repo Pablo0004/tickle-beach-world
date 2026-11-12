@@ -535,13 +535,66 @@
     t.useItem = null;
   }
   App.endAction = endAction;
+  // ---------- spearfishing (asked 11 November): diving in first person, B throws a harpoon at a fish ahead ----------
+  // The harpoon flies from the diver's hand to the fish (following it), strikes or misses, and comes back on its cord;
+  // a struck fish comes back on the point and is gone from its school for a while (sea.js). firstperson.js starts the
+  // cast (App.spearCast) and steps it every frame (App.spearStep, with where the hand is); it credits the catch.
+  const SP_Y = new THREE.Vector3(0, 1, 0), SP_HAND = new THREE.Vector3(), SP_DIR = new THREE.Vector3(), SP_TGT = new THREE.Vector3(), SP_LEN = 2.6;
+  function spearGear(t) {
+    if (t.spearGear) return t.spearGear;
+    const G = { shaft: new THREE.Group(), line: new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]), new THREE.LineBasicMaterial({ color: 0xf4f8fc })), fish: null };
+    G.shaft.visible = false; G.line.visible = false;
+    App.kitMesh("harpoon", 0).then((mk) => { const m = App.centeredMesh(mk.md, mk.geo, true); m.userData.shared = true; G.shaft.add(m); });
+    App.scene.add(G.shaft, G.line);
+    return (t.spearGear = G);
+  }
+  App.dropSpear = (t) => { const G = t.spearGear; if (!G) return; App.scene.remove(G.shaft, G.line); if (G.fish) App.scene.remove(G.fish); t.spearGear = null; t.spearCast = null; };
+  App.spearCast = (t, fish, hit, cb) => { spearGear(t); t.spearCast = { t0: performance.now(), fish, hit, cb, struck: false, v: fish.v }; };
+  App.spearStep = (t, dtReal, hand) => {
+    const C = t.spearCast;
+    if (!C) return;
+    const G = spearGear(t), u = (performance.now() - C.t0) / 1000, OUT = 0.35, BACK = 0.9;
+    SP_HAND.set(hand.x, hand.y, hand.z);
+    if (u < OUT) {
+      // through the water to the fish, wherever it has swum to
+      const F = App.seaFishAt ? App.seaFishAt(C.fish) : C.fish, k = u / OUT;
+      SP_TGT.set(hand.x + (F.x - hand.x) * k, hand.y + (F.y - hand.y) * k, hand.z + (F.z - hand.z) * k);
+      SP_DIR.set(F.x - hand.x, F.y - hand.y, F.z - hand.z).normalize();
+      C.end = { x: F.x, y: F.y, z: F.z };
+    } else {
+      if (!C.struck) {
+        C.struck = true;
+        if (C.hit && App.spearSeaFish) App.spearSeaFish(C.fish);
+        else { C.end.x += SP_DIR.x * 1.6; C.end.y += SP_DIR.y * 1.6; C.end.z += SP_DIR.z * 1.6; } // (a miss: on past the fish)
+        for (let k = 0; k < 10; k++) App.spawnParticle && App.spawnParticle({ kind: "bubble", x: C.end.x + (Math.random() - 0.5) * 0.6, y: C.end.y + Math.random() * 0.4, z: C.end.z + (Math.random() - 0.5) * 0.6, vx: 0, vy: 1.2 + Math.random(), vz: 0, age: 0, life: 1.4, color: new THREE.Color("#e8f6ff") });
+        if (C.hit) App.kitMesh("seafish", C.v).then((mk) => { if (t.spearCast !== C) return; const f = new THREE.Group(), m = App.centeredMesh(mk.md, mk.geo, true); m.userData.shared = true; f.add(m); App.scene.add(f); G.fish = f; });
+      }
+      const k = Math.min(1, (u - OUT) / BACK), E = C.end;
+      SP_TGT.set(E.x + (hand.x - E.x) * k, E.y + (hand.y - E.y) * k, E.z + (hand.z - E.z) * k);
+      SP_DIR.set(E.x - hand.x, E.y - hand.y, E.z - hand.z).normalize();
+      if (u >= OUT + BACK) {
+        G.shaft.visible = false; G.line.visible = false;
+        if (G.fish) { App.scene.remove(G.fish); G.fish = null; }
+        t.spearCast = null;
+        if (C.cb) C.cb(C.hit, C.v);
+        return;
+      }
+    }
+    // the shaft stands on its butt, pointing along the way it flies; the point leads
+    G.shaft.visible = true; G.line.visible = true;
+    G.shaft.position.set(SP_TGT.x - SP_DIR.x * SP_LEN, SP_TGT.y - SP_DIR.y * SP_LEN, SP_TGT.z - SP_DIR.z * SP_LEN);
+    G.shaft.quaternion.setFromUnitVectors(SP_Y, SP_DIR);
+    if (G.fish) { G.fish.position.set(SP_TGT.x, SP_TGT.y - 0.15, SP_TGT.z); G.fish.rotation.set(Math.sin(u * 15) * 0.5, u * 4, 1.3 + Math.sin(u * 11) * 0.4); }
+    const pos = G.line.geometry.attributes.position;
+    pos.setXYZ(0, SP_HAND.x, SP_HAND.y, SP_HAND.z); pos.setXYZ(1, G.shaft.position.x, G.shaft.position.y, G.shaft.position.z); pos.needsUpdate = true;
+  };
   // show the owner's item only while it is being used
   function itemVisual(t, mode, at) {
     const nm = itemOf(t);
     if (!nm || !ITEM_USE[nm]) { if (!t.itemObj && !t.fishGear) return; mode = null; }
     if (t.itemMode === mode && (!at || !t.itemObj || mode !== "place")) return;
     if (t.itemObj) { t.itemObj.parent && t.itemObj.parent.remove(t.itemObj); t.itemObj = null; }
-    if (t.fishGear) { App.scene.remove(t.fishGear.line, t.fishGear.bob); t.fishGear = null; }
+    if (t.fishGear) { App.scene.remove(t.fishGear.line, t.fishGear.bob); if (t.fishGear.fish) App.scene.remove(t.fishGear.fish); t.fishGear = null; }
     t.itemMode = mode;
     t.liveItem = null;
     if (!mode) return;
@@ -1854,8 +1907,22 @@
       const fx = t.pos.x + Math.sin(t.heading) * 5, fz = t.pos.z + Math.cos(t.heading) * 5, s = App.surfaceAt(fx, fz);
       const by = (s.water ? App.WATER_Y : s.y) + Math.sin(now * 2.5 + ph) * 0.05;
       t.fishGear.bob.position.set(fx, by, fz);
+      // now and then a fish comes up on the line (asked 11 November): at the pull of the rod (armPose's cycle), up out
+      // of the water to the tip, then it is gone into the basket
+      const G = t.fishGear, c = (now * 0.16 + ph) % 1, k = Math.floor(now * 0.16 + ph);
+      if (k !== G.k) { G.k = k; G.catch = !!t.forceCatch || App.hash2(t.id, k, 283) < 0.35; if (G.catch) t.forceCatch = false; G.caught = false; }
+      let lx = fx, ly = by, lz = fz;
+      if (G.catch && c >= 0.07 && c < 0.3) {
+        if (!G.fish) { const f = (G.fish = new THREE.Group()); App.scene.add(f); App.kitMesh("seafish", (t.id + k) % 5).then((mk) => { if (G.fish !== f) return; const m = App.centeredMesh(mk.md, mk.geo, true); m.userData.shared = true; f.add(m); }); }
+        const u = Math.min(1, (c - 0.07) / 0.1), q = u * u;
+        G.fish.position.set(fx + (TIP.x - fx) * q, by + (TIP.y - by) * q + Math.sin(u * Math.PI) * 0.8, fz + (TIP.z - fz) * q);
+        G.fish.rotation.set(Math.sin(now * 16) * 0.5, t.heading, 1.2 + Math.sin(now * 13) * 0.3);
+        lx = G.fish.position.x; ly = G.fish.position.y; lz = G.fish.position.z;
+        G.bob.position.set(lx, ly, lz);
+        if (!G.caught) { G.caught = true; say(t, ["Got one!", "A fat one!", "Dinner!"][k % 3], 3); if (t.village) t.village.food += 1; t.fav.fish = (t.fav.fish || 0) + 1; }
+      } else if (G.fish) { App.scene.remove(G.fish); G.fish = null; }
       const pos = t.fishGear.line.geometry.attributes.position;
-      pos.setXYZ(0, TIP.x, TIP.y, TIP.z); pos.setXYZ(1, fx, by, fz); pos.needsUpdate = true;
+      pos.setXYZ(0, TIP.x, TIP.y, TIP.z); pos.setXYZ(1, lx, ly, lz); pos.needsUpdate = true;
       return true;
     }
     return false;

@@ -320,7 +320,9 @@
         o.cx = o.home.x + Math.sin(t * 0.7) * 4; o.cz = o.home.z + Math.cos(t * 0.5) * 4;
         if (!App.seaAt(o.cx, o.cz)) { o.cx = o.home.x; o.cz = o.home.z; }
         const head = Math.atan2(Math.cos(t * 0.7) * 0.7 * 4, -Math.sin(t * 0.5) * 0.5 * 4);
+        if (o.gone) for (const [i, until] of o.gone) if (App.st.T > until) o.gone.delete(i); // (a speared fish is gone for a while)
         for (let i = 0; i < o.n; i++) {
+          if (o.gone && o.gone.has(i)) continue;
           const a = i * 2.39996 + now * 0.6, rr = o.rad * Math.sqrt((i + 0.5) / o.n);
           const x = o.cx + Math.cos(a) * rr, z = o.cz + Math.sin(a) * rr, y = Math.max(f + 0.4, Math.min(top, mid + Math.sin(i * 1.7 + now) * 0.35));
           put(o.k, x, y, z, head + Math.sin(now * 8 + i) * 0.15, 0, 0, 1);
@@ -343,6 +345,30 @@
     }
     for (const [k, v] of MOVING) { const m = meshes[key(k, v)]; if (m) { m.count = n[key(k, v)]; m.instanceMatrix.needsUpdate = true; } }
   };
+  // ---------- spearfishing (firstperson.js, sim.js): the fish of the schools near a diver, one of them struck ----------
+  // where fish i of a school is now (the same sums as the drawing above)
+  function schoolFish(o, i, now) {
+    const f = floorY(o.cx, o.cz), top = App.WATER_Y - 0.5, mid = f + 0.6 + (top - f - 0.6) * o.depthK;
+    const a = i * 2.39996 + now * 0.6, rr = o.rad * Math.sqrt((i + 0.5) / o.n);
+    return { x: o.cx + Math.cos(a) * rr, y: Math.max(f + 0.4, Math.min(top, mid + Math.sin(i * 1.7 + now) * 0.35)), z: o.cz + Math.sin(a) * rr };
+  }
+  // the fish within R of a point, nearest first: { school, i, x, y, z, d, v } (v: the kind, TB.KIT.seafish's variant)
+  App.seaFishNear = (x, y, z, R) => {
+    const out = [], now = performance.now() / 1000;
+    for (const c of cells.values()) for (const o of c.swim) {
+      if (o.type !== "school" || Math.hypot(o.cx - x, o.cz - z) > R + o.rad) continue;
+      for (let i = 0; i < o.n; i++) {
+        if (o.gone && o.gone.has(i)) continue;
+        const p = schoolFish(o, i, now), d = Math.hypot(p.x - x, p.y - y, p.z - z);
+        if (d <= R) out.push({ school: o, i, x: p.x, y: p.y, z: p.z, d, v: +o.k.split("_")[1] });
+      }
+    }
+    return out.sort((a, b) => a.d - b.d);
+  };
+  App.seaFishAt = (fish) => schoolFish(fish.school, fish.i, performance.now() / 1000);
+  // struck: gone from its school for four hours of the clock (the school fills up again)
+  App.spearSeaFish = (fish) => { const o = fish.school; (o.gone = o.gone || new Map()).set(fish.i, App.st.T + 240); };
+  App.SEA_FISH = { names: ["clownfish", "blue tang", "yellow tang", "sardine", "parrotfish"], food: [2, 2, 2, 1, 3] };
   // ---------- the sea caves: only reached by diving ----------
   // Two in every region, out in deep water off its coast (four blocks of water or more over the sand): a mound of rock
   // on the bottom with a black arch. A Tickle you control in first person swims down to its mouth and goes in with E
