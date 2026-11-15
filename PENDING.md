@@ -52,6 +52,30 @@ birds' wings, first person inside buildings. Still to do, in this order:
    (Done 6 November: the on-chain Surfs Up stands on legs; in use only its first six strokes are drawn, the board and
    its fins with its own colours, without the stand (`keep` in the worker's ground job). Left: on a wave the surfer
    and the board sit inside the water and the foam; raising them, and a bigger board, were offered to the owner.)
+9. **Music in normal play (asked 14 November, to talk about later)**: the owner loved the music of the film (the battle
+   scenes among others) and wants it in the game's normal play, not only in the video. (It is the game's own music,
+   music/, chosen by place: Menu > Sound > Music switches it on; it was off in the owner's game.) To settle later:
+   on by default, or a notice that it exists.
+10. **1.15 Stables for the tamed (asked 15 November, pending)**: inside a fortress, a tamed animal, creature or
+    monster that is not being used (not ridden, not fighting, not out with its tamer) stays in the stables, not
+    loose in the square; the stables are to be made bigger and set against the wall, on its inner side. To decide
+    first: whether every fortress gets one stable block or one per holder, and where the horses for sale go.
+9. **1.14 Chairs at the card tables (asked and done 14 November)**: every seat of the poker and blackjack tables
+   has a chair (casino.js `casinoBuild`), and the players sit on them (the `cards` pose is seated, interiors.js);
+   the dealers stand, as do the roulette players.
+8. **1.13 Elbow room and battle lines (asked 12 November, for the film and the game)**: Tickles keep a step apart
+   from each other, as they do when they talk, instead of piling up on one spot; in the wars between holders the
+   armies form up as in Imperium. Done 12 November: outdoors, two Tickles standing or walking within 1.1 blocks are
+   nudged apart a little every frame (`elbowRoom`, sim.js: not seats, slots, contest lines, fights, rides, first
+   person, the water); the battle lines of a war have more room between files (1.5) and ranks (1.8) and stand a
+   little further from the gate (3.5), the defenders behind it likewise (war.js `slotOf`; the ranks were already by
+   unit: cavalry in front, then swords, spears, archers, tamers, mages, healers). Watched in a siege on 14 November
+   and widened: three blocks between files and between ranks in the field (2.2/2.4 behind the gate), the first rank four
+   blocks from the gate; the nudge leaves the battle lines alone (`warfight`, `warmarch` in `KEEP_PUT`: it was
+   turning the ranks into a crowd). While the gate stands, only the ram's crew (one in five of the foot) goes to it;
+   the rest hold their ranks and the archers and mages shoot over the wall from where they stand (war.js
+   `stepWar`). The defenders' archers, mages, tamers and healers stand on top of the wall either side of the gate
+   (already so; it needs the gate whole: a ruined gate makes the war an open battle at the hall door).
 7. **1.12 Spearfishing (asked 11 November, done 12 November)**: diving in first person, B throws a harpoon at a fish
    ahead (one of the schools of the open sea, sea.js, within eight blocks and in the line of sight): it flies to the
    fish, following it, strikes or misses, and comes back on its cord with the fish on the point; a struck fish is
@@ -68,6 +92,11 @@ birds' wings, first person inside buildings. Still to do, in this order:
    water at the pull of the rod now and then (about one cast in three; `t.forceCatch` makes the next one sure, for
    the film): up the line to the tip, then gone into the basket, "Got one!", food for the granary.
 6. **1.11 A film of the whole game (asked 11 November, for the TickleBedge account)**: a video showing everything the
+   Shots settled on 14 November (owner's notes): the siege from high up and from the side, as Imperium shows its
+   armies; the griffin a few moments in first person (eyes well down, so no unloaded land on the horizon), then the
+   griffin itself from the side with the castle behind; the Parliament from outside (a dozen ministers in 333 seats
+   look empty); the Guild Quarter scene dropped (its plaza is empty at any hour). A test war for the film needs the
+   gate whole, the two armouries stocked and the old wars over (film.js does all that for the shot only).
    game has, each thing from its best camera angle (fishing, taming, hunting, wars between holders, the Underworld,
    the casino, the arena, the sea beasts, surfing, diving, dragons, the contests, the Parliament, the mines, first
    person...). Harpoon fishing does not exist in the game (asked once, then interrupted): the film shows the fishing

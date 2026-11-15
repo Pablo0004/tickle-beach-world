@@ -836,7 +836,7 @@
     }
     near.sort((a, b) => a[0] - b[0]);
     const want = new Set();
-    for (const [d, id] of near) { if (d > App.RANGE.full || want.size >= MAX_FULL) break; want.add(id); }
+    for (const [d, id] of near) { if (d > App.RANGE.full || want.size >= (App.MAX_FULL || MAX_FULL)) break; want.add(id); }
     if (App.pinned != null) want.add(App.pinned);
     for (const t of st.tickles.slice()) {
       const d = Math.hypot(t.pos.x - tx, t.pos.z - tz);

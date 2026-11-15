@@ -493,7 +493,7 @@
     if (!spot) spot = { x: ad.spot.x, z: ad.spot.z };
     if (!ad.water && !bigHome) spot = App.clearOfBuildings(spot);
     t.action = { kind: "do", indoor: bigHome || undefined, act: ad.act, ref: ad.ref, key: occKey(ad.act.id, ad.ref), spot, center: ad.face || ad.spot, phase: "walk", started: st.T,
-      water: !!ad.water, project: ad.project || null, prop: ad.prop || null, order: !!order, host: ad.host, until: until || null, item: !!ad.ownItem,
+      water: !!ad.water, project: ad.project || null, prop: ad.prop || null, order: !!order, host: ad.host, until: until || null, item: !!ad.ownItem, exact: !!ad.exact,
       itemName: ad.itemName || null, shore: ad.spot && ad.spot.lx != null ? { x: ad.spot.lx, z: ad.spot.lz } : null };
     if (ad.ownItem) { if (t.itemObj || t.fishGear) itemVisual(t, null); t.useItem = ad.itemName || null; }
     occAdd(t.action.key, t);
@@ -675,6 +675,32 @@
     if (Math.floor(o[k]) > before && App.pop.agent[id]) App.toast(App.nameOf(id) + ": " + SKILLS[k] + " " + Math.floor(o[k]));
   };
   App.skillsText = (id) => Object.keys(SKILLS).filter((k) => App.skillOf(id, k) >= 1).map((k) => SKILLS[k] + " " + Math.floor(App.skillOf(id, k))).join(" \u00b7 ");
+  // ---------- elbow room (asked 12 November): Tickles keep a step apart, as they do when they talk ----------
+  // Two standing or walking within 1.1 blocks of each other are nudged apart a little every frame, on to land and
+  // never into a building. Not those whose place is set to the block (a seat, a slot in a formation, a contest
+  // line), nor those fighting, riding, held, down or in first person.
+  const KEEP_PUT = new Set(["ko", "fall", "held", "flying", "fp", "box", "ringwait", "duel", "ride", "row", "sail", "dive", "seafight", "war", "warfight", "warmarch", "wallwatch", "slay", "command", "delve", "spirit", "throw", "fight", "brawl", "cower", "tame", "hunt", "surf"]);
+  const loose = (t) => t.group.visible && !t.riding && !(t.action && (KEEP_PUT.has(t.action.kind) || t.action.exact || t.action.water || t.action.surf));
+  function elbowRoom() {
+    const L = st.tickles, n = L.length;
+    for (let i = 0; i < n; i++) {
+      const a = L[i];
+      if (!loose(a)) continue;
+      for (let j = i + 1; j < n; j++) {
+        const b = L[j];
+        if (!loose(b)) continue;
+        let dx = b.pos.x - a.pos.x, dz = b.pos.z - a.pos.z;
+        const d2 = dx * dx + dz * dz;
+        if (d2 > 1.21 || d2 < 1e-6) continue;
+        const d = Math.sqrt(d2), push = (1.1 - d) * 0.12;
+        dx /= d; dz /= d;
+        const ax = a.pos.x - dx * push, az = a.pos.z - dz * push, bx = b.pos.x + dx * push, bz = b.pos.z + dz * push;
+        if (App.isLand(ax, az) && !App.buildingAt(ax, az)) { a.pos.x = ax; a.pos.z = az; }
+        if (App.isLand(bx, bz) && !App.buildingAt(bx, bz)) { b.pos.x = bx; b.pos.z = bz; }
+      }
+    }
+  }
+  App.elbowRoom = elbowRoom;
   App.canOrder = (t) => st.mode === "manual" && ((App.devMode && App.devMode()) || !st.wallet || App.isMine(t.id));
   App._startDo = (t, ad, order, until) => startDo(t, ad, order, until); // for testing by hand
   App.startDo = startDo; App.startTravel = startTravel; App.walkTo = walkTo; // for the contests, diving and first person
@@ -2099,6 +2125,7 @@
     }
     App.daylight(App.clock(st.T).minute);
     if (night0 !== App.isNight && App.isNight) App.log("world", "Night falls.", "Tickles head home to sleep.");
+    if (st.speed > 0) elbowRoom();
   };
 
   // ---------- projects (Minecraft-style building) ----------
