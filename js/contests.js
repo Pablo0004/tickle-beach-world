@@ -457,10 +457,17 @@
   }
   const endOf = (c) => { const K = KINDS[c.kind]; return K.turn ? c.go + c.entrants.length * K.turn : c.end; };
   function planDay(day) {
-    for (const [r, kind] of kindsFor(day)) {
+    for (const [r, kind] of kindsFor(day)) if (!st.contests[day + ":" + r]) makeContest(day, r, kind);
+    for (const k in st.contests) if (st.contests[k].day < day - 1) delete st.contests[k];
+    reindex();
+    for (const k in st.contests) { const c = st.contests[k]; if (c.day === day) touch(c); }
+  }
+  // one contest of a kind in a region on a day (the day's own are planned above; for a test, App.debugContest)
+  function makeContest(day, r, kind) {
+    {
       const key = day + ":" + r;
-      if (st.contests[key]) continue;
       const K = KINDS[kind], V = venue(r, K.venue), d0 = day * DAY;
+      if (!V) return null;
       const c = { key, day, region: r, kind, entrants: [], spectators: [], judges: [], gather: d0 + K.gather, go: d0 + K.go, done: false };
       const s0 = K.gather - 70, e0 = (K.cap || K.end || K.go + K.n * K.turn) + CER;
       const pool = [];
@@ -468,7 +475,7 @@
       pool.sort((a, b) => b[1] - a[1]);
       let tried = 0;
       for (const [id] of pool) { if (c.entrants.length >= K.n || tried++ > 80) break; if (!busy(id, day, s0, e0)) c.entrants.push(id); }
-      if (c.entrants.length < 3) continue;
+      if (c.entrants.length < 3) return null;
       // the judges (from the host town) and some of the neighbours to watch
       const near = App.villages.filter((v) => v.region === r).sort((a, b) => Math.hypot(a.x - V.x, a.z - V.z) - Math.hypot(b.x - V.x, b.z - V.z)).slice(0, 3);
       const taken = new Set(c.entrants), cands = [];
@@ -481,11 +488,23 @@
       }
       settle(c);
       st.contests[key] = c;
+      return c;
     }
-    for (const k in st.contests) if (st.contests[k].day < day - 1) delete st.contests[k];
-    reindex();
-    for (const k in st.contests) { const c = st.contests[k]; if (c.day === day) touch(c); }
   }
+  // a test: a contest of this kind today in this region, in place of the region's own (null if it cannot be held)
+  App.debugContest = (kind, r) => {
+    const day = Math.floor(st.T / DAY), key = day + ":" + r;
+    if (!KINDS[kind]) return null;
+    for (const k in st.contests) if (st.contests[k].day === day && st.contests[k].kind === kind) return st.contests[k]; // (one of a kind a day)
+    const old = st.contests[key];
+    if (old && old.kind === kind) return old;
+    delete st.contests[key];
+    const c = makeContest(day, r, kind);
+    if (!c && old) st.contests[key] = old;
+    reindex();
+    if (c) touch(c);
+    return c;
+  };
   // everyone in it thinks again about today
   function touch(c) {
     for (const id of c.entrants.concat(c.spectators, c.judges)) {
@@ -632,6 +651,7 @@
     const i = p.i;
     if (c.kind === "fishing") {
       const q = Y.start[i];
+      if (!q) return false; // (a shore with fewer places than entrants)
       if (far(t, q, 1)) return go(q, "to the " + K.name);
       if (T < c.go) return stay(q, q.face, WAITA, c.go);
       App.startDo(t, { act: FISHA, ref: "contest" + t.id, spot: { x: q.x, z: q.z }, exact: true, ownItem: true, itemName: "Fishing Rod", face: q.face }, false, c.end);
@@ -639,6 +659,7 @@
     }
     if (c.kind === "surf") {
       const q = Y.start[i];
+      if (!q) return false; // (a beach with fewer places in the line than entrants)
       if (T < c.go) { if (far(t, q, 1)) return go(q, "to the " + K.name); return stay(q, q.face, WAITA, c.go); }
       App.startDo(t, { act: SURFA, ref: "contest" + t.id, spot: { x: q.wx, z: q.wz, lx: q.x, lz: q.z }, exact: true, water: true, ownItem: true, itemName: "Surfs Up", face: q.face }, false, c.end);
       return true;

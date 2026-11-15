@@ -1295,7 +1295,7 @@
       }
       holder.position.set(x, 0, z); holder.rotation.y = rot;
       if (o.walk) fig.walk = o.walk;
-      if (o.pose === "sitidle") F.pivot.position.y = 0.35; // (up on the seat)
+      if (o.pose === "sitidle" || o.pose === "cards") F.pivot.position.y = 0.35; // (up on the seat; a card player sits at the table, asked 14 November)
       // a sleeper is fitted to its own shape (Tickles are round): lying on top of the mattress (or the floor),
       // its head just short of the headboard
       if (o.pose === "sleep") {
@@ -1891,7 +1891,7 @@
     if (f.pose === "sleep") { if (f.lieY == null) f.lieY = f.F.pivot.position.y; f.F.pivot.position.y = f.lieY + Math.abs(Math.sin(now / 900 + f.id)) * 0.04; /* breathing, from where it was laid */ if (A) { A.R.rotation.z = 0.5; A.L.rotation.z = -0.5; } return; }
     if (!A) return;
     A.R.rotation.z = 0; A.L.rotation.z = 0;
-    if (f.pose !== "dig" && f.pose !== "ko" && f.pose !== "sitidle") { f.F.pivot.rotation.x = 0; f.F.pivot.position.y = 0; }
+    if (f.pose !== "dig" && f.pose !== "ko" && f.pose !== "sitidle" && f.pose !== "cards") { f.F.pivot.rotation.x = 0; f.F.pivot.position.y = 0; }
     if (f.pose === "eat") { A.R.rotation.x = -1.1 + s * 0.35; A.L.rotation.x = -0.3; }
     else if (f.pose === "dig") { A.R.rotation.x = A.L.rotation.x = -1.6 + Math.sin(now / 200 + f.id) * 0.9; f.F.pivot.rotation.x = 0.2 + Math.max(0, Math.sin(now / 200 + f.id)) * 0.2; }
     else if (f.pose === "melee" || f.pose === "fight") {
@@ -1927,7 +1927,7 @@
     }
     else if (f.pose === "cower") { A.R.rotation.x = A.L.rotation.x = -2.7; f.F.pivot.position.y = -0.2; }
     else if (f.pose === "seat") { const c = (now / 3000 + f.id * 0.137) % 1; A.R.rotation.x = c < 0.08 ? -2.7 : -0.25; A.L.rotation.x = -0.25; f.F.pivot.position.y = -0.15; } // a minister in its seat, a paw up now and then
-    else if (f.pose === "cards") { const c = (now / 2400 + f.id * 0.17) % 1; A.R.rotation.x = c < 0.15 ? -1.6 : -1.05; A.L.rotation.x = -1.05; }
+    else if (f.pose === "cards") { const c = (now / 2400 + f.id * 0.17) % 1; A.R.rotation.x = c < 0.15 ? -1.6 : -1.05; A.L.rotation.x = -1.05; f.F.pivot.position.y = 0.35; } // (seated at the table)
     else if (f.pose === "deal") { A.R.rotation.x = -1.2 + Math.sin(now / 260 + f.id) * 0.35; A.L.rotation.x = -1.0; }
     else if (f.pose === "slots") { const c = (now / 3200 + f.id * 0.21) % 1; A.R.rotation.x = c < 0.12 ? -2.4 + (c / 0.12) * 1.8 : -0.9; A.L.rotation.x = -0.9; }
     else if (f.pose === "drink") { const c = (now / 2800 + f.id * 0.17) % 1; A.R.rotation.x = c < 0.2 ? -2.3 : -1.0; A.L.rotation.x = -0.8; }

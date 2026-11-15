@@ -513,13 +513,15 @@
         return { x: W0.x + Math.cos(ga + side * off) * W0.r, z: W0.z + Math.sin(ga + side * off) * W0.r, h: Math.atan2(-F.ux, -F.uz) };
       }
       const at = gateDown(w) ? hallDoor(w) : { x: F.gx + F.ux * 4.5, z: F.gz + F.uz * 4.5 }, files = 6, r = Math.floor(k / files), f = (k % files) - (files - 1) / 2;
-      return { x: at.x + F.ux * r * 1.4 + nx * f * 1.2, z: at.z + F.uz * r * 1.4 + nz * f * 1.2, h: Math.atan2(-F.ux, -F.uz) };
+      return { x: at.x + F.ux * r * 2.4 + nx * f * 2.2, z: at.z + F.uz * r * 2.4 + nz * f * 2.2, h: Math.atan2(-F.ux, -F.uz) };
     }
     const files = 10, r = Math.floor(k / files), f = (k % files) - (files - 1) / 2, dir = s === "A" ? -1 : 1;
     let at = { x: F.x, z: F.z };
     if (s === "A" && (w.siege ? gateDown(w) : standing(w, "B").length < w.start.B * 0.25)) at = hallDoor(w);
-    const gap = s === "A" && w.siege && !gateDown(w) ? 2 : 5;
-    return { x: at.x + F.ux * dir * (gap + r * 1.6) + nx * f * 1.25, z: at.z + F.uz * dir * (gap + r * 1.6) + nz * f * 1.25, h: Math.atan2(F.ux * -dir, F.uz * -dir) };
+    // (asked 12 November: ranks and files well apart, as in Imperium, so that the lines read as lines and not as
+    // a crowd: three blocks between files and between ranks, and the first rank a little back from the gate)
+    const gap = s === "A" && w.siege && !gateDown(w) ? 4 : 5;
+    return { x: at.x + F.ux * dir * (gap + r * 3) + nx * f * 3, z: at.z + F.uz * dir * (gap + r * 3) + nz * f * 3, h: Math.atan2(F.ux * -dir, F.uz * -dir) };
   }
   function wallRank(w, id) {
     const key = "wall" + w.days;
@@ -560,8 +562,10 @@
     if (s === "A" && st.T < bt.arrive) { t.action = { kind: "warmarch", war: w.id, started: st.T }; if (rnd() < 0.2) App.say(t, ["Forward, march!", "Left, right, left!", "To " + App.villages[w.b].name + "!"][Math.floor(rnd() * 3)], 2); return true; }
     const p = slotOf(w, s, t.id);
     if (s === "B" && w.siege && !gateDown(w) && RANGED.has(w.unit[t.id]) && App.wallDeckY && App.wallDeckY(p.x, p.z) != null) {
-      // up the stairs of the gate towers and along the top of the wall to its place
-      const W0 = App.villages[w.b].walls, F = w.front, inGate = { x: F.gx + F.ux * 4, z: F.gz + F.uz * 4 };
+      // up the stairs of the gate tower on its own side (beside the gate, not through the ranks drawn up behind
+      // it) and along the top of the wall to its place
+      const W0 = App.villages[w.b].walls, F = w.front, sgn = (p.x - F.gx) * -F.uz + (p.z - F.gz) * F.ux >= 0 ? 1 : -1;
+      const inGate = { x: F.gx + F.ux * 3 - F.uz * sgn * 5.5, z: F.gz + F.uz * 3 + F.ux * sgn * 5.5 };
       if (Math.hypot(p.x - t.pos.x, p.z - t.pos.z) > 1 && Math.hypot(inGate.x - t.pos.x, inGate.z - t.pos.z) > 3 && App.wallDeckY(t.pos.x, t.pos.z) == null) { App.startTravel(t, { x: inGate.x, z: inGate.z, label: "to the walls" }, "up to the walls"); return true; }
       t.pos.x = p.x; t.pos.z = p.z; t.heading = p.h; void W0;
       t.action = { kind: "warfight", war: w.id, side: s, next: st.T + rnd() * 1.5, started: st.T, onWall: true };
@@ -603,17 +607,20 @@
     }
     if (st.T < w.bt.arrive) { App.faceTo(t, w.front, dtReal); App.animateTickle(t, false, dtReal); return; }
     // the battle: melee units go for the closest foe; the rest keep their place and cast or throw
-    const p = slotOf(w, a.side, t.id), ranged = u === "mage" || u === "healer" || u === "tamer";
-    // (while the gate stands, no one fights through it: the attackers hammer at it, the archers shoot over it)
-    const foe = !ranged && w.siege && !gateDown(w) ? null : foesNear(w, t, a.side, ranged ? 22 : 9);
+    const shut = w.siege && !gateDown(w);
+    // (while the gate stands, no one fights through it: the ram's crew hammers at it, the rest hold their ranks as in
+    // Imperium (asked 14 November), the archers and mages shoot over it from where they stand)
+    const p = slotOf(w, a.side, t.id), ranged = u === "mage" || u === "healer" || u === "tamer" || (u === "archer" && shut);
+    const crew = a.side === "A" && shut && !ranged && u !== "griffin" && rankOf(w, a.side, t.id) % 5 === 0; // (one in five of the foot: the ram's crew)
+    const foe = !ranged && shut ? null : foesNear(w, t, a.side, ranged ? 22 : 9);
     let target = p, walking = false;
     a.engaged = false;
-    // with no foe at hand, an attacker goes for the building it prefers and sets about it
-    const bld = a.side === "A" ? (w.siege && !gateDown(w) && u !== "griffin" ? gateOf(w) : targetFor(w, u, t.pos)) : null;
+    // with no foe at hand, an attacker goes for the building it prefers and sets about it (the gate: only its crew)
+    const bld = a.side === "A" ? (shut && u !== "griffin" ? (crew ? gateOf(w) : null) : targetFor(w, u, t.pos)) : null;
     if (!foe && bld && !ranged) { const d = Math.hypot(bld.x - t.pos.x, bld.z - t.pos.z), R0 = bld.castle ? 9 : bld.gate ? 3.2 : 3; if (d > R0) target = { x: bld.x + (t.pos.x - bld.x) / d * R0, z: bld.z + (t.pos.z - bld.z) / d * R0 }; else target = null; }
     if (foe && !ranged) { const d = Math.hypot(foe.pos.x - t.pos.x, foe.pos.z - t.pos.z); if (d > 1.3) target = { x: foe.pos.x + (t.pos.x - foe.pos.x) / d * 1.2, z: foe.pos.z + (t.pos.z - foe.pos.z) / d * 1.2 }; else target = null; a.engaged = true; }
     if (a.onWall) { target = null; if (gateDown(w)) { t.action = null; App.animateTickle(t, false, dtReal); return; } }
-    if (target && Math.hypot(target.x - t.pos.x, target.z - t.pos.z) > 0.4) {
+    if (target && Math.hypot(target.x - t.pos.x, target.z - t.pos.z) > 0.1) {
       const dx = target.x - t.pos.x, dz = target.z - t.pos.z, d = Math.hypot(dx, dz), stp = Math.min(d, App.WALK_SPEED * dm * (u === "cavalry" ? 1.9 : 1.15));
       t.pos.x += (dx / d) * stp; t.pos.z += (dz / d) * stp; t.heading = Math.atan2(dx, dz); walking = stp > 1e-4;
     } else App.faceTo(t, foe ? foe.pos : { x: t.pos.x + Math.sin(p.h), z: t.pos.z + Math.cos(p.h) }, dtReal);

@@ -959,6 +959,12 @@
       const P = TP[T.key], grp = new THREE.Group();
       grp.position.set(P.x, 0, P.z); g.add(grp);
       V.tables[T.key] = { grp, cards: [], chips: [], sig: "" };
+      // a chair at every seat of the card tables (the players sit at them: asked 14 November)
+      if (T.kind === "poker" || T.kind === "blackjack") for (let k = 0; k < P.seats; k++) {
+        const s = App.CASINO_LAYOUT.seat(T.key, k), holder = new THREE.Group();
+        holder.position.set(s.x, 0, s.z); holder.rotation.y = s.rot; g.add(holder);
+        App.kitMesh("chair", 0).then((mk) => { if (cur.token !== token) return; const m = App.centeredMesh(mk.md, mk.geo, true); m.userData.shared = true; holder.add(m); });
+      }
       if (T.kind === "roulette") {
         // the wheel at the end of the table: a pivot at its very middle turns it in place; the ball runs round it
         const W = { grp: new THREE.Group(), pivot: new THREE.Group(), a: 0 };
