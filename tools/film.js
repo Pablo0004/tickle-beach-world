@@ -89,8 +89,11 @@
     await new Promise((res, rej) => { const s = document.createElement("script"); s.src = "tools/vendor/mp4-muxer.min.js"; s.onload = res; s.onerror = () => rej(new Error("tools/vendor/mp4-muxer.min.js is missing (see tools/FILM.md)")); document.head.appendChild(s); });
     return window.Mp4Muxer;
   }
-  function upload(buf) {
-    rec.queue = rec.queue.then(() => fetch("/film/" + FILM.name, { method: "POST", body: buf }).then((r) => r.json()).then((j) => { FILM.bytes = j.size; })).catch((e) => log("upload: " + e.message));
+  // (each piece is sent in order; one that the muxer writes back over an earlier place, as the size in the mdat
+  // header at the end, is written at that place: ?at=)
+  function upload(buf, at) {
+    const url = "/film/" + FILM.name + (at != null ? "?at=" + at : "");
+    rec.queue = rec.queue.then(() => fetch(url, { method: "POST", body: buf }).then((r) => r.json()).then((j) => { FILM.bytes = j.size; })).catch((e) => log("upload: " + e.message));
   }
   async function startRec(name) {
     const M = await loadMuxer();
@@ -98,7 +101,8 @@
     await fetch("/film/" + name, { method: "DELETE" }).catch(() => {});
     // the file: written in order as it is made (the index at the end)
     const pending = []; let last = 0;
-    const target = new M.StreamTarget({ onData: (data, pos) => { if (pos !== last) log("muxer wrote out of order at " + pos); last = pos + data.byteLength; upload(data.slice ? data.slice() : new Uint8Array(data)); }, chunked: true, chunkSize: 2 * 1024 * 1024 });
+    let end = 0;
+    const target = new M.StreamTarget({ onData: (data, pos) => { const buf = data.slice ? data.slice() : new Uint8Array(data); if (pos === end) { upload(buf); end += buf.byteLength; } else upload(buf, pos); last = pos + buf.byteLength; }, chunked: true, chunkSize: 2 * 1024 * 1024 });
     rec.mux = new M.Muxer({ target, video: { codec: "avc", width: FILM.W, height: FILM.H, frameRate: FILM.fps }, audio: { codec: "aac", sampleRate: 48000, numberOfChannels: 2 }, fastStart: false, firstTimestampBehavior: "offset" });
     rec.enc = new VideoEncoder({ output: (chunk, meta) => rec.mux.addVideoChunk(chunk, meta), error: (e) => log("encoder: " + e.message) });
     rec.enc.configure({ codec: "avc1.640028", width: FILM.W, height: FILM.H, bitrate: FILM.bitrate, framerate: FILM.fps, latencyMode: "quality", avc: { format: "avc" } });
