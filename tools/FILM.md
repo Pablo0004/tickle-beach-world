@@ -6,8 +6,9 @@ Nothing of it is part of the game: `index.html` does not load it.
 ## Recording it
 
 1. Serve the repository with the Python dev server: `python tests/serve.py` (port 8765). It serves `film.html`
-   (the game with `tools/film-hook.js` loaded first) and takes the recording in chunks (`POST /film/<name>`),
-   written under `film/` (ignored by git).
+   (the game with `tools/film-hook.js` loaded first, stamped so that the browser never keeps a stale copy) and takes
+   the recording in chunks (`POST /film/<name>`; a piece the muxer writes back over an earlier place, the size in
+   the mdat header at the end, comes with `?at=<offset>` and is written there), under `film/` (ignored by git).
    The encoder needs the mp4-muxer library once, as `tools/vendor/mp4-muxer.min.js` (32 KB, from
    https://cdn.jsdelivr.net/npm/mp4-muxer@5.2.1/build/mp4-muxer.min.js; the folder is ignored by git).
 2. Open http://localhost:8765/film.html, let the world load, click once in it (the browser only plays sound after a
