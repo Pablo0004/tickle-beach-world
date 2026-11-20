@@ -60,9 +60,15 @@ birds' wings, first person inside buildings. Still to do, in this order:
     monster that is not being used (not ridden, not fighting, not out with its tamer) stays in the stables, not
     loose in the square; the stables are to be made bigger and set against the wall, on its inner side. To decide
     first: whether every fortress gets one stable block or one per holder, and where the horses for sale go.
-9. **1.14 Chairs at the card tables (asked and done 14 November)**: every seat of the poker and blackjack tables
-   has a chair (casino.js `casinoBuild`), and the players sit on them (the `cards` pose is seated, interiors.js);
-   the dealers stand, as do the roulette players.
+9. **1.14 Chairs at the card tables and the bingo (asked 14 and 15 November, done)**: every seat of the poker and
+   blackjack tables and of the bingo rows has a chair (casino.js `casinoBuild`), and the players sit on them (the
+   `cards` pose is seated, interiors.js); the dealers stand, as do the roulette players.
+   **1.14b The griffin remodelled (asked 15 November: it read as a big hen; done)**: the riding griffin
+   (kit-wealth.js `griffinmount`, `griffinwing`) and the wild one (kit.js `griffin`, the same beast at a little
+   more than half the size with its wings half open): a lion's body and haunches, an eagle's feathered breast, a
+   short neck and a long eagle head with a hooked two-tone beak, a brow, ear tufts and amber eyes; eagle forelegs with
+   talons, lion hind legs with paws, a long tail trailing behind with a tuft; the wings a thin leading edge, coverts
+   and six fanned primaries with white tips. Strokes only, as everything else.
 8. **1.13 Elbow room and battle lines (asked 12 November, for the film and the game)**: Tickles keep a step apart
    from each other, as they do when they talk, instead of piling up on one spot; in the wars between holders the
    armies form up as in Imperium. Done 12 November: outdoors, two Tickles standing or walking within 1.1 blocks are

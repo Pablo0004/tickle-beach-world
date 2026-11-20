@@ -226,36 +226,62 @@
   }
 
   // ---------- the riding griffin ----------
-  // bigger than the wild ones: a lion's body, an eagle's front and head, a saddle; the wings apart
+  // (remodelled 15 November, asked by the owner: it read as a big hen) a lion's body and haunches, an eagle's
+  // feathered breast, a real neck and a long eagle head with a hooked beak, a brow and ear tufts; eagle forelegs
+  // with talons, lion hind legs with paws, a long tail with a tuft; the saddle on its back; the wings apart
   function griffinmount() {
-    const st = [], white = C("#f4f4f4"), tan = C("#c9a27a"), beak = C("#ffb020"), dark = C("#222222"), talon = C("#ffd23f"), saddle = C("#7a4a24"), cloth = C("#8a4fd8"), gold = C("#ffd23f");
-    st.push(S("sphere", [0, -60, 300], [115, 210, 105], { color: tan }));
-    st.push(S("sphere", [0, 130, 340], [110, 110, 120], { color: white, blend: 40 }));
-    st.push(S("joint", [70, 150, 120], [26, 26, 120], { color: talon, mirror: true, offsX: 70, blend: 12 }));
-    st.push(S("joint", [78, -190, 120], [32, 32, 120], { color: tan, mirror: true, offsX: 78, blend: 14 }));
-    st.push(S("sphere", [70, 170, 14], [30, 44, 14], { color: talon, mirror: true, offsX: 70 }));
-    st.push(S("sphere", [78, -175, 14], [32, 44, 14], { color: tan, mirror: true, offsX: 78 }));
-    // layer 1: the head, beak and eyes, the crest
-    st.push(S("sphere", [0, 230, 500], [78, 84, 78], { color: white, blend: 22, layer: 1 }));
-    st.push(S("joint", [0, 320, 485], [24, 24, 40], { color: beak, cone: 0.9, rot: dir(0, 1, -0.45), layer: 1 }));
-    st.push(S("sphere", [40, 280, 530], [11, 11, 11], { color: dark, mirror: true, offsX: 40, layer: 1 }));
-    st.push(S("joint", [0, 190, 600], [14, 30, 46], { color: tan, rot: dir(0, -0.8, 0.6), layer: 1 }));
-    // layer 2: the tail with its tuft
-    st.push(S("joint", [0, -300, 360], [14, 14, 110], { color: tan, rot: dir(0, -1, 0.6), layer: 2 }));
-    st.push(S("sphere", [0, -390, 430], [30, 30, 40], { color: C("#8a5a3a"), layer: 2 }));
+    const st = [], white = C("#f4f4f4"), cream = C("#efe6d2"), tan = C("#c9a27a"), dark = C("#8a5a3a"), beak = C("#ffb020"), beak2 = C("#d98a10"), talon = C("#ffd23f"), eye = C("#222222"), iris = C("#ffb020"), saddle = C("#7a4a24"), cloth = C("#8a4fd8"), gold = C("#ffd23f");
+    // the body: a long lion's barrel, the rump, the feathered breast and collar over the shoulders
+    st.push(S("sphere", [0, -70, 300], [95, 215, 95], { color: tan }));
+    st.push(S("sphere", [0, -235, 300], [105, 95, 100], { color: tan, blend: 30 }));
+    st.push(S("sphere", [0, 120, 325], [100, 112, 105], { color: white, blend: 40 }));
+    st.push(S("sphere", [0, 60, 372], [104, 62, 92], { color: cream, blend: 28 }));
+    // the neck rising forward, the head long like an eagle's, the brow over the eyes
+    st.push(S("joint", [0, 215, 440], [46, 46, 66], { color: white, rot: dir(0, 1, 0.9), blend: 24 }));
+    st.push(S("sphere", [0, 305, 512], [56, 78, 54], { color: white, blend: 18, layer: 1 }));
+    st.push(S("sphere", [0, 325, 548], [50, 44, 20], { color: white, blend: 12, layer: 1 }));
+    st.push(S("sphere", [36, 341, 528], [15, 12, 13], { color: iris, mirror: true, offsX: 36, layer: 1 }));
+    st.push(S("sphere", [40, 349, 529], [10, 9, 9], { color: eye, mirror: true, offsX: 40, layer: 1 }));
+    st.push(S("cube", [40, 347, 546], [18, 12, 4], { color: dark, mirror: true, offsX: 40, rot: [0, 0.35, 0], layer: 1 }));
+    // the hooked beak: the upper half a cone that bends down to its tip, the lower half shorter and darker
+    st.push(S("joint", [0, 380, 510], [24, 24, 64], { color: beak, cone: 0.8, rot: dir(0, 1, -0.3), layer: 1 }));
+    st.push(S("sphere", [0, 431, 476], [14, 18, 20], { color: beak, blend: 12, layer: 1 }));
+    st.push(S("joint", [0, 373, 490], [16, 16, 42], { color: beak2, cone: 0.7, rot: dir(0, 1, -0.5), layer: 1 }));
+    // the ear tufts
+    st.push(S("joint", [36, 287, 574], [12, 14, 36], { color: dark, cone: 0.9, mirror: true, offsX: 36, rot: dir(0.3, -0.3, 1), layer: 1 }));
+    // the forelegs: feathered thighs, scaly shanks, four talons each
+    st.push(S("sphere", [78, 150, 232], [42, 50, 72], { color: white, mirror: true, offsX: 78, blend: 22 }));
+    st.push(S("joint", [78, 150, 110], [20, 20, 110], { color: talon, mirror: true, offsX: 78 }));
+    st.push(S("sphere", [78, 165, 14], [26, 40, 14], { color: talon, mirror: true, offsX: 78 }));
+    for (const dx of [-14, 0, 14]) st.push(S("joint", [78 + dx, 212, 10], [7, 7, 22], { color: talon, cone: 0.9, mirror: true, offsX: 78 + dx, rot: dir(dx / 40, 1, -0.1) }));
+    st.push(S("joint", [78, 122, 10], [7, 7, 18], { color: talon, cone: 0.9, mirror: true, offsX: 78, rot: dir(0, -1, -0.1) }));
+    // the hind legs: a lion's thighs, legs and paws
+    st.push(S("sphere", [85, -225, 232], [48, 72, 82], { color: tan, mirror: true, offsX: 85, blend: 26 }));
+    st.push(S("joint", [85, -238, 110], [26, 26, 110], { color: tan, mirror: true, offsX: 85 }));
+    st.push(S("sphere", [85, -222, 16], [32, 44, 16], { color: tan, mirror: true, offsX: 85 }));
+    for (const dx of [-16, 0, 16]) st.push(S("sphere", [85 + dx, -178, 12], [9, 12, 10], { color: dark, mirror: true, offsX: 85 + dx }));
+    // layer 2: the tail, up and over, with its tuft
+    st.push(S("joint", [0, -400, 300], [14, 14, 120], { color: tan, rot: dir(0, -1, 0.25), layer: 2 }));
+    st.push(S("joint", [0, -525, 350], [12, 12, 64], { color: tan, rot: dir(0, -0.5, 1), layer: 2, blend: 10 }));
+    st.push(S("sphere", [0, -548, 420], [28, 26, 40], { color: dark, layer: 2 }));
     // layer 3: the saddle
     st.push(S("cube", [0, -30, 400], [100, 100, 12], { color: cloth, round: 0.4, layer: 3 }));
     st.push(S("cube", [0, -30, 420], [72, 72, 16], { color: saddle, round: 0.5, layer: 3 }));
     st.push(S("sphere", [0, 38, 440], [40, 14, 18], { color: gold, layer: 3 }));
     return st;
   }
-  // a wing reaching out along +x from the shoulder (variant 1 is the left wing, a mirror image)
+  // a wing reaching out along +x from the shoulder (variant 1 is the left wing, a mirror image): the arm along
+  // its leading edge, the coverts, and the primaries fanned out behind it with white tips
   function griffinwing(v) {
-    const st = [], sx = v ? -1 : 1, brown = C("#8a5a3a"), white = C("#f4f4f4"), tan = C("#c9a27a");
-    st.push(S("sphere", [sx * 150, 0, 0], [160, 70, 20], { color: brown }));
-    st.push(S("sphere", [sx * 380, -40, 0], [170, 80, 16], { color: brown, blend: 20 }));
-    st.push(S("sphere", [sx * 560, -90, 0], [110, 70, 12], { color: white, blend: 16, layer: 1 }));
-    st.push(S("sphere", [sx * 300, -100, -4], [220, 50, 10], { color: tan, layer: 1 }));
+    const st = [], sx = v ? -1 : 1, brown = C("#8a5a3a"), white = C("#f4f4f4"), tan = C("#c9a27a"), cream = C("#efe6d2");
+    st.push(S("joint", [sx * 290, -40, 0], [13, 13, 290], { color: tan, rot: dir(sx, -0.12, 0), blend: 10 }));
+    st.push(S("sphere", [sx * 230, -95, -6], [230, 70, 12], { color: tan, blend: 14 }));
+    for (let k = 0; k < 6; k++) {
+      const x = 300 + k * 56, y = -150 - k * 34, a = sx * (0.18 + k * 0.13);
+      st.push(S("sphere", [sx * x, y, -10], [34, 150 + k * 10, 9], { color: k < 4 ? brown : cream, rot: [0, 0, a], layer: 1 }));
+      st.push(S("sphere", [sx * (x + Math.sin(a) * 120), y - Math.cos(a) * 120, -10], [26, 40, 8], { color: white, rot: [0, 0, a], layer: 2 }));
+    }
+    for (let k = 0; k < 5; k++) st.push(S("sphere", [sx * (70 + k * 60), -150, -8], [32, 100, 8], { color: k % 2 ? tan : cream, rot: [0, 0, sx * 0.08], layer: 1 }));
     return st;
   }
 
