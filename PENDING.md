@@ -103,6 +103,9 @@ birds' wings, first person inside buildings. Still to do, in this order:
    griffin itself from the side with the castle behind; the Parliament from outside (a dozen ministers in 333 seats
    look empty); the Guild Quarter scene dropped (its plaza is empty at any hour). A test war for the film needs the
    gate whole, the two armouries stocked and the old wars over (film.js does all that for the shot only).
+   First full recording 20 November (28 scenes, 165 s, 1920x1080, H.264 + AAC): the muxer's header patch had been
+   appended at the end and the music mix had failed in the audio tap; both fixed (the server writes `?at=`, the tap
+   leaves offline contexts alone) and the film recorded again. Sample: `film/tickle-beach-world.mp4` (not in git).
    game has, each thing from its best camera angle (fishing, taming, hunting, wars between holders, the Underworld,
    the casino, the arena, the sea beasts, surfing, diving, dragons, the contests, the Parliament, the mines, first
    person...). Harpoon fishing does not exist in the game (asked once, then interrupted): the film shows the fishing

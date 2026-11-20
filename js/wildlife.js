@@ -336,7 +336,7 @@
     return { kind, x, z, y: App.genHeight(x, z), h: rnd() * 6.28, t: null, wait: rnd() * 4, wob: rnd() * 6, home, wild, gone: 0, fleeing: 0 };
   }
   App.updateWildlifeSet = () => {
-    if (!geo.pig) return;
+    if (KINDS.some((k) => !geo[k] || !meshes[k])) return; // (every kind's model in first: they come from the workers one by one)
     const tx = App.cam.target.x, tz = App.cam.target.z, R = App.RANGE.scenery * 0.85;
     const keep = new Set();
     for (const v of App.gridNear("village", tx, tz, R + 60)) {
@@ -455,7 +455,7 @@
   };
 
   App.stepWildlife = (dtReal) => {
-    if (!geo.pig) return;
+    if (KINDS.some((k) => !geo[k] || !meshes[k])) return; // (every kind's model in first: they come from the workers one by one)
     const dmAll = Math.min(dtReal, 0.1) * st.speed;
     const sub = Math.max(1, Math.ceil(dmAll / 0.08)), dm = dmAll / sub;
     const n = {};
