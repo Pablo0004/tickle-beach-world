@@ -467,7 +467,7 @@
 
   // ---------- per frame ----------
   App.stepMonsters = (dtReal) => {
-    if (!geo.gloomslime) return;
+    if (MKINDS.some((k) => !meshes[k])) return; // (every kind's model in first: they come from the workers one by one)
     const dm = Math.min(dtReal, 0.1) * st.speed, time = performance.now() / 1000;
     const n = {};
     for (const k of MKINDS) n[k] = 0;

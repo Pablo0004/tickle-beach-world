@@ -335,9 +335,11 @@
           App.endAction(rider); rider.pos.x = v.x + 14; rider.pos.z = v.z + 6; rider.pos.y = App.surfaceAt(rider.pos.x, rider.pos.z).y; await wait(2500);
         }
         st.mode = "manual"; App.enterFP(rider.id); await wait(700);
-        App.keys.add("KeyM"); await wait(350); App.keys.delete("KeyM"); await wait(500);
-        if (!(rider.action && rider.action.ride)) { await wait(1500); App.keys.add("KeyM"); await wait(350); App.keys.delete("KeyM"); await wait(500); } // (its griffin may take a moment to come)
-        const a = rider.action; if (!a || !a.ride) throw new Error("did not mount");
+        // into the saddle (what the M key does in first person; set directly, so that a key or a click in the window
+        // cannot undo it)
+        if (rider.action && rider.action.kind === "fp") { rider.action.ride = true; rider.action.mWas = true; }
+        await wait(500);
+        const a = rider.action; if (!a || !a.ride) throw new Error("did not mount (" + (a ? a.kind : "no action") + ")");
         App.keys.add("Space"); App.keys.add("KeyW"); FILM.rider = rider;
         await wait(1600);
       },
@@ -357,17 +359,21 @@
         FILM.fly = { t, v, R0: W0 ? W0.r * 0.8 : 52, a: Math.atan2(t.pos.x - v.x, t.pos.z - v.z), R: Math.max(40, Math.hypot(t.pos.x - v.x, t.pos.z - v.z)), alt: Math.max(8, a0.alt || 0) };
         FILM.fly.step = (dt) => {
           const F = FILM.fly, T = F.t; F.a += dt * 0.22; F.R += (F.R0 - F.R) * Math.min(1, dt * 0.8); F.alt += (13 - F.alt) * Math.min(1, dt * 0.6);
-          T.action = { kind: "fp", ride: true, alt: F.alt, started: st.T, film: true }; // (the sim leaves a first-person rider alone; the film moves it)
+          if (!T.action || !T.action.film) T.action = { kind: "fp", ride: true, alt: F.alt, started: st.T, film: true }; // (the film's own flight: see stepFP below)
+          T.action.alt = F.alt;
           T.pos.x = F.v.x + Math.sin(F.a) * F.R; T.pos.z = F.v.z + Math.cos(F.a) * F.R; T.heading = F.a + Math.PI / 2;
           App.mountRide(T, { slow: false, path: null }, 100);
           const ground = Math.max(App.surfaceAt(T.pos.x, T.pos.z).y, App.WATER_Y);
           T.flyY = ground + F.alt; if (T.riding) T.riding.alt = F.alt; T.pos.y = T.flyY;
           App.animateTickle(T, true, dt);
         };
-        FILM.fly.step(0.03); cam.follow = t.id; at(t.pos.x, t.pos.z, 15, 1.12, FILM.fly.a + 0.35); await wait(400);
+        // (the game steps a first-person action through App.stepFP, which drops it when nobody is in first person: the
+        // film's flight is stepped there instead, after the game's own frame, so the rider stays in the air)
+        if (!FILM.stepFP0) { FILM.stepFP0 = App.stepFP; App.stepFP = (T, a, dm, dtReal) => (a && a.film && FILM.fly && FILM.fly.t === T ? FILM.fly.step(dtReal || DT) : FILM.stepFP0(T, a, dm, dtReal)); }
+        FILM.fly.step(0.03); cam.follow = t.id; at(t.pos.x, t.pos.z, 16, 1.1, FILM.fly.a + 0.4); await wait(1500); // (the griffin's model back on it after first person)
       },
-      cam: () => (u, dt) => { const F = FILM.fly; F.step(dt || DT); cam.follow = F.t.id; cam.fly = null; cam.target.x += (F.t.pos.x - cam.target.x) * 0.25; cam.target.z += (F.t.pos.z - cam.target.z) * 0.25; cam.radius = 16; cam.phi = 1.1; cam.theta = F.a + 0.4; },
-      after: async () => { const F = FILM.fly; if (F && F.t) { F.t.action = null; F.t.flyY = null; } cam.follow = null; FILM.fly = null; if (FILM.range0 != null) { App.RANGE.full = FILM.range0; FILM.range0 = null; } App.MAX_FULL = 96; await leave(); } },
+      cam: () => (u, dt) => { const F = FILM.fly; cam.follow = F.t.id; cam.fly = null; cam.target.x += (F.t.pos.x - cam.target.x) * 0.25; cam.target.z += (F.t.pos.z - cam.target.z) * 0.25; cam.radius = 16; cam.phi = 1.1; cam.theta = F.a + 0.4; },
+      after: async () => { const F = FILM.fly; if (F && F.t) { F.t.action = null; F.t.flyY = null; } cam.follow = null; FILM.fly = null; if (FILM.stepFP0) { App.stepFP = FILM.stepFP0; FILM.stepFP0 = null; } if (FILM.range0 != null) { App.RANGE.full = FILM.range0; FILM.range0 = null; } App.MAX_FULL = 96; await leave(); } },
     { id: "dive", title: "Diving", sub: "Down with a diver to the wrecks, the reefs and the pearl beds", secs: 6,
       setup: async () => {
         clock("11:20"); const s = near(App.diveSites.filter((q) => q.kind === "pearls" || q.kind === "wreck"), C.dock.x, C.dock.z) || App.diveSites[0];

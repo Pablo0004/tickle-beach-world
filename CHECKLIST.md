@@ -192,3 +192,6 @@ graphics card). Tick what looks right and note what does not.
 - [ ] A fisher with a rod at a pier or a pond: now and then a fish comes up on the line at the pull of the rod.
 - [ ] Menu > Encyclopedia > Arms: the Harpoon.
 - Casino: the poker and blackjack tables have a chair at every seat and the players sit on them (14 November).
+- Casino: the bingo rows have chairs too, and the players sit on them (15 November).
+- Griffins (riding and wild): an eagle's head with a hooked beak and ear tufts, a lion's body, talons in front, paws behind, a tufted tail, feathered wings; no longer a big hen (15 November).
+- Dungeons: no error while the monsters' models are still loading (15 November).

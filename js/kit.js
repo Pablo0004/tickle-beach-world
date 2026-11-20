@@ -228,20 +228,37 @@
   }
 
   // ---------- creatures: invented fantasy animals Tickles can tame (none is a Tickle species) ----------
+  // (remodelled 15 November with the riding one: a lion's body, an eagle's breast, neck and hooked beak, talons
+  // in front and paws behind, a tufted tail; here the wings half open, part of the body)
   function griffin() {
-    const st = [], white = C("#f4f4f4"), tan = C("#c9a27a"), wing = C("#8a5a3a"), beak = C("#ffb020"), dark = C("#222222");
-    st.push(S("sphere", [0, -20, 128], [70, 112, 62], { color: tan }));
-    st.push(S("sphere", [0, 70, 158], [62, 60, 66], { color: white, blend: 24 }));
-    st.push(S("joint", [40, 70, 46], [14, 14, 46], { color: tan, mirror: true, offsX: 40, blend: 8 }));
-    st.push(S("joint", [42, -95, 46], [16, 16, 46], { color: tan, mirror: true, offsX: 42, blend: 8 }));
-    st.push(S("sphere", [40, 80, 8], [17, 24, 9], { m: "rep", color: beak, mirror: true, offsX: 40 }));
-    st.push(S("joint", [0, -150, 190], [9, 9, 55], { color: tan, rot: dir(0, -1, 0.7) }));
-    st.push(S("sphere", [0, -188, 232], [18, 18, 22], { color: wing, blend: 6 }));
-    st.push(S("sphere", [0, 112, 262], [44, 48, 44], { color: white, blend: 16, layer: 1 }));
-    st.push(S("joint", [0, 162, 252], [14, 14, 22], { color: beak, cone: 0.9, rot: dir(0, 1, -0.4), layer: 1 }));
-    st.push(S("sphere", [22, 142, 276], [7, 7, 7], { color: dark, mirror: true, offsX: 22, layer: 1 }));
-    st.push(S("sphere", [62, -10, 230], [16, 90, 50], { color: wing, mirror: true, offsX: 62, rot: [0.5, 0.3, 0], layer: 2 }));
-    st.push(S("sphere", [62, -60, 275], [12, 60, 30], { color: white, mirror: true, offsX: 62, rot: [0.7, 0.3, 0], layer: 2, blend: 8 }));
+    const st = [], white = C("#f4f4f4"), cream = C("#efe6d2"), tan = C("#c9a27a"), dark = C("#8a5a3a"), beak = C("#ffb020"), beak2 = C("#d98a10"), talon = C("#ffd23f"), eye = C("#222222"), iris = C("#ffb020");
+    const k = 0.56, P = (v) => v.map((x) => x * k), Z = (v) => v.map((x) => x * k);
+    st.push(S("sphere", P([0, -70, 300]), Z([95, 215, 95]), { color: tan }));
+    st.push(S("sphere", P([0, -235, 300]), Z([105, 95, 100]), { color: tan, blend: 16 }));
+    st.push(S("sphere", P([0, 120, 325]), Z([100, 112, 105]), { color: white, blend: 22 }));
+    st.push(S("joint", P([0, 215, 440]), Z([46, 46, 66]), { color: white, rot: dir(0, 1, 0.9), blend: 12 }));
+    st.push(S("sphere", P([0, 305, 512]), Z([56, 78, 54]), { color: white, blend: 10, layer: 1 }));
+    st.push(S("sphere", P([0, 325, 548]), Z([50, 44, 20]), { color: white, blend: 7, layer: 1 }));
+    st.push(S("sphere", P([36, 341, 528]), Z([15, 12, 13]), { color: iris, mirror: true, offsX: 36 * k, layer: 1 }));
+    st.push(S("sphere", P([40, 349, 529]), Z([10, 9, 9]), { color: eye, mirror: true, offsX: 40 * k, layer: 1 }));
+    st.push(S("joint", P([0, 380, 510]), Z([24, 24, 64]), { color: beak, cone: 0.8, rot: dir(0, 1, -0.3), layer: 1 }));
+    st.push(S("sphere", P([0, 431, 476]), Z([14, 18, 20]), { color: beak, blend: 7, layer: 1 }));
+    st.push(S("joint", P([0, 373, 490]), Z([16, 16, 42]), { color: beak2, cone: 0.7, rot: dir(0, 1, -0.5), layer: 1 }));
+    st.push(S("joint", P([36, 287, 574]), Z([12, 14, 36]), { color: dark, cone: 0.9, mirror: true, offsX: 36 * k, rot: dir(0.3, -0.3, 1), layer: 1 }));
+    st.push(S("sphere", P([78, 150, 232]), Z([42, 50, 72]), { color: white, mirror: true, offsX: 78 * k, blend: 12 }));
+    st.push(S("joint", P([78, 150, 110]), Z([20, 20, 110]), { color: talon, mirror: true, offsX: 78 * k }));
+    st.push(S("sphere", P([78, 165, 14]), Z([26, 40, 14]), { color: talon, mirror: true, offsX: 78 * k }));
+    for (const dx of [-14, 0, 14]) st.push(S("joint", P([78 + dx, 212, 10]), Z([7, 7, 22]), { color: talon, cone: 0.9, mirror: true, offsX: (78 + dx) * k, rot: dir(dx / 40, 1, -0.1) }));
+    st.push(S("sphere", P([85, -225, 232]), Z([48, 72, 82]), { color: tan, mirror: true, offsX: 85 * k, blend: 14 }));
+    st.push(S("joint", P([85, -238, 110]), Z([26, 26, 110]), { color: tan, mirror: true, offsX: 85 * k }));
+    st.push(S("sphere", P([85, -222, 16]), Z([32, 44, 16]), { color: tan, mirror: true, offsX: 85 * k }));
+    st.push(S("joint", P([0, -400, 300]), Z([14, 14, 120]), { color: tan, rot: dir(0, -1, 0.25), layer: 2 }));
+    st.push(S("joint", P([0, -525, 350]), Z([12, 12, 64]), { color: tan, rot: dir(0, -0.5, 1), layer: 2, blend: 6 }));
+    st.push(S("sphere", P([0, -548, 420]), Z([28, 26, 40]), { color: dark, layer: 2 }));
+    // the wings half open: the arm, the coverts and five primaries each side
+    st.push(S("joint", P([150, 10, 430]), Z([16, 16, 150]), { color: dark, mirror: true, offsX: 150 * k, rot: dir(1, -0.15, 0.35), layer: 3 }));
+    st.push(S("sphere", P([130, -40, 410]), Z([120, 55, 10]), { color: tan, mirror: true, offsX: 130 * k, rot: [0, 0.3, 0], blend: 8, layer: 3 }));
+    for (let n = 0; n < 5; n++) st.push(S("sphere", P([170 + n * 30, -70 - n * 26, 430 + n * 10]), Z([22, 95 + n * 8, 8]), { color: n < 3 ? dark : cream, mirror: true, offsX: (170 + n * 30) * k, rot: [0, 0.3, 0.15 + n * 0.12], layer: 3 }));
     return st;
   }
   function cinderling() {
