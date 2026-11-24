@@ -56,6 +56,10 @@ birds' wings, first person inside buildings. Still to do, in this order:
    scenes among others) and wants it in the game's normal play, not only in the video. (It is the game's own music,
    music/, chosen by place: Menu > Sound > Music switches it on; it was off in the owner's game.) To settle later:
    on by default, or a notice that it exists.
+11. **1.16 More mounts and creatures (asked 22 November, pending)**: flying is not only for griffins: add pegasi
+    (horses with wings) and winged unicorns as mounts, and in general many more creatures, monsters and animals of
+    every kind (all as strokes, like the rest). To decide first with the owner: which ones, which can be tamed or
+    ridden, which fly, and where each lives.
 10. **1.15 Stables for the tamed (asked 15 November, pending)**: inside a fortress, a tamed animal, creature or
     monster that is not being used (not ridden, not fighting, not out with its tamer) stays in the stables, not
     loose in the square; the stables are to be made bigger and set against the wall, on its inner side. To decide
@@ -105,7 +109,8 @@ birds' wings, first person inside buildings. Still to do, in this order:
    gate whole, the two armouries stocked and the old wars over (film.js does all that for the shot only).
    First full recording 20 November (28 scenes, 165 s, 1920x1080, H.264 + AAC): the muxer's header patch had been
    appended at the end and the music mix had failed in the audio tap; both fixed (the server writes `?at=`, the tap
-   leaves offline contexts alone) and the film recorded again. Sample: `film/tickle-beach-world.mp4` (not in git).
+   leaves offline contexts alone) and the film recorded again (28 scenes, 168 s, sound checked); given to the owner
+   24 November. File: `film/tickle-beach-world.mp4` (not in git).
    game has, each thing from its best camera angle (fishing, taming, hunting, wars between holders, the Underworld,
    the casino, the arena, the sea beasts, surfing, diving, dragons, the contests, the Parliament, the mines, first
    person...). Harpoon fishing does not exist in the game (asked once, then interrupted): the film shows the fishing
