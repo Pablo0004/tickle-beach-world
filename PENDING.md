@@ -71,6 +71,8 @@ birds' wings, first person inside buildings. Still to do, in this order:
        attacking and defending; the defenders' may fly out beyond the wall to attack (see 1:57-1:58).
     f. The Parliament's inside is to come at the start, with its outside (not after the casino).
     g. 2:29, the Song Contest: shot from behind the stage; it should be from the front.
+    h. When a dragon attacks a village, only those going to fight it should be about; others went on dancing in
+       the square (in the game too): the rest are to take shelter.
 13. **1.18 Chat between holders (asked 25 November, pending)**: a chat so that holders can talk to each other, from
     one of their Tickles to another's.
 14. **1.19 Sorties from enemy fortresses (asked 25 November, pending)**: by default, when a Tickle or a group of

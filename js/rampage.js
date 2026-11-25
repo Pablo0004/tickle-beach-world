@@ -150,7 +150,7 @@
   };
 
   // ---------- joining in, or running to hide ----------
-  const BUSY = new Set(["held", "flying", "fall", "spirit", "ko", "box", "ringwait", "duel", "tame", "delve", "dizzy", "slay", "command", "hide"]);
+  const BUSY = new Set(["held", "flying", "fall", "spirit", "ko", "duel", "tame", "delve", "dizzy", "slay", "command", "hide"]); // (a boxing match stops too)
   const free = (t) => !App.isKO(t.id) && !App.isDead(t.id) && !(t.action && BUSY.has(t.action.kind));
   App.joinFight = (t, d) => {
     const k = App.fighterKind(t.id);
@@ -167,7 +167,7 @@
     for (const t of st.tickles) {
       if (!free(t) || Math.hypot(t.pos.x - d.x, t.pos.z - d.z) > R) continue;
       if (App.joinFight(t, d)) { if (rnd() < (first ? 0.5 : 0.25)) App.say(t, pick(t.action.kind === "command" ? ["Go get it, buddy!", "Show it your power!", "Together, partner!"] : ["To arms!", "Shields up!", "Protect the village!", "Charge!"]), 3); }
-      else if (t.group.visible && Math.hypot(t.pos.x - d.x, t.pos.z - d.z) < R * 0.8 && App.hideFrom) App.hideFrom(t, d);
+      else if (t.group.visible && App.hideFrom) App.hideFrom(t, d); // (everyone in reach who does not fight hides: nobody goes on dancing or playing in the square)
     }
   };
   App.dragonFight = (d) => !d ? null : d.duel ? (d.duel.a === d ? d.duel.fa : d.duel.fb) : d.rampage || (d.hunt && !d.hunt.done ? d.hunt : null) || (d.live && d.live.phase === "landed" && !d.live.attack.done ? d.live.attack : null);

@@ -523,6 +523,13 @@
       const at = gateDown(w) ? hallDoor(w) : { x: F.gx + F.ux * 4.5, z: F.gz + F.uz * 4.5 }, files = 6, r = Math.floor(k / files), f = (k % files) - (files - 1) / 2;
       return { x: at.x + F.ux * r * 2.4 + nx * f * 2.2, z: at.z + F.uz * r * 2.4 + nz * f * 2.2, h: Math.atan2(-F.ux, -F.uz) };
     }
+    // (the attackers' griffin riders, while the gate stands, in a line of their own behind the ranks, seven blocks
+    // apart: their wings are wide; asked 25 November, they bunched over the ranks)
+    if (s === "A" && u === "griffin" && w.siege && !gateDown(w)) {
+      const gs = sideIds(w, "A").filter((x) => w.unit[x] === "griffin").sort((x, y) => x - y), gi = Math.max(0, gs.indexOf(id)), gn = gs.length;
+      const back = 4 + (Math.ceil(sideIds(w, "A").length / 10) + 1) * 3;
+      return { x: F.x - F.ux * back + nx * (gi - (gn - 1) / 2) * 7, z: F.z - F.uz * back + nz * (gi - (gn - 1) / 2) * 7, h: Math.atan2(F.ux, F.uz) };
+    }
     const files = 10, r = Math.floor(k / files), f = (k % files) - (files - 1) / 2, dir = s === "A" ? -1 : 1;
     let at = { x: F.x, z: F.z };
     if (s === "A" && (w.siege ? gateDown(w) : standing(w, "B").length < w.start.B * 0.25)) at = hallDoor(w);
