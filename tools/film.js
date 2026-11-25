@@ -421,7 +421,13 @@
         clock("11:40");
         const reef = App.diveSites.find((s) => /Painted Reef/.test(s.name)) || App.diveSites.find((s) => s.kind === "reef");
         at(reef.x, reef.z, 20, 1.0, 0); await ready();
-        const t = st.tickles.find((q) => !App.isKO(q.id) && !q.riding && !(q.action && q.action.kind === "fp"));
+        // (out on the reef nobody is about: a Tickle of the nearest village is brought in)
+        let t = st.tickles.find((q) => !App.isKO(q.id) && !q.riding && !(q.action && q.action.kind === "fp") && Math.hypot(q.pos.x - reef.x, q.pos.z - reef.z) < 80);
+        if (!t) {
+          const v = near(App.villages, reef.x, reef.z), id = v && v.residents.find((q) => !App.isKO(q) && !(App.isDead && App.isDead(q)));
+          if (id == null) throw new Error("nobody to spear");
+          App.forcePromote(id); await until(() => !!App.pop.agent[id], 12); App.pinned = null; t = App.pop.agent[id];
+        }
         if (!t) throw new Error("nobody to spear");
         await leave(); App.endAction(t);
         t.pos.x = reef.x + 2; t.pos.z = reef.z + 2; t.pos.y = App.WATER_Y - 0.7;
@@ -505,7 +511,7 @@
         // (nobody out on wheels just now: two or three of those in the square take their skateboards or skates out,
         // the same thing the game has them do; the owners of one first)
         if (!st.tickles.some(skating)) {
-          const free = st.tickles.filter((t) => t.group.visible && !App.isKO(t.id) && !t.riding && Math.hypot(t.pos.x - v.x, t.pos.z - v.z) < 22 && !(t.action && /fp|war|ko|box|duel|ride/.test(t.action.kind || "")));
+          const free = st.tickles.filter((t) => t.group.visible && !App.isKO(t.id) && !t.riding && Math.hypot(t.pos.x - v.x, t.pos.z - v.z) < 50 && !(t.action && /fp|war|ko|box|duel|ride|rounds/.test(t.action.kind || "")));
           free.sort((a, b) => ((b.ground === "Skateboard" || b.ground === "Skates") - (a.ground === "Skateboard" || a.ground === "Skates")));
           for (const t of free.slice(0, 3)) {
             const g = t.ground === "Skates" ? "Skates" : "Skateboard", act = st.acts.find((q) => q.where === "ground" && q.ground === g);
@@ -517,6 +523,7 @@
         }
         const sk = st.tickles.find(skating);
         if (!sk) throw new Error("nobody skating");
+        at(sk.pos.x, sk.pos.z, 9, 1.22, sk.heading + 1.4); await wait(600);
         FILM.skate = { t: sk };
       },
       // (low and from the side, keeping pace with the skater)
@@ -623,7 +630,7 @@
         const cx = grp.length ? grp.reduce((a, o) => a + o.at.x, 0) / grp.length : 0, cz = grp.length ? grp.reduce((a, o) => a + o.at.z, 0) / grp.length : 0;
         inFocus(cx, cz); await wait(500); FILM.parlIn = { n: occ.length, grp: grp.length };
       },
-      cam: () => inOrbit({ r: 17, phi: 1.0, th: 0.35 }, { r: 14, phi: 0.95, th: -0.2 }), after: leave },
+      cam: () => inOrbit({ r: 17, phi: 1.0, th: Math.PI + 0.35 }, { r: 14, phi: 0.95, th: Math.PI - 0.2 }), after: leave }, // (from the Speaker's side: their faces)
     { id: "casino", title: "The casino", sub: "Poker, blackjack, roulette, bingo and the slots, open from seven", secs: 8,
       setup: async () => {
         clock("20:10"); const Cs = C.casino; at(Cs.x, Cs.z, 40, 1.0, 0); await ready(); // (an hour after opening the tables are full)
@@ -674,7 +681,7 @@
     // (a scene starts from the ordinary view: out of first person, the camera following nobody; the griffin's side
     // shot carries on from the first-person one and takes care of that itself)
     if (S.id !== "griffinside") { if (App.fpOn && App.fpOn()) { App.keys.clear(); App.exitFP(); } cam.follow = null; cam.fly = null; }
-    try { await S.setup(); } catch (e) { log("skipped " + S.id + ": " + (e && e.message)); try { if (S.after) await S.after(); } catch (e2) { /* */ } return false; }
+    try { await S.setup(); } catch (e) { log("skipped " + S.id + ": " + (e && e.message) + (e && e.stack ? " @ " + String(e.stack).split("\n").slice(1, 3).join(" ").replace(/https?:\/\/[^/]+\//g, "") : "")); try { if (S.after) await S.after(); } catch (e2) { /* */ } return false; }
     ctrl = S.cam();
     if (FILM.onShot) { try { FILM.onShot(S); } catch (e) { /* */ } }
     if (recording) noteMusic(S);

@@ -590,7 +590,8 @@
   function ride(t, u) {
     if (u !== "cavalry" && u !== "griffin") return;
     const M = App.mountRide && App.mountRide(t, { slow: false, path: null }, 100);
-    if (M && M.fly && t.riding) { const alt = 7 + Math.sin(st.T * 0.7 + t.id) * 1.2 + (t.id % 3) * 1.5; t.riding.alt = alt; // (high enough to clear the walls, at different heights) t.flyY = Math.max(App.surfaceAt(t.pos.x, t.pos.z).y, App.WATER_Y) + alt; }
+    // (high enough to clear the walls, at different heights)
+    if (M && M.fly && t.riding) { const alt = 7 + Math.sin(st.T * 0.7 + t.id) * 1.2 + (t.id % 3) * 1.5; t.riding.alt = alt; t.flyY = Math.max(App.surfaceAt(t.pos.x, t.pos.z).y, App.WATER_Y) + alt; }
   }
   App.stepWar = (t, a, dm, dtReal) => {
     const w = W() && W().wars.find((x) => x.id === a.war);
