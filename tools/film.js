@@ -77,7 +77,21 @@
   // the picture is copied right after the game draws each frame (App.render)
   let looping = false;
   const render0 = App.render;
-  App.render = () => { render0(); if (looping) { try { ox.drawImage(App.renderer.domElement, 0, 0, FILM.W, FILM.H); drawOverlay(); } catch (e) { /* a frame lost */ } } };
+  // (the camera never under the ground or inside a building: before each frame is drawn, if it is, it slides along
+  // its line toward what it looks at until it is clear; asked 25 November, it went into structures)
+  const camBlocked = (p) => {
+    const s0 = App.surfaceAt(p.x, p.z);
+    if (!s0.water && p.y < s0.y + 0.6) return true;
+    const f = App.buildingAt && App.buildingAt(p.x, p.z);
+    if (f && f.sc) { const F = App.frag[f.sc.type], h = (F ? F.height : 8) * (f.sc.scale || 1) * ((App.FRAG_SCALE && App.FRAG_SCALE[f.sc.type]) || 1); if (p.y < App.columnHeight(Math.floor(p.x), Math.floor(p.z)) + h + 0.6) return true; }
+    return false;
+  };
+  function camGuard() {
+    if (!looping || FILM.noGuard || App.inside || (App.fpOn && App.fpOn())) return;
+    const c = App.camera, T = App.cam.target;
+    for (let k = 0; k < 30 && camBlocked(c.position); k++) c.position.lerp(T, 0.1);
+  }
+  App.render = () => { camGuard(); render0(); if (looping) { try { ox.drawImage(App.renderer.domElement, 0, 0, FILM.W, FILM.H); drawOverlay(); } catch (e) { /* a frame lost */ } } };
   const ramp = (x, a, b) => Math.max(0, Math.min(1, (x - a) / (b - a)));
 
   // ---------- the encoder: frame by frame, through WebCodecs and mp4-muxer (exact 30 frames a second, the pane
@@ -224,10 +238,11 @@
   // nothing is shot while the land, the models or the people are still loading: no job pending for two seconds
   // running, and three seconds at least; twelve at most
   async function ready(max) {
-    const t0 = performance.now(); let quiet = 0;
+    const t0 = performance.now(); let quiet = 0; max = Math.max(max || 14, 20);
     await wait(manual() ? 900 : 1500);
     while (performance.now() - t0 < (max || 14) * 1000) {
-      const busy = (App.jobsPending && App.jobsPending() > 0) || (App.pop.pending && App.pop.pending.size > 0) || (App.landPending || 0) > 0;
+      App.sceneryDirty = true; // (so the scenery counts again what it still lacks)
+      const busy = (App.jobsPending && App.jobsPending() > 0) || (App.pop.pending && App.pop.pending.size > 0) || (App.landPending || 0) > 0 || (App.fineMissing || 0) > 0;
       quiet = busy ? 0 : quiet + 1;
       if (quiet >= 20 && performance.now() - t0 > 4000) break;
       if (manual()) { for (let k = 0; k < 3; k++) App._tick(DT, DT); await yieldEL(); await timer(40); } else await timer(100);
@@ -515,14 +530,24 @@
         const ux = (b.cx - b.x), uz = (b.cz - b.z), L = Math.hypot(ux, uz) || 1, F = { x: b.x + ux / L * 13, z: b.z + uz / L * 13 };
         at(b.x + ux / L * 4, b.z + uz / L * 4, 30, 1.14, Math.atan2(-ux, -uz)); await ready();
         const day = Math.floor(st.T / DAY), def = [];
-        for (const q of App.villages) if (Math.hypot(q.x - F.x, q.z - F.z) < 240) for (const id of q.residents) { if (def.length >= 5) break; if (App.isKO(id) || App.isDead(id) || !App.combatRole(id)) continue; def.push(id); }
-        const a = { id: "film" + day + Math.floor(st.T), day, kind: "kraken", r, t0: st.T + 1.5, t1: st.T + 70, hp: 1600, max: 1600, def, done: false, live: false, dealt: {} };
+        // (eighteen defenders, already in their ranks along the shore when the beast comes up: each brought in the
+        // flesh and set at its place, as the game would have it after the march; asked 26 November, in formation)
+        for (const q of App.villages) if (Math.hypot(q.x - F.x, q.z - F.z) < 240) for (const id of q.residents) { if (def.length >= 18) break; if (App.isKO(id) || App.isDead(id) || !App.combatRole(id)) continue; def.push(id); }
+        const a = { id: "film" + day + Math.floor(st.T), day, kind: "kraken", r, t0: st.T + 1.5, t1: st.T + 70, hp: 3200, max: 3200, def, done: false, live: false, dealt: {} };
         st.seaAttacks.push(a);
-        for (const id of def) { App.invalidatePlan(id); const t = App.pop.agent[id]; if (t && t.action && !t.action.order && t.action.kind !== "ko") App.endAction(t); }
-        FILM.kraken = { F, th: Math.atan2(-ux, -uz), b: { x: b.x + ux / L * 4, z: b.z + uz / L * 4 } };
-        await until(() => a.live, 12); await wait(3500);
+        App.MAX_FULL = 120;
+        for (const id of def) { App.invalidatePlan(id); if (!App.pop.agent[id]) App.forcePromote(id); }
+        App.pinned = null; await until(() => def.every((id) => App.pop.agent[id]), 12);
+        for (const id of def) {
+          const t = App.pop.agent[id]; if (!t) continue; const S0 = App.seaDefendStep(id, day); if (!S0) continue;
+          App.endAction(t); t.pos.x = S0.p.x; t.pos.z = S0.p.z; t.pos.y = App.surfaceAt(t.pos.x, t.pos.z).y; t.heading = Math.atan2(F.x - t.pos.x, F.z - t.pos.z);
+        }
+        FILM.kraken = { F, th: Math.atan2(-ux, -uz), b: { x: b.x - ux / L * 2, z: b.z - uz / L * 2 } };
+        await until(() => a.live, 12); await wait(3000);
       },
-      cam: () => { const K = FILM.kraken; return move({ x: K.b.x, z: K.b.z, r: 30, phi: 1.14, th: K.th - 0.35 }, { x: K.F.x, z: K.F.z, r: 24, phi: 1.1, th: K.th + 0.35 }); } },
+      // (from behind the ranks and above: the defenders in their lines in front, the beast out in the water beyond them;
+      // then a little closer, to the beast)
+      cam: () => { const K = FILM.kraken; return move({ x: K.b.x, z: K.b.z, r: 34, phi: 0.98, th: K.th - 0.3 }, { x: (K.b.x + K.F.x) / 2, z: (K.b.z + K.F.z) / 2, r: 28, phi: 1.02, th: K.th + 0.25 }); } },
     { id: "dragon", title: "Dragons", sub: "Each island's dragon sleeps on its peak and flies a patrol", secs: 5,
       setup: async () => { clock("12:40"); const L = C.lair; at(L.x, L.z, 30, 1.12, 0.5); cam.target.y = L.h + 2; await ready(); },
       cam: () => { const L = C.lair; return orbit({ x: L.x, z: L.z, y: L.h + 2 }, { r: 30, phi: 1.12, th: 0.5 }, { r: 22, phi: 1.05, th: 1.4 }); } },
@@ -653,9 +678,11 @@
         FILM.flyer = st.tickles.find((t) => t.riding && t.riding.fly && (t.riding.alt || 0) > 1.5 && near0(t)) || st.tickles.find((t) => t.riding && t.riding.fly && near0(t)) || null;
         FILM.gatePt = { x: w.front.gx != null ? w.front.gx : w.front.x, z: w.front.gz != null ? w.front.gz : w.front.z };
       },
-      // (wide and from the side, a little above the riders: the attackers' line of griffins over their ranks, the
-      // defenders' line out in front of their wall, the walls shooting; asked 25 November)
-      cam: () => { const F = FILM.war.front, th = Math.atan2(-F.ux, -F.uz), m = move({ x: F.x - F.ux * 10, z: F.z - F.uz * 10, y: App.surfaceAt(F.x, F.z).y + 7, r: 46, phi: 1.05, th: th + 1.35 }, { x: F.x - F.ux * 4, z: F.z - F.uz * 4, y: App.surfaceAt(F.x, F.z).y + 7, r: 40, phi: 1.0, th: th + 1.0 }); return (u) => { holdGate(); return m(u); }; },
+      // (if the rider is knocked out, the next griffin in the air takes over; the camera keeps its turn, so no spin)
+      cam: () => { const w = FILM.war, flying = (t) => t.riding && t.riding.fly && !App.isKO(t.id) && Math.hypot(t.pos.x - w.front.x, t.pos.z - w.front.z) < 90;
+        const pick = () => { if (!FILM.flyer || !flying(FILM.flyer)) FILM.flyer = st.tickles.find(flying) || null; return FILM.flyer || { pos: FILM.gatePt }; };
+        // (from outside the wall, a little above the rider: the griffin crosses the wall with the fortress beyond it)
+        const g = follow(pick, { r: 17, phi: 0.82, th: Math.atan2(-w.front.ux, -w.front.uz) + 0.35, dth: 0.05 }); return (u, dt) => { holdGate(); return g(u, dt); }; },
       after: warNormal },
     { id: "arena", title: "The arena", sub: "A creature tournament every evening, the whole island in the stands", secs: 7,
       // (a bout is fought in the ring only when both tamers are in the flesh: the range of full Tickles is widened
@@ -731,13 +758,6 @@
     // shot carries on from the first-person one and takes care of that itself)
     if (S.id !== "griffinside") { if (App.fpOn && App.fpOn()) { App.keys.clear(); App.exitFP(); } cam.follow = null; cam.fly = null; }
     try { await S.setup(); } catch (e) { log("skipped " + S.id + ": " + (e && e.message) + (e && e.stack ? " @ " + String(e.stack).split("\n").slice(1, 3).join(" ").replace(/https?:\/\/[^/]+\//g, "") : "")); try { if (S.after) await S.after(); } catch (e2) { /* */ } return false; }
-    // (the camera first visits where the shot ends, so that the land and the models there are in before the shot
-    // starts; not for the shots whose camera moves a Tickle about)
-    if (!S.noWarm && !App.inside && !(App.fpOn && App.fpOn())) {
-      const save = { t: cam.target.clone(), r: cam.radius, p: cam.phi, th: cam.theta, f: cam.follow };
-      try { const probe = S.cam(); if (typeof probe === "function") { probe(1, 0); await ready(6); } } catch (e) { /* */ }
-      cam.target.copy(save.t); cam.radius = save.r; cam.phi = save.p; cam.theta = save.th; cam.follow = save.f; await ready(4);
-    }
     ctrl = S.cam();
     if (FILM.onShot) { try { FILM.onShot(S); } catch (e) { /* */ } }
     if (recording) noteMusic(S);

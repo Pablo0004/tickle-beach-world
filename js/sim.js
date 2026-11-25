@@ -1688,7 +1688,16 @@
     let rowing = false;
     if (goal) {
       const dx = goal.x - b.x, dz = goal.z - b.z, d = Math.hypot(dx, dz), step = Math.min(d, 3 * dm);
-      if (d > 0.3) { b.x += (dx / d) * step; b.z += (dz / d) * step; b.h = App.boatTurn(b.h, Math.atan2(dx, dz), dm * 2); rowing = true; }
+      if (d > 0.3) {
+        b.x += (dx / d) * step; b.z += (dz / d) * step; b.h = App.boatTurn(b.h, Math.atan2(dx, dz), dm * 2); rowing = true;
+        // (never over another boat: out on the water a boat keeps a boat's length from the others, away from its
+        // mooring; asked 26 November, one rode up on top of another)
+        if (Math.hypot(b.x - b.home.x, b.z - b.home.z) > 4) for (const o of App.rowboats) {
+          if (o === b || o.sunk != null) continue;
+          const ex = b.x - o.x, ez = b.z - o.z, dd = Math.hypot(ex, ez);
+          if (dd < 3.6 && dd > 1e-3) { const k = (3.6 - dd) * 0.5, nx = b.x + (ex / dd) * k, nz = b.z + (ez / dd) * k; if (!App.isLand(nx, nz)) { b.x = nx; b.z = nz; } }
+        }
+      }
       else if (a.phase === "out") { a.phase = "fish"; itemVisual(t, "carry"); if (rnd() < 0.6) say(t, "Now, where are the fish...", 3); }
       else {
         // moored again: step out onto the dock

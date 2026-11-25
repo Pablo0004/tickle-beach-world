@@ -789,6 +789,7 @@
     const byType = {};
     App.sceneryVisible = [];
     const fine = App.gfxLevel && App.gfxLevel().fine, XR = fine ? fine.near : 0;
+    let fineMissing = 0; // (finest copies wanted near the camera and not made yet: the film waits for none)
     for (const s of all) {
       const d = Math.hypot(s.x - tx, s.z - tz);
       if (s.gone || d > App.RANGE.scenery || !App.kitOn(App.kindOf(s.type)) || (App.isBroken && App.isBroken(s))) continue;
@@ -797,10 +798,12 @@
       // close to the camera, the finest copy once it is made (the usual one until then)
       // (a big building counts from its walls, not its middle)
       const rad = s.building && App.frag[s.type] ? App.frag[s.type].rad * (s.scale || FRAG_SCALE[s.type] || 1) : 0;
-      if (d - rad < XR && !s.giant) { if (App.fragX[s.type]) L = "x"; else ensureFine(s.type); }
+      if (d - rad < XR && !s.giant) { if (App.fragX[s.type]) L = "x"; else { ensureFine(s.type); fineMissing++; } }
       if (s.type !== "duck") (byType[s.type + ":" + L] = byType[s.type + ":" + L] || []).push(s); // ducks are alive, see critters.js
       if (d < NEAR_LOD + 30) App.sceneryVisible.push(s);
     }
+    App.fineMissing = fineMissing;
+
     if (!shadowMesh) {
       const g = new THREE.PlaneGeometry(1, 1); g.rotateX(-Math.PI / 2);
       shadowMesh = new THREE.InstancedMesh(g, App.makeBlob(0.5).material, 6000);

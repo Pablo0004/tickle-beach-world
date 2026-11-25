@@ -127,7 +127,12 @@
     if (!st.seaAttacks) return null;
     const a = attackOf(id, day);
     if (!a) return null;
-    const F = frontOf(a.r, a.kind), i = a.def.indexOf(id), sp = F.spots[i % F.spots.length], d0 = day * DAY, v = App.villageOfToken(id);
+    // (in ranks along the shore, as an army: the first rank at the water's edge, each further rank two blocks back up
+    // the beach, never two on one spot; asked 26 November, they piled up at the Kraken)
+    const F = frontOf(a.r, a.kind), i = a.def.indexOf(id), n = F.spots.length, s0 = F.spots[i % n], rk = Math.floor(i / n), d0 = day * DAY, v = App.villageOfToken(id);
+    let sp = { x: s0.x - F.D.ux * rk * 2.2, z: s0.z - F.D.uz * rk * 2.2 };
+    if (!App.isLand(sp.x, sp.z)) sp = { x: s0.x - F.D.ux * rk * 2.2 + F.D.uz * 1.1, z: s0.z - F.D.uz * rk * 2.2 - F.D.ux * 1.1 };
+    if (!App.isLand(sp.x, sp.z)) sp = s0;
     const walk = Math.min(150, (Math.hypot(v.x - F.x, v.z - F.z) * 1.25) / App.WALK_SPEED);
     return { k: "seadefend", s: Math.max(0, a.t0 - d0 - walk - 4), e: Math.min(1435, a.t1 - d0), p: { x: sp.x, z: sp.z, label: "fighting " + BEASTS[a.kind].name + " at " + F.name, attack: a.id, cx: F.x, cz: F.z } };
   };

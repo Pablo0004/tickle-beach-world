@@ -310,7 +310,7 @@
       const at = (f, s) => ({ x: D.berth.x + ux * f * k + px * sgn * s * k, z: D.berth.z + uz * f * k + pz * sgn * s * k });
       const S = at(9, 16), M1 = at(44, 30), M2 = at(44, 4);
       if (![S, M1, M2].every((p) => wet(p.x, p.z)) || !segWet(S, M1) || !segWet(M1, M2) || !segWet(M2, S)) continue;
-      const moor = bankLine(D, sgn, 8, 3.4);
+      const moor = bankLine(D, sgn, 8, 4.8); // (a boat's width and its oars apart: they overlapped)
       if (moor.length < 4) continue;
       return { type: "lake", D, sgn, S, marks: [M1, M2], course: course([S, M1, M2, S]), moor, x: S.x, z: S.z, name: D.name };
     }
