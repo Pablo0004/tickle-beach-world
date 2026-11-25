@@ -81,6 +81,9 @@ birds' wings, first person inside buildings. Still to do, in this order:
     if the camera is under the ground or inside a building's footprint below its top, slide it toward its target
     until clear); the warm-up visit before each shot must not run controllers with side effects (the casino's cut);
     then snapshot EVERY scene, check each for the camera inside anything, fix, and only then record and deliver.
+    Owner, 26 November, for the fourth version (best film I can make, every scene checked for bugs): no boat on top
+    of another; nothing passing through structures it should not; everything well framed; at the Kraken, not only the
+    beast: the Tickles attacking it in formation, not piled up. Scenes are to be provoked in code, not waited for.
 13. **1.18 Chat between holders (asked 25 November, pending)**: a chat so that holders can talk to each other, from
     one of their Tickles to another's.
 14. **1.19 Sorties from enemy fortresses (asked 25 November, pending)**: by default, when a Tickle or a group of
