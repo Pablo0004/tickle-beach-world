@@ -60,6 +60,17 @@ birds' wings, first person inside buildings. Still to do, in this order:
     (horses with wings) and winged unicorns as mounts, and in general many more creatures, monsters and animals of
     every kind (all as strokes, like the rest). Decided 25 November: every one of them can be tamed, and every one
     with wings can fly. Still to decide: which ones, and where each lives.
+12b. **1.17b The film, third pass (owner's notes on the second version, 25 November)**: much better; still:
+    a. At 0:26 (the great lake) a corner of the land is not loaded yet.
+    b. The first-person spearfishing still looks wrong: pull the camera back to see the Tickle with its harpoon;
+       the figure seems stuck (it does not swim); it is too quick to see what happens.
+    c. Skating: the skater does not move from place to place; it hops on the spot.
+    d. Taming at a pond: two creatures fighting in it, with the donkey, horses and other animals about: clear the
+       horses away. And Tickles should not walk through the water where others are fishing (in the game too).
+    e. The war between holders: the griffin riders still get stuck; they are to keep a formation like the rest,
+       attacking and defending; the defenders' may fly out beyond the wall to attack (see 1:57-1:58).
+    f. The Parliament's inside is to come at the start, with its outside (not after the casino).
+    g. 2:29, the Song Contest: shot from behind the stage; it should be from the front.
 13. **1.18 Chat between holders (asked 25 November, pending)**: a chat so that holders can talk to each other, from
     one of their Tickles to another's.
 14. **1.19 Sorties from enemy fortresses (asked 25 November, pending)**: by default, when a Tickle or a group of
