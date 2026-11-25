@@ -113,7 +113,12 @@
     const P = App.pop, hx = P.home[2 * id], hz = P.home[2 * id + 1];
     const list = App.poisNear(hx, hz, 180, (p) => !!bySite[p.type] && !(App.lairNear && App.lairNear(p.x, p.z, 70))).sort((a, b) => Math.hypot(a.x - hx, a.z - hz) - Math.hypot(b.x - hx, b.z - hz));
     const p = list[Math.floor(hash2(id, Math.floor(st.T / 1440), 65) * Math.min(3, list.length))];
-    return p ? { x: p.spot ? p.spot.x : p.x, z: p.spot ? p.spot.z : p.z, label: "the " + p.name + " near " + App.nearestVillage(p.x, p.z).name + " (taming creatures)", poi: p.i, type: p.type } : null;
+    if (!p) return null;
+    // (the tamer stands on dry land: at a pond or a beach, on the nearest shore, not in the water where others fish;
+    // asked 25 November)
+    let x = p.spot ? p.spot.x : p.x, z = p.spot ? p.spot.z : p.z;
+    if (!App.isLand(x, z)) { let best = null; for (let r = 1.5; r <= 10 && !best; r += 1.5) for (let k = 0; k < 16; k++) { const a = (k / 16) * 6.283, qx = x + Math.sin(a) * r, qz = z + Math.cos(a) * r; if (App.isLand(qx, qz) && (!best || hash2(id, k, 67) < 0.5)) { best = { x: qx, z: qz }; } } if (best) { x = best.x; z = best.z; } }
+    return { x, z, label: "the " + p.name + " near " + App.nearestVillage(p.x, p.z).name + " (taming creatures)", poi: p.i, type: p.type };
   };
 
   // ---------- start of the world, saving ----------

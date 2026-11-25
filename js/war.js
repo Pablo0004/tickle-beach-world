@@ -621,11 +621,14 @@
     // Imperium (asked 14 November), the archers and mages shoot over it from where they stand)
     // (the defenders' griffin riders, while the gate stands, fly over their walls and strike at the ranks below)
     const skyGuard = a.side === "B" && shut && u === "griffin";
-    const p = slotOf(w, a.side, t.id), ranged = u === "mage" || u === "healer" || u === "tamer" || (u === "archer" && shut) || (u === "spear" && !!a.onWall) || skyGuard;
+    // (while the gate stands the griffin riders of both sides keep a formation in the air, as the rest keep theirs,
+    // and shoot from it: the attackers' over their own ranks, the defenders' in a line out in front of their wall;
+    // asked 25 November, they wheeled about and got stuck)
+    const p = slotOf(w, a.side, t.id), ranged = u === "mage" || u === "healer" || u === "tamer" || (u === "archer" && shut) || (u === "spear" && !!a.onWall) || skyGuard || (u === "griffin" && shut);
     const crew = a.side === "A" && shut && !ranged && u !== "griffin" && rankOf(w, a.side, t.id) % 5 === 0; // (one in five of the foot: the ram's crew)
     // (from the top of the wall the archers, the spears, the mages and the tamers reach the whole of the ranks below:
     // asked 25 November, the defenders on the walls are to shoot, throw and cast, not stand)
-    const foe = !ranged && shut ? null : foesNear(w, t, a.side, a.onWall || skyGuard ? 48 : ranged ? 22 : 9);
+    const foe = !ranged && shut ? null : foesNear(w, t, a.side, a.onWall || skyGuard || (u === "griffin" && shut) ? 48 : ranged ? 22 : 9);
     let target = p, walking = false;
     a.engaged = false;
     // with no foe at hand, an attacker goes for the building it prefers and sets about it (the gate: only its crew)
@@ -638,9 +641,13 @@
       else if (d > R0) target = { x: bld.x + (t.pos.x - bld.x) / d * R0, z: bld.z + (t.pos.z - bld.z) / d * R0 }; else target = null;
     }
     if (skyGuard) {
-      // over the stretch of wall either side of the gate, each at a place of its own, sweeping to and fro
+      // in a line out in front of the wall either side of the gate, evenly spaced, each at its place in it
       const W0 = App.villages[w.b].walls, F = w.front;
-      if (W0) { const ga = Math.atan2(F.gz - W0.z, F.gx - W0.x), off = (hash2(t.id, 735, 3) - 0.5) * 0.9 + Math.sin(st.T * 0.4 + t.id) * 0.12; target = { x: W0.x + Math.cos(ga + off) * (W0.r + 2), z: W0.z + Math.sin(ga + off) * (W0.r + 2) }; }
+      if (W0) {
+        const gs = sideIds(w, "B").filter((x) => w.unit[x] === "griffin").sort((x, y) => x - y), k = Math.max(0, gs.indexOf(t.id)), n = gs.length;
+        const ga = Math.atan2(F.gz - W0.z, F.gx - W0.x), off = (k - (n - 1) / 2) * (3.2 / W0.r);
+        target = { x: W0.x + Math.cos(ga + off) * (W0.r + 6), z: W0.z + Math.sin(ga + off) * (W0.r + 6) };
+      }
     }
     if (foe && !ranged) { const d = Math.hypot(foe.pos.x - t.pos.x, foe.pos.z - t.pos.z); if (d > 1.3) target = { x: foe.pos.x + (t.pos.x - foe.pos.x) / d * 1.2, z: foe.pos.z + (t.pos.z - foe.pos.z) / d * 1.2 }; else target = null; a.engaged = true; }
     if (a.onWall) { target = null; if (gateDown(w)) { t.action = null; App.animateTickle(t, false, dtReal); return; } }

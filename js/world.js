@@ -272,6 +272,7 @@
     want.sort((a, b) => a[0] - b[0]);
     let n = 0;
     for (const [, c] of want) { meshChunk(c); if (++n >= (budget || 3)) break; }
+    App.landPending = want.length - n; // (chunks still to be built round the camera: the film waits for none)
     for (const [k, c] of chunks) {
       const d = Math.max(Math.abs(c.cx - tx), Math.abs(c.cz - tz));
       if (d > R + 1 && c.mesh) { scene.remove(c.mesh); c.mesh.geometry.dispose(); c.mesh = null; c.dirty = true; }
