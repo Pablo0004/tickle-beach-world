@@ -574,7 +574,10 @@
       cam: () => { const L = C.lair; return orbit({ x: L.x, z: L.z, y: L.h + 2 }, { r: 30, phi: 1.12, th: 0.5 }, { r: 22, phi: 1.05, th: 1.4 }); } },
     { id: "rampage", title: "...and some days it attacks", sub: "Swords, spears, spells and creatures against it, together", secs: 8,
       setup: async () => {
-        const L = C.lair, d = App.dragonObjects.get(L.i);
+        const L = C.lair;
+        // (its model is made when the camera comes near its peak: there first if it is not in yet)
+        if (!App.dragonObjects.get(L.i)) { at(L.x, L.z, 40, 1.0, 0.5); await ready(8); await until(() => !!App.dragonObjects.get(L.i), 15); }
+        const d = App.dragonObjects.get(L.i);
         if (!d) throw new Error("no dragon object");
         const v = near(App.villages.filter((o) => o.residents.length >= 20 && Math.hypot(o.x - L.x, o.z - L.z) < 400), L.x, L.z) || App.nearestVillage(L.x, L.z);
         clock("12:55"); at(v.x, v.z, 36, 1.02, 0.8); await ready();
@@ -612,7 +615,11 @@
           App.forcePromote(id); await until(() => !!App.pop.agent[id], 12); App.pinned = null; t = App.pop.agent[id];
         }
         if (!t) throw new Error("no skater about");
-        App.endAction(t); t.pos.x = v.x + 2; t.pos.z = v.z + 2; t.pos.y = App.surfaceAt(t.pos.x, t.pos.z).y;
+        // (already out on the open road between the two towns, clear of the houses, which hid it from the camera)
+        let st0 = null;
+        for (let u = 0.35; u <= 0.7 && !st0; u += 0.05) { const x = v.x + (dest.x - v.x) * u, z = v.z + (dest.z - v.z) * u; let clear = App.isLand(x, z); for (let q = 0; q < 12 && clear; q++) { const b0 = (q / 12) * 6.283; for (const rr of [0, 6, 12]) if (App.buildingAt(x + Math.sin(b0) * rr, z + Math.cos(b0) * rr)) { clear = false; break; } } if (clear) st0 = { x, z }; }
+        if (!st0) st0 = { x: v.x + 2, z: v.z + 2 };
+        App.endAction(t); t.pos.x = st0.x; t.pos.z = st0.z; t.pos.y = App.surfaceAt(t.pos.x, t.pos.z).y; at(st0.x, st0.z, 20, 1.0, 0.5); await ready(8);
         App.startTravel(t, { x: dest.x, z: dest.z, label: dest.name }, "off to " + dest.name);
         FILM.skate = { t }; at(t.pos.x, t.pos.z, 9, 1.22, t.heading + 1.4); await wait(1500);
       },
@@ -652,7 +659,7 @@
         if (!App.tamingBrain(t, {})) throw new Error("taming refused");
         FILM.tame = { spot: { x: w.x, z: w.z }, who: [id] };
       },
-      cam: () => { const T = FILM.tame; return follow(() => st.tickles.find((t) => T.who.includes(t.id)) || { pos: T.spot }, { r: 18, phi: 1.08, dth: 0.12 }); } },
+      cam: () => { const T = FILM.tame; return follow(() => st.tickles.find((t) => T.who.includes(t.id)) || { pos: T.spot }, { r: 16, phi: 0.88, dth: 0.12 }); } },
     { id: "dungeon", title: "The Great Underworld", sub: "Twelve floors under the whole island, a guardian on each; parties go down for relics", secs: 7,
       setup: async () => {
         clock("15:50");
@@ -679,7 +686,16 @@
         const w = App.debugWar(C.foe.i, C.fort.i);
         if (!w) throw new Error("no war");
         FILM.war = w;
-        // a battle is over in a few minutes of the clock and the ram has the gate down in two: for the two shots the
+        // (griffin riders on both sides, every time: each side's owners of a winged mount join its army as griffins,
+        // up to four, so that griffins attack and defend in every recording; asked 26 November, some wars had none)
+        for (const [side, vi] of [["A", C.foe.i], ["B", C.fort.i]]) {
+          const have = [].concat(...w[side].map((c) => c.ids)), add = App.villages[vi].residents.filter((id) => { const M = App.mountOf(id); return M && M.fly && !App.isKO(id) && !(App.isDead && App.isDead(id)) && !have.includes(id); });
+          const nG = have.filter((id) => w.unit[id] === "griffin").length;
+          for (const id of add.slice(0, Math.max(0, 4 - nG))) { w[side][0].ids.push(id); w.unit[id] = "griffin"; App.invalidatePlan(id); }
+          w.start[side] = [].concat(...w[side].map((c) => c.ids)).length;
+        }
+        w._ord = {};
+        // (a battle is over in a few minutes of the clock and the ram has the gate down in two: for the two shots the
         // clock runs at a little more than half its pace and the gate holds (both back to normal after)
         FILM.speed0 = st.speed; st.speed = 0.6;
         // both armies in the flesh: the range of full Tickles reaches the ranks and the walls (back to normal after)
@@ -704,14 +720,13 @@
         FILM.flyer = st.tickles.find((t) => t.riding && t.riding.fly && (t.riding.alt || 0) > 1.5 && near0(t)) || st.tickles.find((t) => t.riding && t.riding.fly && near0(t)) || null;
         FILM.gatePt = { x: w.front.gx != null ? w.front.gx : w.front.x, z: w.front.gz != null ? w.front.gz : w.front.z };
       },
-      // (if the rider is knocked out, the next griffin in the air takes over; the camera keeps its turn, so no spin)
-      cam: () => { const w = FILM.war, flying = (t) => t.riding && t.riding.fly && !App.isKO(t.id) && Math.hypot(t.pos.x - w.front.x, t.pos.z - w.front.z) < 90;
-        // (a defenders' rider first: they fly in front of their wall, with the wall behind; the attackers' keep a line
-        // over their own crowded ranks)
-        const defB = (t) => w.B.some((c) => c.ids.includes(t.id));
-        const pick = () => { if (!FILM.flyer || !flying(FILM.flyer)) FILM.flyer = st.tickles.find((t) => flying(t) && defB(t)) || st.tickles.find(flying) || null; return FILM.flyer || { pos: FILM.gatePt }; };
-        // (from outside the wall, a little above the rider: the griffin crosses the wall with the fortress beyond it)
-        const g = follow(pick, { r: 17, phi: 0.82, th: Math.atan2(-w.front.ux, -w.front.uz) + 0.35, dth: 0.05 }); return (u, dt) => { holdGate(); return g(u, dt); }; },
+      // (from the side of the battle, at about the riders' height, a little above: the griffins in the air and the
+      // Tickles fighting on the ground both in sight, the wall to one side; asked 26 November, from behind the three
+      // griffins hid those on the ground)
+      cam: () => { const F = FILM.war.front, th = Math.atan2(-F.ux, -F.uz) + Math.PI / 2, y0 = App.surfaceAt(F.x, F.z).y;
+        // (aimed at the middle between the ranks and the wall, at the griffins' height above them, so both are framed)
+        const m = move({ x: F.x - F.ux * 12, z: F.z - F.uz * 12, y: y0 + 6, r: 54, phi: 1.12, th: th - 0.15 }, { x: F.x - F.ux * 8, z: F.z - F.uz * 8, y: y0 + 6, r: 46, phi: 1.1, th: th + 0.12 });
+        return (u) => { holdGate(); return m(u); }; },
       after: warNormal },
     { id: "arena", title: "The arena", sub: "A creature tournament every evening, the whole island in the stands", secs: 7,
       // (a bout is fought in the ring only when both tamers are in the flesh: the range of full Tickles is widened
