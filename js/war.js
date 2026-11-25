@@ -57,6 +57,9 @@
     return hash2(id, 621, 3) < 0.35 ? "archer" : "infantry"; // about a third of the foot soldiers carry bows
   }
   const RANGED = new Set(["mage", "healer", "tamer", "archer"]);
+  // (who goes up on the walls of a fortress under siege: those who shoot, cast or throw; the spears throw theirs from
+  // up there, asked 25 November)
+  const WALLMEN = new Set(["mage", "healer", "tamer", "archer", "spear"]);
   const ORDER = ["cavalry", "infantry", "spear", "archer", "tamer", "mage", "healer", "griffin"]; // the column, head to tail
 
   // ---------- who can go to war ----------
@@ -507,7 +510,7 @@
     const nx = -F.uz, nz = F.ux;
     if (s === "B" && w.siege) {
       const V = App.villages[w.b];
-      if (!gateDown(w) && RANGED.has(u) && V.walls) {
+      if (!gateDown(w) && WALLMEN.has(u) && V.walls) {
         // up on the walls either side of the gate: archers, mages and tamers along the top, a pace apart
         const W0 = V.walls, ga = Math.atan2(F.gz - W0.z, F.gx - W0.x), kr = wallRank(w, id), j = Math.floor(kr / 2), side = kr % 2 ? 1 : -1, off = (6.2 + j * 1.3) / W0.r;
         return { x: W0.x + Math.cos(ga + side * off) * W0.r, z: W0.z + Math.sin(ga + side * off) * W0.r, h: Math.atan2(-F.ux, -F.uz) };
@@ -526,7 +529,7 @@
   function wallRank(w, id) {
     const key = "wall" + w.days;
     w._ord = w._ord || {};
-    if (!w._ord[key]) w._ord[key] = new Map(sideIds(w, "B").filter((x) => RANGED.has(w.unit[x])).sort((a, b) => a - b).map((x, i) => [x, i]));
+    if (!w._ord[key]) w._ord[key] = new Map(sideIds(w, "B").filter((x) => WALLMEN.has(w.unit[x])).sort((a, b) => a - b).map((x, i) => [x, i]));
     return w._ord[key].get(id) || 0;
   }
   function hallDoor(w) { const v = App.villages[w.b], d = v.hall.door || v.hall; return { x: d.x - w.front.ux * 3, z: d.z - w.front.uz * 3 }; }
@@ -561,7 +564,7 @@
     }
     if (s === "A" && st.T < bt.arrive) { t.action = { kind: "warmarch", war: w.id, started: st.T }; if (rnd() < 0.2) App.say(t, ["Forward, march!", "Left, right, left!", "To " + App.villages[w.b].name + "!"][Math.floor(rnd() * 3)], 2); return true; }
     const p = slotOf(w, s, t.id);
-    if (s === "B" && w.siege && !gateDown(w) && RANGED.has(w.unit[t.id]) && App.wallDeckY && App.wallDeckY(p.x, p.z) != null) {
+    if (s === "B" && w.siege && !gateDown(w) && WALLMEN.has(w.unit[t.id]) && App.wallDeckY && App.wallDeckY(p.x, p.z) != null) {
       // up the stairs of the gate tower on its own side (beside the gate, not through the ranks drawn up behind
       // it) and along the top of the wall to its place
       const W0 = App.villages[w.b].walls, F = w.front, sgn = (p.x - F.gx) * -F.uz + (p.z - F.gz) * F.ux >= 0 ? 1 : -1;
@@ -587,7 +590,7 @@
   function ride(t, u) {
     if (u !== "cavalry" && u !== "griffin") return;
     const M = App.mountRide && App.mountRide(t, { slow: false, path: null }, 100);
-    if (M && M.fly && t.riding) { const alt = 4.5 + Math.sin(st.T * 0.7 + t.id) * 0.8; t.riding.alt = alt; t.flyY = Math.max(App.surfaceAt(t.pos.x, t.pos.z).y, App.WATER_Y) + alt; }
+    if (M && M.fly && t.riding) { const alt = 7 + Math.sin(st.T * 0.7 + t.id) * 1.2 + (t.id % 3) * 1.5; t.riding.alt = alt; // (high enough to clear the walls, at different heights) t.flyY = Math.max(App.surfaceAt(t.pos.x, t.pos.z).y, App.WATER_Y) + alt; }
   }
   App.stepWar = (t, a, dm, dtReal) => {
     const w = W() && W().wars.find((x) => x.id === a.war);
@@ -610,14 +613,29 @@
     const shut = w.siege && !gateDown(w);
     // (while the gate stands, no one fights through it: the ram's crew hammers at it, the rest hold their ranks as in
     // Imperium (asked 14 November), the archers and mages shoot over it from where they stand)
-    const p = slotOf(w, a.side, t.id), ranged = u === "mage" || u === "healer" || u === "tamer" || (u === "archer" && shut);
+    // (the defenders' griffin riders, while the gate stands, fly over their walls and strike at the ranks below)
+    const skyGuard = a.side === "B" && shut && u === "griffin";
+    const p = slotOf(w, a.side, t.id), ranged = u === "mage" || u === "healer" || u === "tamer" || (u === "archer" && shut) || (u === "spear" && !!a.onWall) || skyGuard;
     const crew = a.side === "A" && shut && !ranged && u !== "griffin" && rankOf(w, a.side, t.id) % 5 === 0; // (one in five of the foot: the ram's crew)
-    const foe = !ranged && shut ? null : foesNear(w, t, a.side, ranged ? 22 : 9);
+    // (from the top of the wall the archers, the spears, the mages and the tamers reach the whole of the ranks below:
+    // asked 25 November, the defenders on the walls are to shoot, throw and cast, not stand)
+    const foe = !ranged && shut ? null : foesNear(w, t, a.side, a.onWall || skyGuard ? 48 : ranged ? 22 : 9);
     let target = p, walking = false;
     a.engaged = false;
     // with no foe at hand, an attacker goes for the building it prefers and sets about it (the gate: only its crew)
     const bld = a.side === "A" ? (shut && u !== "griffin" ? (crew ? gateOf(w) : null) : targetFor(w, u, t.pos)) : null;
-    if (!foe && bld && !ranged) { const d = Math.hypot(bld.x - t.pos.x, bld.z - t.pos.z), R0 = bld.castle ? 9 : bld.gate ? 3.2 : 3; if (d > R0) target = { x: bld.x + (t.pos.x - bld.x) / d * R0, z: bld.z + (t.pos.z - bld.z) / d * R0 }; else target = null; }
+    if (!foe && bld && !ranged) {
+      const d = Math.hypot(bld.x - t.pos.x, bld.z - t.pos.z), R0 = bld.castle ? 9 : bld.gate ? 3.2 : 3;
+      // (a griffin rider wheels round its target from a side of its own, so that the riders are spread round the
+      // towers and the keep and do not bunch on one spot: asked 25 November)
+      if (u === "griffin") { const ang = hash2(t.id, 731, 3) * 6.283 + st.T * 0.35, rr = R0 + 2.2 + hash2(t.id, 733, 3) * 1.5; target = { x: bld.x + Math.sin(ang) * rr, z: bld.z + Math.cos(ang) * rr }; }
+      else if (d > R0) target = { x: bld.x + (t.pos.x - bld.x) / d * R0, z: bld.z + (t.pos.z - bld.z) / d * R0 }; else target = null;
+    }
+    if (skyGuard) {
+      // over the stretch of wall either side of the gate, each at a place of its own, sweeping to and fro
+      const W0 = App.villages[w.b].walls, F = w.front;
+      if (W0) { const ga = Math.atan2(F.gz - W0.z, F.gx - W0.x), off = (hash2(t.id, 735, 3) - 0.5) * 0.9 + Math.sin(st.T * 0.4 + t.id) * 0.12; target = { x: W0.x + Math.cos(ga + off) * (W0.r + 2), z: W0.z + Math.sin(ga + off) * (W0.r + 2) }; }
+    }
     if (foe && !ranged) { const d = Math.hypot(foe.pos.x - t.pos.x, foe.pos.z - t.pos.z); if (d > 1.3) target = { x: foe.pos.x + (t.pos.x - foe.pos.x) / d * 1.2, z: foe.pos.z + (t.pos.z - foe.pos.z) / d * 1.2 }; else target = null; a.engaged = true; }
     if (a.onWall) { target = null; if (gateDown(w)) { t.action = null; App.animateTickle(t, false, dtReal); return; } }
     if (target && Math.hypot(target.x - t.pos.x, target.z - t.pos.z) > 0.1) {
@@ -634,7 +652,7 @@
       if (ranged && (foe || bld)) {
         const to = foe ? { x: foe.pos.x, y: foe.pos.y + 1.2, z: foe.pos.z } : { x: bld.x, y: App.genHeight(bld.x, bld.z) + 3, z: bld.z };
         const school = u === "healer" ? "light" : u === "mage" ? (App.mageSchool(t.id) || "arcane") : "arcane";
-        if (u === "archer") {
+        if (u === "archer" || u === "spear") { // (an arrow, or a spear thrown down from the wall)
           const tt = foe;
           App.spawnParticle && App.spawnParticle({ kind: "stone", x0: from.x, y0: from.y + (a.onWall ? 0.4 : 0), z0: from.z, x1: to.x, y1: to.y, z1: to.z, arc: a.onWall ? 0.8 : 1.6, age: 0, life: 0.45, onHit: () => { if (tt && a.side === "B" && !w.fallen[tt.id] && rnd() < 0.12) fall(w, "A", tt.id); } });
         } else if (u === "healer") { const mate = st.tickles.find((o) => o !== t && sideOf(w, o.id) === a.side && !App.isKO(o.id) && Math.hypot(o.pos.x - t.pos.x, o.pos.z - t.pos.z) < 10); if (mate) App.FX.heal(App.scene, { x: mate.pos.x, y: mate.pos.y + 1, z: mate.pos.z }); }

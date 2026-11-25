@@ -144,7 +144,7 @@
   App.surfaceAt = (x, z) => {
     // (the walk along the top of a fortress's walls, geo.js)
     const wd = App.wallDeckY ? App.wallDeckY(x, z) : null;
-    if (wd != null) return { y: wd, water: false, deck: true };
+    if (wd != null) return { y: wd, water: false, deck: true, wall: true };
     const h = App.columnHeight(Math.floor(x), Math.floor(z));
     if (h < SEA) { const d = App.deckY(x, z); return d != null ? { y: d, water: false, deck: true } : { y: WATER_Y - 0.45, water: true, floor: h }; }
     return { y: h, water: false };
