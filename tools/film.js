@@ -86,7 +86,16 @@
     if (f && f.sc) { const F = App.frag[f.sc.type], h = (F ? F.height : 8) * (f.sc.scale || 1) * ((App.FRAG_SCALE && App.FRAG_SCALE[f.sc.type]) || 1); if (p.y < App.columnHeight(Math.floor(p.x), Math.floor(p.z)) + h + 0.6) return true; }
     return false;
   };
+  // (the horses and other mounts waiting about while their riders are on foot are kept out of the film's shots, so
+  // that the Tickles are seen and not a crowd of animals; not in the war shots, where they are ridden; asked 26
+  // November)
+  function hideParked() {
+    if (!App.mountObjOf) return;
+    const war = FILM.war && FILM.war.status === "on";
+    for (const t of st.tickles) { const o = App.mountObjOf(t.id); if (o) o.visible = war || !looping || o.parent !== App.scene; }
+  }
   function camGuard() {
+    hideParked();
     if (!looping || FILM.noGuard || App.inside || (App.fpOn && App.fpOn())) return;
     const c = App.camera, T = App.cam.target;
     for (let k = 0; k < 30 && camBlocked(c.position); k++) c.position.lerp(T, 0.1);
@@ -358,13 +367,17 @@
         cands.sort((a, b) => a.crowd - b.crowd);
         if (!cands.length) throw new Error("no quiet pier");
         let t = null, S = null, p = null, th = 0;
-        for (const c of cands.slice(0, 3)) {
+        for (const c of cands.slice(0, 8)) {
           // (the way to the open water from the fisher's spot: the mean of the directions in which water lies a few
           // blocks off; the camera goes out there and looks back at the fisher)
           S = c.S; p = S.p; let wx = 0, wz = 0; for (let k = 0; k < 24; k++) { const a = (k / 24) * 6.283; for (const r of [4, 7, 10]) if (!App.isLand(p.x + Math.sin(a) * r, p.z + Math.cos(a) * r)) { wx += Math.sin(a); wz += Math.cos(a); } } th = Math.atan2(wx, wz);
           at(p.x, p.z, 13, 1.12, th + 0.45);
           await ready();
           await until(() => st.tickles.some((q) => S.ids.includes(q.id) && q.fishGear), 4);
+          // (and quiet in fact: no more than three others standing within ten blocks of the fishers; asked 26
+          // November, the pier was crowded)
+          const others = st.tickles.filter((q) => q.group.visible && !S.ids.includes(q.id) && Math.hypot(q.pos.x - p.x, q.pos.z - p.z) < 10).length;
+          if (others > 3) { t = null; continue; }
           t = st.tickles.find((q) => S.ids.includes(q.id) && q.fishGear);
           FILM.rod = { p, th, ids: S.ids, crowd: c.crowd };
           if (t) break;

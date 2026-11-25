@@ -120,8 +120,9 @@
     let M = marinas.get(D.i);
     if (M) return M;
     const ux = D.ux, uz = D.uz, px = uz, pz = -ux, slots = [];
-    for (let row = 0; row < 8 && slots.length < 12; row++) for (const sd of [1, -1]) {
-      const along = 6.5 + row * 3.6, x = D.x + ux * along + px * sd * 9.5, z = D.z + uz * along + pz * sd * 9.5;
+    // (the rows a rowing boat's oars apart: moored side by side they overlapped; asked 26 November)
+    for (let row = 0; row < 10 && slots.length < 12; row++) for (const sd of [1, -1]) {
+      const along = 6.5 + row * 4.8, x = D.x + ux * along + px * sd * 9.5, z = D.z + uz * along + pz * sd * 9.5;
       // room for a yacht: the whole hull over open water
       const ok = [-4.6, -2.3, 0, 2.3, 4.6].every((o) => { const qx = x + px * sd * o, qz = z + pz * sd * o; return !App.isLand(qx, qz) && App.lakeSd(qx, qz) < -1; }) &&
         [-1.4, 1.4].every((o) => !App.isLand(x + ux * o, z + uz * o));
