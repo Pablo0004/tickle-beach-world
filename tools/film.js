@@ -706,12 +706,16 @@
         const ids = (FILM.warIds = new Set([].concat(...w.A.map((c) => c.ids), ...w.B.map((c) => c.ids))));
         for (const t of st.tickles) if (ids.has(t.id)) { const S0 = App.planStep(t.id, st.T).step; if (S0.k !== "war") continue; App.endAction(t); const q = S0.p; t.pos.x = q.x; t.pos.z = q.z; t.pos.y = App.surfaceAt(q.x, q.z).y; }
         const F = w.front, th = Math.atan2(-F.ux, -F.uz);
-        at(F.x - F.ux * 7, F.z - F.uz * 7, 58, 0.6, th + 1.25); await ready(12);
+        at(F.x - F.ux * 11, F.z - F.uz * 11, 36, 1.06, th + Math.PI / 2 + 0.2); await ready(12);
         await wait(3000);
       },
-      // from high up and from the side, as Imperium shows its armies: the ranks read as lines, the gate and the walls
-      // beyond them; the camera comes down and round towards the gate
-      cam: () => { const F = FILM.war.front, th = Math.atan2(-F.ux, -F.uz), f = move({ x: F.x - F.ux * 7, z: F.z - F.uz * 7, r: 58, phi: 0.6, th: th + 1.25 }, { x: F.x - F.ux * 1, z: F.z - F.uz * 1, r: 44, phi: 0.72, th: th + 0.75 }); return (u) => { holdGate(); return f(u); }; } },
+      // (from the side of the battle and low, a little above the heads: the ranks, the ram at the gate and the
+      // defenders on the wall in profile; asked 26 November, not from high above)
+      cam: () => { const F = FILM.war.front, th = Math.atan2(-F.ux, -F.uz) + Math.PI / 2, y0 = App.surfaceAt(F.x, F.z).y;
+        // (half way up, between the attackers' griffins over their ranks and the defenders' in front of the wall: the
+        // griffins close, every Tickle below seen from the side)
+        const f = move({ x: F.x - F.ux * 11, z: F.z - F.uz * 11, y: y0 + 6, r: 36, phi: 1.06, th: th + 0.2 }, { x: F.x - F.ux * 7, z: F.z - F.uz * 7, y: y0 + 6, r: 30, phi: 1.04, th: th + 0.02 });
+        return (u) => { holdGate(); return f(u); }; } },
     { id: "walls", title: "Griffin riders fly over the walls", sub: "Cavalry, mages, healers, tamers with their creatures; stars decide the spoils", secs: 7,
       setup: async () => {
         await wait(300); const w = FILM.war; if (!w || w.status !== "on") throw new Error("war over");
