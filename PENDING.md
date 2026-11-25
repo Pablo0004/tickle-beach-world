@@ -73,6 +73,14 @@ birds' wings, first person inside buildings. Still to do, in this order:
     g. 2:29, the Song Contest: shot from behind the stage; it should be from the front.
     h. When a dragon attacks a village, only those going to fight it should be about; others went on dancing in
        the square (in the game too): the rest are to take shelter.
+    Third version recorded and given 25 November (26 scenes, 164 s). Owner's notes on it: the camera goes inside
+    structures at times; the angles of the second version were better: change only the details the owner names,
+    never the angles on my own. NEXT (when the session limit resets): put back the second version's wall shot
+    (follow one griffin rider, r 18, as before; I had made it wide from the side unasked); check the Song Contest's
+    new front framing does not sit inside a building; add a camera guard in film.js (before each frame is drawn,
+    if the camera is under the ground or inside a building's footprint below its top, slide it toward its target
+    until clear); the warm-up visit before each shot must not run controllers with side effects (the casino's cut);
+    then snapshot EVERY scene, check each for the camera inside anything, fix, and only then record and deliver.
 13. **1.18 Chat between holders (asked 25 November, pending)**: a chat so that holders can talk to each other, from
     one of their Tickles to another's.
 14. **1.19 Sorties from enemy fortresses (asked 25 November, pending)**: by default, when a Tickle or a group of
