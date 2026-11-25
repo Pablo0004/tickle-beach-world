@@ -106,6 +106,13 @@ birds' wings, first person inside buildings. Still to do, in this order:
     checked). Still wrong: the spearfishing shot still looks at a slope of sand and the strike ends it at once (the
     Painted Reef lies along a shallow slope: try another reef, or the open-water search must also want the floor
     well below the diver all round); the siege and wall shots with the new defence are not yet seen.
+    Third sitting, 25 November: all seen in snapshots now. The skaters (staged when needed), the siege (the wall
+    defenders shoot arrows, throw spears and cast; the attackers' griffin riders spread over the four nearest
+    defences and strike them from the air), the walls, the Parliament inside facing its ministers, the arena (the
+    film picks the arena whose tournament has the most striking creatures and puts them first: a griffin against a
+    fire salamander), the surf with no horse in the sea, the fortress with nobody on the wall, the Lich close up
+    (robes a little lighter), the spearfishing over a deep, colourful reef (the sites are tried deepest first until
+    one has fish in deep water: fish swim only in the loaded sea round the camera).
 10. **1.15 Stables for the tamed (asked 15 November, pending)**: inside a fortress, a tamed animal, creature or
     monster that is not being used (not ridden, not fighting, not out with its tamer) stays in the stables, not
     loose in the square; the stables are to be made bigger and set against the wall, on its inner side. To decide

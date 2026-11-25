@@ -419,8 +419,18 @@
     { id: "spear", title: "Diving and spearfishing", sub: "Down to the reefs, the wrecks and the pearl beds; a harpoon for their fish, in first person", secs: 7,
       setup: async () => {
         clock("11:40");
-        const reef = App.diveSites.find((s) => /Painted Reef/.test(s.name)) || App.diveSites.find((s) => s.kind === "reef");
-        at(reef.x, reef.z, 20, 1.0, 0); await ready();
+        // (the reef or wreck whose water is deepest round it: the shallow ones lie along slopes of sand)
+        if (!App.diveSites.length) await until(() => App.diveSites.length > 0, 30); // (the dive sites are laid out a little after the world loads)
+        const depth = (q) => { let d = 0; for (let k = 0; k < 8; k++) { const a = k * 0.785; d += App.WATER_Y - App.seaFloorY(q.x + Math.sin(a) * 8, q.z + Math.cos(a) * 8); } return d / 8; };
+        // (the fish swim only where the sea round the camera is loaded: the sites are tried deepest first until one
+        // has schools in deep water near it)
+        const deepFish = (x, z) => App.seaFishNear(x, App.WATER_Y - 3, z, 90).filter((f) => App.seaFloorY(f.x, f.z) < App.WATER_Y - 5);
+        let reef = null;
+        for (const q of App.diveSites.filter((q) => q.kind === "reef" || q.kind === "wreck").sort((a, b) => depth(b) - depth(a)).slice(0, 6)) {
+          at(q.x, q.z, 20, 1.0, 0); await ready(6);
+          if (deepFish(q.x, q.z).length >= 3) { reef = q; break; }
+        }
+        if (!reef) throw new Error("no fish in deep water near any reef");
         // (out on the reef nobody is about: a Tickle of the nearest village is brought in)
         let t = st.tickles.find((q) => !App.isKO(q.id) && !q.riding && !(q.action && q.action.kind === "fp") && Math.hypot(q.pos.x - reef.x, q.pos.z - reef.z) < 80);
         if (!t) {
@@ -436,7 +446,7 @@
         App.keys.add("KeyC"); await wait(2400); App.keys.delete("KeyC");
         // beside the nearest school, looking at one of its fish
         const ey = () => t.pos.y + (t.height || 3) * 0.8;
-        const far = App.seaFishNear(t.pos.x, ey(), t.pos.z, 80);
+        const far = deepFish(t.pos.x, t.pos.z);
         if (!far.length) throw new Error("no fish");
         // (in open water: a fish of a school, the diver five blocks off it at its height, with clear water between
         // them and below; asked 25 November, it was shot against a slope of sand with the fish far off)
@@ -446,7 +456,8 @@
           const school = far.filter((g) => Math.hypot(g.x - f.x, g.z - f.z) < 4).length;
           for (let k = 0; k < 12; k++) {
             const a = (k / 12) * 6.283, px = f.x - Math.sin(a) * 5.5, pz = f.z - Math.cos(a) * 5.5, ey0 = f.y + 0.3;
-            let ok = true; for (let q = 0; q <= 6 && ok; q++) { const u = q / 6; ok = open(px + (f.x - px) * u, pz + (f.z - pz) * u, ey0); }
+            // (clear water from the diver to the fish and on beyond it: open water behind the fish, not a bank)
+            let ok = true; for (let q = 0; q <= 12 && ok; q++) { const u = q / 6; ok = open(px + (f.x - px) * u, pz + (f.z - pz) * u, ey0 + (u > 1 ? 0.8 : 0)); }
             if (ok && open(px, pz, ey0 - 1) && (!pick || school > pick.school)) pick = { f, px, pz, ey0, school };
           }
           if (pick && pick.school >= 4) break;
@@ -462,8 +473,8 @@
         if (FILM.spear.aim() == null) throw new Error("no fish near");
       },
       // it follows a fish with its eyes, then throws; the shot ends at the strike
-      cam: () => { const S = FILM.spear, t = S.t; return (u) => { if (!S.thrown) { const p = S.aim(); if (p != null) App.fpLook(0, 0); } if (!S.thrown && u > 0.35) { S.thrown = true; t.forceHit = true; key("KeyB"); } }; },
-      done: (u) => !!(FILM.spear && FILM.spear.t.spearCast && FILM.spear.t.spearCast.struck), tail: 0.5,
+      cam: () => { const S = FILM.spear, t = S.t; return (u) => { if (!S.thrown) { const p = S.aim(); if (p != null) App.fpLook(0, 0); } if (!S.thrown && u > 0.55) { S.thrown = true; t.forceHit = true; key("KeyB"); } }; },
+      done: (u) => !!(FILM.spear && FILM.spear.t.spearCast && FILM.spear.t.spearCast.struck), tail: 1.2,
       after: async () => { App.keys.clear(); await leave(); } },
     { id: "seacave", title: "A sea cave", sub: "Only a diver finds the way in: dark blue stone, torches, treasure", secs: 4,
       setup: async () => { const c = near(App.seaCaves, C.dock.x, C.dock.z); await enter({ kind: "seacave", cave: c, door: c.door, name: c.name }); inFocus(0, 0); await wait(600); },
@@ -614,8 +625,20 @@
       // for the shot, and the shot waits for a bout)
       // (the camera is at the arena before the tournament opens, so that the players are in the flesh when it does:
       // a bout whose tamers are not is decided off screen in an instant)
-      setup: async () => { clock("17:18"); const a = C.arena; FILM.range0 = App.RANGE.full; App.RANGE.full = 90; App.MAX_FULL = 120; at(a.x, a.z, 24, 0.9, a.rot - 0.45); await ready(12); await until(() => { const tr = st.tourneys[Math.floor(st.T / DAY) + ":" + a.region]; return tr && tr.current; }, 60); await wait(1200); },
-      cam: () => { const a = C.arena; return orbit({ x: a.x, z: a.z }, { r: 24, phi: 0.9, th: a.rot - 0.45 }, { r: 19, phi: 1.02, th: a.rot + 0.4 }); },
+      setup: async () => {
+        clock("17:18");
+        // (the most striking creatures fight first: a tamed monster, then a griffin, then a fire creature; and the arena
+        // is the one whose tournament has the most striking two; asked 25 November, more striking fights)
+        const BASE = new Set(Object.keys(App.CREATURES)), score = (id) => { const c = App.leadCreature(id); if (!c) return 0; return !BASE.has(c.sp) ? 3 : c.sp === "griffin" ? 2 : c.sp === "cinderling" ? 1.5 : 1; };
+        const dayK = Math.floor(st.T / DAY);
+        const cands = App.arenas.filter(Boolean).map((A) => { const tr = st.tourneys[dayK + ":" + A.region]; const top = tr && tr.alive ? tr.alive.map(score).sort((x, y) => y - x) : []; return { A, v: (top[0] || 0) + (top[1] || 0) }; }).sort((x, y) => y.v - x.v);
+        const a = (cands[0] && cands[0].v > 2 ? cands[0].A : C.arena); FILM.arenaA = a;
+        FILM.range0 = App.RANGE.full; App.RANGE.full = 90; App.MAX_FULL = 120; at(a.x, a.z, 24, 0.9, a.rot - 0.45); await ready(12);
+        const key = dayK + ":" + a.region, tr = st.tourneys[key];
+        if (tr && !tr.current && !tr.queue && tr.alive && tr.alive.length > 3) tr.alive = tr.alive.slice().sort((x, y) => score(y) - score(x));
+        await until(() => { const q = st.tourneys[key]; return q && q.current; }, 60); await wait(1200);
+      },
+      cam: () => { const a = FILM.arenaA || C.arena; return orbit({ x: a.x, z: a.z }, { r: 24, phi: 0.9, th: a.rot - 0.45 }, { r: 19, phi: 1.02, th: a.rot + 0.4 }); },
       after: () => { if (FILM.range0 != null) { App.RANGE.full = FILM.range0; FILM.range0 = null; } App.MAX_FULL = 96; } },
     { id: "parliament", title: "The Parliament", sub: "The holders' ministers sit every afternoon and vote the laws", secs: 4,
       // (inside, at the vote, the camera on the ministers who are there: asked 25 November, the Parliament is seen
@@ -628,9 +651,11 @@
         let best = null; for (const o of occ) { const n = occ.filter((q) => Math.hypot(q.at.x - o.at.x, q.at.z - o.at.z) < 7).length; if (!best || n > best.n) best = { o, n }; }
         const grp = best ? occ.filter((q) => Math.hypot(q.at.x - best.o.at.x, q.at.z - best.o.at.z) < 7) : [];
         const cx = grp.length ? grp.reduce((a, o) => a + o.at.x, 0) / grp.length : 0, cz = grp.length ? grp.reduce((a, o) => a + o.at.z, 0) / grp.length : 0;
-        inFocus(cx, cz); await wait(500); FILM.parlIn = { n: occ.length, grp: grp.length };
+        // (the camera in front of them, the way their seats face: their faces, not their backs)
+        const fx = grp.reduce((a, o) => a + Math.sin(o.at.rot || 0), 0), fz = grp.reduce((a, o) => a + Math.cos(o.at.rot || 0), 0);
+        inFocus(cx, cz); await wait(500); FILM.parlIn = { n: occ.length, grp: grp.length, th: Math.atan2(fx, fz) };
       },
-      cam: () => inOrbit({ r: 17, phi: 1.0, th: Math.PI + 0.35 }, { r: 14, phi: 0.95, th: Math.PI - 0.2 }), after: leave }, // (from the Speaker's side: their faces)
+      cam: () => { const th = FILM.parlIn.th; return inOrbit({ r: 17, phi: 1.0, th: th + 0.35 }, { r: 14, phi: 0.95, th: th - 0.2 }); }, after: leave },
     { id: "casino", title: "The casino", sub: "Poker, blackjack, roulette, bingo and the slots, open from seven", secs: 8,
       setup: async () => {
         clock("20:10"); const Cs = C.casino; at(Cs.x, Cs.z, 40, 1.0, 0); await ready(); // (an hour after opening the tables are full)

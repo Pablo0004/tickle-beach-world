@@ -264,7 +264,7 @@
   // with brow, cheekbones, sunken sockets that glow and a jaw hanging a little open; a spiked crown; bony arms and
   // hands, one on a tall staff crowned with claws round an orb, the other raised with a spell in it
   function lich() {
-    const st = [], robe = C("#3d2a52"), robe2 = C("#2a1e3a"), robe3 = C("#55406e"), glow = C("#4fe0c0"), purple = C("#9a5cff");
+    const st = [], robe = C("#5a3d7a"), robe2 = C("#41295c"), robe3 = C("#6e5290"), glow = C("#4fe0c0"), purple = C("#9a5cff");
     // the robe: a long cone, the hood behind the head, the opening at the chest
     st.push(S("cylinder", [0, 0, 210], [105, 92, 210], { color: robe, cone: 0.45 }));
     st.push(S("sphere", [0, -6, 390], [86, 66, 66], { color: robe2, blend: 24 }));

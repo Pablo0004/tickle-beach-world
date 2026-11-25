@@ -150,6 +150,11 @@
     if (!list.length) return null;
     const fx = from ? from.x : w.front.x, fz = from ? from.z : w.front.z;
     const near0 = (arr) => { let best = null, bd = 1e9; for (const b of arr) { const d = Math.hypot(b.x - fx, b.z - fz); if (d < bd) { bd = d; best = b; } } return best; };
+    // (the griffin riders spread over the four nearest defences, each its own, instead of all on the nearest one)
+    if (u === "griffin" && from && from.id != null) {
+      const defs = list.filter(isDefense).sort((a, b) => Math.hypot(a.x - fx, a.z - fz) - Math.hypot(b.x - fx, b.z - fz)).slice(0, 4);
+      if (defs.length) return defs[Math.floor(hash2(from.id, 737, 3) * defs.length)];
+    }
     return (pref === "defense" && near0(list.filter(isDefense))) || near0(list);
   }
   function destroyed(w, b) {
@@ -624,12 +629,12 @@
     let target = p, walking = false;
     a.engaged = false;
     // with no foe at hand, an attacker goes for the building it prefers and sets about it (the gate: only its crew)
-    const bld = a.side === "A" ? (shut && u !== "griffin" ? (crew ? gateOf(w) : null) : targetFor(w, u, t.pos)) : null;
+    const bld = a.side === "A" ? (shut && u !== "griffin" ? (crew ? gateOf(w) : null) : targetFor(w, u, { x: t.pos.x, z: t.pos.z, id: t.id })) : null;
     if (!foe && bld && !ranged) {
       const d = Math.hypot(bld.x - t.pos.x, bld.z - t.pos.z), R0 = bld.castle ? 9 : bld.gate ? 3.2 : 3;
       // (a griffin rider wheels round its target from a side of its own, so that the riders are spread round the
       // towers and the keep and do not bunch on one spot: asked 25 November)
-      if (u === "griffin") { const ang = hash2(t.id, 731, 3) * 6.283 + st.T * 0.35, rr = R0 + 2.2 + hash2(t.id, 733, 3) * 1.5; target = { x: bld.x + Math.sin(ang) * rr, z: bld.z + Math.cos(ang) * rr }; }
+      if (u === "griffin") { const ang = hash2(t.id, 731, 3) * 6.283 + st.T * 0.35, rr = R0 + 4 + hash2(t.id, 733, 3) * 4; target = { x: bld.x + Math.sin(ang) * rr, z: bld.z + Math.cos(ang) * rr }; }
       else if (d > R0) target = { x: bld.x + (t.pos.x - bld.x) / d * R0, z: bld.z + (t.pos.z - bld.z) / d * R0 }; else target = null;
     }
     if (skyGuard) {
@@ -663,6 +668,10 @@
         App.FX.slash(App.scene, { x: foe.pos.x, y: foe.pos.y + 1.2, z: foe.pos.z }, t.heading, a.side === "A" ? "#ff6b5e" : "#5ab0ff");
         t.throwAt = performance.now();
         if (rnd() < 0.15) App.say(t, ["Pow!", "Take that!", "Hiyah!", "Yield!"][Math.floor(rnd() * 4)], 1.2);
+      } else if (!foe && bld && u === "griffin" && Math.hypot(bld.x - t.pos.x, bld.z - t.pos.z) < 14) {
+        // a griffin rider wheeling round a defence strikes at it from the air (a gust of its griffin)
+        App.FX.bolt(App.scene, from, { x: bld.x, y: App.genHeight(bld.x, bld.z) + 4, z: bld.z }, "arcane", () => App.FX.burst(App.scene, { x: bld.x, y: App.genHeight(bld.x, bld.z) + 4, z: bld.z }, "#c79a62", 8, 0.15));
+        t.throwAt = performance.now();
       } else if (!foe && bld && Math.hypot(bld.x - t.pos.x, bld.z - t.pos.z) < (bld.castle ? 12 : 6)) {
         // hammering at the gate or the castle door
         App.FX.burst(App.scene, { x: t.pos.x + Math.sin(t.heading) * 1.2, y: t.pos.y + 1.4, z: t.pos.z + Math.cos(t.heading) * 1.2 }, "#c79a62", 5, 0.12);
