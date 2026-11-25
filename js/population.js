@@ -691,6 +691,21 @@
     return { md, geo, local, box, rad: Math.max(box.max.x - box.min.x, box.max.z - box.min.z) / 2, height: box.max.y - box.min.y };
   }
   App.fragEntry = fragEntry; // for models made later (wealth.js)
+  // the arenas' red and white dais, laid flat on the sand (asked 25 November: the fighters sank into it). The
+  // on-chain model keeps it; only its drawing here is brought down: every point of the model within five blocks of
+  // the middle and above the sand goes down to the sand, so the dais is a ring painted on the floor.
+  function flattenDais(F) {
+    if (!F || F.flat) return;
+    const k = App.ARENA.scale, pos = F.geo.attributes.position, inv = new THREE.Matrix4().copy(F.local).invert(), v = new THREE.Vector3();
+    let floor = Infinity;
+    for (let i = 0; i < pos.count; i++) { v.fromBufferAttribute(pos, i).applyMatrix4(F.local); if (Math.hypot(v.x, v.z) * k < 5) floor = Math.min(floor, v.y); }
+    if (!isFinite(floor)) return;
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i).applyMatrix4(F.local);
+      if (Math.hypot(v.x, v.z) * k < 5 && v.y > floor + 0.001) { v.y = floor + 0.03 / k; v.applyMatrix4(inv); pos.setXYZ(i, v.x, v.y, v.z); }
+    }
+    pos.needsUpdate = true; F.geo.computeBoundingBox(); F.geo.computeBoundingSphere(); F.flat = true;
+  }
   App.loadFragments = async (onEach) => {
     const keys = Object.keys(TB.FRAGMENTS).filter((k) => !TB.FRAGMENTS[k].critter);
     await Promise.all(keys.map(async (key) => {
@@ -700,6 +715,7 @@
       ]);
       App.frag[key] = fragEntry(hi.mesh);
       App.fragLo[key] = fragEntry(lo.mesh, App.frag[key].box);
+      if (/^arena_/.test(key)) { flattenDais(App.frag[key]); flattenDais(App.fragLo[key]); }
       if (onEach) onEach(key);
     }));
     // the world kit: trees and village buildings designed in the same stroke format
@@ -754,6 +770,9 @@
   const SC = new THREE.Vector3();
   const NEAR_LOD = 70;
   function updateScenery(tx, tz) {
+    // (the arenas' dais laid flat in every level of detail of their models, as each arrives: the fine one near you is
+    // made later than the others)
+    for (const M of [App.frag, App.fragLo, App.fragX]) for (const key of ["arena_0", "arena_1", "arena_2"]) if (M[key] && !M[key].flat) flattenDais(M[key]);
     // rebuild when the view moves on, and also when more models finish loading (trees arrive after the first frame)
     // (with the finest level of detail on, more often: models come into it within a few dozen blocks)
     const G = App.gfxLevel && App.gfxLevel().fine ? 8 : 24;

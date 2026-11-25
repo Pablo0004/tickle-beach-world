@@ -660,7 +660,7 @@
       const indoors = !t.group.visible || (t.step && (t.step.k === "sleep" || t.step.k === "morning") && Math.hypot(t.pos.x - t.home.x, t.pos.z - t.home.z) < 3);
       // where it is going: to the stable by the house, or up beside its rider when left too far behind
       if (indoors) { if (Math.hypot(t.pos.x - t.home.x, t.pos.z - t.home.z) < 6 && (!m.goal || !m.goal.stable)) m.goal = Object.assign(stableSpot(t.id), { stable: true }); }
-      else if (m.park && (!m.goal || m.goal.stable) && Math.hypot(m.park.x - t.pos.x, m.park.z - t.pos.z) > 10 && !(App.ISLE && Math.hypot(t.pos.x - App.ISLE.x, t.pos.z - App.ISLE.z) < App.ISLE.r + 12)) { /* (no mount follows its rider over the lake to the Maker's Isle) */ const px = Math.cos(t.heading), pz = -Math.sin(t.heading); m.goal = { x: t.pos.x + px * 2.6 - Math.sin(t.heading) * 1.5, z: t.pos.z + pz * 2.6 - Math.cos(t.heading) * 1.5, h: t.heading }; }
+      else if (m.park && (!m.goal || m.goal.stable) && Math.hypot(m.park.x - t.pos.x, m.park.z - t.pos.z) > 10 && !(App.ISLE && Math.hypot(t.pos.x - App.ISLE.x, t.pos.z - App.ISLE.z) < App.ISLE.r + 12)) { /* (no mount follows its rider over the lake to the Maker's Isle) */ const px = Math.cos(t.heading), pz = -Math.sin(t.heading); const gx = t.pos.x + px * 2.6 - Math.sin(t.heading) * 1.5, gz = t.pos.z + pz * 2.6 - Math.cos(t.heading) * 1.5; if (m.fly || App.isLand(gx, gz)) m.goal = { x: gx, z: gz, h: t.heading }; }
       if (!m.park) m.park = m.goal ? { x: m.goal.x, z: m.goal.z, h: m.goal.h } : { x: t.pos.x + 2.4, z: t.pos.z, h: t.heading };
       // never inside an arena: it waits outside, behind its rider's seat (asked 5 November)
       const Ar = (App.arenas || []).find((q) => q && Math.hypot(m.park.x - q.x, m.park.z - q.z) < App.ARENA.out + 4);
@@ -670,7 +670,13 @@
       if (goal) {
         const dx = goal.x - m.park.x, dz = goal.z - m.park.z, d = Math.hypot(dx, dz);
         if (d > 60) { m.park.x = goal.x; m.park.z = goal.z; m.park.h = goal.h; m.goal = null; }
-        else if (d > 0.3) { const sp = Math.min(d, dt * 3.2 * Math.min(3, Math.max(0.5, st.speed))); m.park.x += (dx / d) * sp; m.park.z += (dz / d) * sp; m.park.h = App.boatTurn(m.park.h, Math.atan2(dx, dz), dt * 5); moving = st.speed > 0; }
+        else if (d > 0.3) {
+          // (a horse or a beast without wings never sets foot in the water: it stops at the shore and waits there,
+          // asked 25 November; a far goal is still reached at once, off screen, as before)
+          const sp = Math.min(d, dt * 3.2 * Math.min(3, Math.max(0.5, st.speed))), nx = m.park.x + (dx / d) * sp, nz = m.park.z + (dz / d) * sp;
+          if (!m.fly && !App.isLand(nx, nz)) m.goal = null;
+          else { m.park.x = nx; m.park.z = nz; m.park.h = App.boatTurn(m.park.h, Math.atan2(dx, dz), dt * 5); moving = st.speed > 0; }
+        }
         else { m.park.h = App.boatTurn(m.park.h, goal.h, dt * 2); if (Math.abs(m.park.h - goal.h) < 0.05) m.goal = null; }
       }
       poseMount(m, moving, false, dt, 7);

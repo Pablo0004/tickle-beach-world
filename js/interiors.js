@@ -1039,7 +1039,13 @@
       });
       // (lunch, and the first half hour of the morning for breakfast, round the table as before; the rest of the time each in a place of its own)
       const S0 = up.length ? App.planStep(up[0], st.T).step : null, meal = !!S0 && (S0.k === "lunch" || (S0.k === "morning" && m - S0.s < 30));
-      if (meal) for (const id of up.slice(0, map.maxEat || 99)) out.push({ id, pose: "eat" }); else placeAwake(map.rooms[ri], up.slice(0, map.merged ? 30 : 14), out); void awake;
+      // (at a meal each sits on a chair of the room, facing its table; whoever finds no chair takes a place of its
+      // own as at any other hour: never a line across the room, asked 25 November)
+      if (meal) {
+        const chairs = (map.rooms[ri].items || []).filter((it) => it.k === "chair" || it.k === "throne"), eaters = up.slice(0, Math.min(map.maxEat || 99, chairs.length));
+        eaters.forEach((id, k) => { const c = chairs[k]; out.push({ id, pose: "dine", at: { x: c.x, z: c.z, rot: c.rot || 0 } }); });
+        if (up.length > eaters.length) placeAwake(map.rooms[ri], up.slice(eaters.length, eaters.length + (map.merged ? 30 : 14)), out);
+      } else placeAwake(map.rooms[ri], up.slice(0, map.merged ? 30 : 14), out); void awake;
     }
     if (T.kind === "hall" && ri === 0 && !(T.sc && T.sc.mansion)) {
       const v = App.villages[T.sc.village];
@@ -1295,7 +1301,7 @@
       }
       holder.position.set(x, 0, z); holder.rotation.y = rot;
       if (o.walk) fig.walk = o.walk;
-      if (o.pose === "sitidle" || o.pose === "cards") F.pivot.position.y = 0.35; // (up on the seat; a card player sits at the table, asked 14 November)
+      if (o.pose === "sitidle" || o.pose === "cards" || o.pose === "dine") F.pivot.position.y = 0.35; // (up on the seat; a card player sits at the table, asked 14 November)
       // a sleeper is fitted to its own shape (Tickles are round): lying on top of the mattress (or the floor),
       // its head just short of the headboard
       if (o.pose === "sleep") {
@@ -1891,8 +1897,8 @@
     if (f.pose === "sleep") { if (f.lieY == null) f.lieY = f.F.pivot.position.y; f.F.pivot.position.y = f.lieY + Math.abs(Math.sin(now / 900 + f.id)) * 0.04; /* breathing, from where it was laid */ if (A) { A.R.rotation.z = 0.5; A.L.rotation.z = -0.5; } return; }
     if (!A) return;
     A.R.rotation.z = 0; A.L.rotation.z = 0;
-    if (f.pose !== "dig" && f.pose !== "ko" && f.pose !== "sitidle" && f.pose !== "cards") { f.F.pivot.rotation.x = 0; f.F.pivot.position.y = 0; }
-    if (f.pose === "eat") { A.R.rotation.x = -1.1 + s * 0.35; A.L.rotation.x = -0.3; }
+    if (f.pose !== "dig" && f.pose !== "ko" && f.pose !== "sitidle" && f.pose !== "cards" && f.pose !== "dine") { f.F.pivot.rotation.x = 0; f.F.pivot.position.y = 0; }
+    if (f.pose === "eat" || f.pose === "dine") { A.R.rotation.x = -1.1 + s * 0.35; A.L.rotation.x = -0.3; if (f.pose === "dine") f.F.pivot.position.y = 0.35; }
     else if (f.pose === "dig") { A.R.rotation.x = A.L.rotation.x = -1.6 + Math.sin(now / 200 + f.id) * 0.9; f.F.pivot.rotation.x = 0.2 + Math.max(0, Math.sin(now / 200 + f.id)) * 0.2; }
     else if (f.pose === "melee" || f.pose === "fight") {
       // a swing: the arm goes up and comes down hard

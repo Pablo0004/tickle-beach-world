@@ -226,6 +226,8 @@
   App.creatureBodiesNear = (x, z, R) => { const out = []; for (const list of wild.values()) for (const b of list) if (b.gone <= st.T && Math.abs(b.x - x) + Math.abs(b.z - z) < R) out.push(b); for (const b of pets.values()) if (Math.abs(b.x - x) + Math.abs(b.z - z) < R) out.push(b); return out; };
 
   const isLand = (x, z) => App.columnHeight(Math.floor(x), Math.floor(z)) >= App.SEA;
+  const WINGED = new Set(["griffin", "zapbug", "lumoth"]);
+  const takesWater = (b) => { const B = SPECIES[b.data && b.data.sp] || {}; return B.type === "Water" || B.type === "Air" || !!B.hover || WINGED.has(b.data && b.data.sp); };
   function moveTo(b, tx, tz, sp, dm) {
     const dx = tx - b.x, dz = tz - b.z, d = Math.hypot(dx, dz);
     if (d < 0.05) return 0;
@@ -233,7 +235,9 @@
     // (never into a building, wild or a pet: a pet waits outside while its Tickle is in)
     if (App.buildingBlocks && App.buildingBlocks(b.x, b.z, nx, nz)) { /* stays */ }
     else if (isLand(nx, nz) && App.climbOK(b.x, b.z, nx, nz)) { b.x = nx; b.z = nz; b.wob += step * 6; }
-    else if (!b.wild) { b.x = nx; b.z = nz; } // a pet keeps up with its owner whatever the ground
+    // a pet keeps up with its owner over any ground, but into the water only if it swims or flies: the rest wait on
+    // the shore (asked 25 November: animals crossed the lake without a boat)
+    else if (!b.wild && (isLand(nx, nz) || takesWater(b))) { b.x = nx; b.z = nz; }
     b.h = turnTo(b.h, Math.atan2(dx, dz), Math.min(1, dm * 6));
     return d - step;
   }

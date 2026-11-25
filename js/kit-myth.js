@@ -259,21 +259,52 @@
     st.push(S("cylinder", [95, 100, 330], [10, 10, 20], { color: steel(), cone: 1, layer: 2 }));
     return st;
   }
-  // a Lich: a crowned skeleton in rotting robes with a staff and a glowing orb
+  // a Lich: a crowned skeleton in rotting robes with a staff and a glowing orb (remodelled 25 November, asked by the
+  // owner: it was poorly made). A hooded robe open on a ribcage, its hem in tatters; bone pauldrons; a real skull
+  // with brow, cheekbones, sunken sockets that glow and a jaw hanging a little open; a spiked crown; bony arms and
+  // hands, one on a tall staff crowned with claws round an orb, the other raised with a spell in it
   function lich() {
-    const st = [], robe = C("#3d2a52"), robe2 = C("#2a1e3a");
-    st.push(S("cylinder", [0, 0, 220], [100, 90, 220], { color: robe, cone: 0.5 }));
-    st.push(S("sphere", [0, 0, 400], [80, 64, 60], { color: robe2, blend: 20 }));
-    st.push(S("sphere", [0, 14, 475], [46, 50, 50], { color: bone(), blend: 6 }));
-    st.push(S("joint", [95, 40, 330], [18, 18, 80], { color: robe, mirror: true, offsX: 95, rot: dir(0.4, 0.6, -0.5) }));
-    // layer 1: the face, its burning eyes, a gold circlet
-    st.push(S("sphere", [18, 54, 482], [11, 5, 10], { color: black(), mirror: true, offsX: 18, layer: 1 }));
-    st.push(S("sphere", [18, 58, 482], [5, 3, 5], { color: red(), mirror: true, offsX: 18, layer: 1 }));
-    st.push(S("cylinder", [0, 14, 518], [50, 50, 8], { color: gold(), hole: 0.2, layer: 1 }));
-    // layer 2: the staff and its orb
-    st.push(S("joint", [140, 100, 300], [8, 8, 230], { color: dark(), rot: dir(0, 0.15, 1), layer: 2 }));
-    st.push(S("sphere", [140, 135, 545], [30, 30, 30], { color: C("#4fe0c0"), layer: 2 }));
-    st.push(S("sphere", [150, 120, 280], [18, 18, 18], { color: bone(), layer: 2 }));
+    const st = [], robe = C("#3d2a52"), robe2 = C("#2a1e3a"), robe3 = C("#55406e"), glow = C("#4fe0c0"), purple = C("#9a5cff");
+    // the robe: a long cone, the hood behind the head, the opening at the chest
+    st.push(S("cylinder", [0, 0, 210], [105, 92, 210], { color: robe, cone: 0.45 }));
+    st.push(S("sphere", [0, -6, 390], [86, 66, 66], { color: robe2, blend: 24 }));
+    st.push(S("sphere", [0, -22, 478], [62, 58, 66], { color: robe2, blend: 10 }));
+    st.push(S("sphere", [0, -2, 478], [54, 54, 60], { m: "sub", color: robe2 }));
+    st.push(S("cube", [0, 66, 340], [34, 20, 76], { m: "sub", color: robe }));
+    // the tattered hem: strips of robe of different lengths
+    for (let k = 0; k < 10; k++) { const a = (k / 10) * 6.283, L = 26 + ((k * 37) % 23); st.push(S("cube", [Math.sin(a) * 98, Math.cos(a) * 88, 16 + L / 2 - 30], [20, 10, L], { color: k % 2 ? robe : robe3, rot: [0, 0, -a], layer: 0 })); }
+    // layer 1: the bones: ribcage in the opening, the spine, the pauldrons
+    for (let k = 0; k < 4; k++) st.push(S("cylinder", [0, 52, 372 - k * 18], [34 - k * 3, 20, 4], { color: bone(), hole: 0.6, layer: 1 }));
+    st.push(S("joint", [0, 48, 340], [6, 6, 56], { color: bone(), layer: 1 }));
+    st.push(S("sphere", [74, 0, 430], [34, 30, 20], { color: bone(), mirror: true, offsX: 74, layer: 1 }));
+    for (const dz of [0, 14]) st.push(S("joint", [92, 8, 436 + dz], [5, 5, 26], { color: bone(), cone: 0.9, mirror: true, offsX: 92, rot: dir(1, 0, 0.5), layer: 1 }));
+    // layer 2: the skull: cranium, brow, cheekbones, sunken sockets with a glow, the nose, the jaw and its teeth
+    st.push(S("sphere", [0, 14, 488], [40, 44, 44], { color: bone(), layer: 2 }));
+    st.push(S("cube", [0, 48, 500], [38, 10, 8], { color: bone(), round: 0.6, blend: 6, layer: 2 }));
+    st.push(S("sphere", [22, 46, 470], [12, 10, 10], { color: bone(), mirror: true, offsX: 22, blend: 6, layer: 2 }));
+    st.push(S("sphere", [15, 52, 486], [11, 8, 11], { m: "sub", color: black(), mirror: true, offsX: 15, layer: 2 }));
+    st.push(S("sphere", [15, 48, 486], [10, 6, 10], { color: black(), mirror: true, offsX: 15, layer: 2 }));
+    st.push(S("sphere", [15, 52, 486], [4, 3, 4], { color: glow, mirror: true, offsX: 15, layer: 2 }));
+    st.push(S("sphere", [0, 58, 470], [5, 3, 8], { color: black(), layer: 2 }));
+    st.push(S("cube", [0, 40, 444], [28, 26, 12], { color: bone(), round: 0.5, rot: [0.25, 0, 0], layer: 2 }));
+    for (let k = -2; k <= 2; k++) st.push(S("cube", [k * 6, 52, 454], [2.5, 3, 5], { color: white(), layer: 2 }));
+    // layer 3: the crown: a gold band with five spikes and a purple stone
+    st.push(S("cylinder", [0, 12, 526], [42, 44, 7], { color: gold(), hole: 0.18, layer: 3 }));
+    for (let k = 0; k < 5; k++) { const a = -1.1 + k * 0.55; st.push(S("joint", [Math.sin(a) * 40, 12 + Math.cos(a) * 42, 552], [6, 6, 22], { color: gold(), cone: 1, layer: 3 })); }
+    st.push(S("sphere", [0, 54, 530], [7, 4, 7], { color: purple, layer: 3 }));
+    // layer 4: the arms in their sleeves, bony forearms and hands; the staff in the right, a spell in the left
+    st.push(S("joint", [98, 20, 372], [22, 22, 70], { color: robe, mirror: true, offsX: 98, rot: dir(0.35, 0.45, -0.6), layer: 4 }));
+    st.push(S("joint", [128, 70, 318], [6, 6, 44], { color: bone(), rot: dir(0.2, 0.8, 0.1), layer: 4 }));
+    st.push(S("joint", [-128, 70, 330], [6, 6, 44], { color: bone(), rot: dir(-0.2, 0.7, 0.6), layer: 4 }));
+    for (let k = -1; k <= 1; k++) st.push(S("joint", [140 + k * 6, 112, 318], [3, 3, 14], { color: bone(), rot: dir(0, 0.6, -0.8), layer: 4 }));
+    for (let k = -1; k <= 1; k++) st.push(S("joint", [-136 + k * 7, 104, 372], [3, 3, 16], { color: bone(), rot: dir(k * 0.3, 0.3, 1), layer: 4 }));
+    st.push(S("sphere", [-136, 106, 404], [16, 16, 16], { color: purple, layer: 4 }));
+    // layer 5: the staff, its claws round the orb, a small skull bound under them
+    st.push(S("joint", [142, 112, 300], [7, 7, 250], { color: dark(), rot: dir(0, 0.06, 1), layer: 5 }));
+    for (let k = 0; k < 3; k++) { const a = k * 2.094; st.push(S("joint", [142 + Math.sin(a) * 18, 126 + Math.cos(a) * 18, 560], [4, 4, 26], { color: bone(), cone: 0.9, rot: dir(-Math.sin(a) * 0.5, -Math.cos(a) * 0.5, 1), layer: 5 })); }
+    st.push(S("sphere", [142, 126, 578], [22, 22, 22], { color: glow, layer: 5 }));
+    st.push(S("sphere", [142, 116, 520], [13, 12, 13], { color: bone(), layer: 5 }));
+    st.push(S("sphere", [137, 127, 522], [3, 2, 3], { color: black(), mirror: true, offsX: 5, layer: 5 }));
     return st;
   }
   // a Salamander: a fire lizard with a crest of flames

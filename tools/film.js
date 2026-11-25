@@ -118,9 +118,21 @@
     rec.n++;
   }
   // the music: the track the game plays at the place of each scene, noted as the scene starts
+  // the film's own soundtrack (asked 25 November: too many changes of song): four calm tracks as the base, through
+  // the day, and the lively ones for the battles (the dragon's, which the owner liked, for the kraken and the dragon)
+  const SOUNDTRACK = {
+    feel_good_island: ["intro", "statue", "castle", "town", "dock", "rod", "fortress"],
+    tropical_fantasy: ["griffin", "griffinside", "spear", "seacave"],
+    great_boss: ["kraken", "dragon", "rampage"],
+    sandy_seaside: ["skate", "surf", "tame"],
+    rpg_battle: ["dungeon", "siege", "walls", "arena"],
+    mirror_lake: ["parliament", "casino", "fire", "song", "night"],
+  };
+  FILM.SOUNDTRACK = SOUNDTRACK;
   function noteMusic(S) {
-    const now = App.musicNow && App.musicNow();
-    rec.music.push({ id: S.id, t0: rec.n / FILM.fps, file: now && now.file ? "music/" + now.file : null, gain: now && now.gain != null ? now.gain : 1 });
+    const key = Object.keys(SOUNDTRACK).find((k) => SOUNDTRACK[k].includes(S.id)), T = key && App.MUSIC_TRACKS[key];
+    const now = T ? null : App.musicNow && App.musicNow();
+    rec.music.push({ id: S.id, t0: rec.n / FILM.fps, file: T ? "music/" + T.file : now && now.file ? "music/" + now.file : null, gain: T ? (T.gain != null ? T.gain : 1) : now && now.gain != null ? now.gain : 1 });
   }
   async function mixMusic() {
     const total = rec.n / FILM.fps;
@@ -270,10 +282,21 @@
       setup: async () => { await leave(); clock("06:50"); await until(() => App.farViewReady && App.farViewReady(), 240); at(0, 0, 1250, 0.88, -2.3); cam.target.y = App.WATER_Y + 1; await ready(10); },
       cam: () => orbit({ x: 0, z: 0, y: App.WATER_Y + 1 }, { r: 1250, phi: 0.88, th: -2.3 }, { r: 950, phi: 0.95, th: -1.9 }) },
     { id: "statue", title: "The Maker's Isle", sub: "The statue of the one who made them, in the middle of the great lake", secs: 5,
-      setup: async () => { clock("07:05"); at(0, 0, 95, 1.0, 2.6); cam.target.y = App.WATER_Y + 22; await ready(); },
-      cam: () => orbit({ x: 0, z: 0, y: App.WATER_Y + 22 }, { r: 95, phi: 1.0, th: 2.6 }, { r: 72, phi: 0.96, th: 3.4 }) },
+      // (from the side away from the Parliament, which stands behind the statue and is shown inside later)
+      setup: async () => { clock("07:05"); const P = App.parliament, th0 = P ? Math.atan2(-P.x, -P.z) : 0; FILM.statueTh = th0; at(0, 0, 95, 1.0, th0 - 0.55); cam.target.y = App.WATER_Y + 22; await ready(); },
+      cam: () => orbit({ x: 0, z: 0, y: App.WATER_Y + 22 }, { r: 95, phi: 1.0, th: FILM.statueTh - 0.55 }, { r: 72, phi: 0.96, th: FILM.statueTh - 0.25 }) },
     { id: "castle", title: "Inside a holder's castle", sub: "The great hall, the kitchen, the training rooms, the treasury; the bedrooms upstairs", secs: 6,
-      setup: async () => { clock("07:15"); const d = C.fort.hall.door || C.fort.hall; at(d.x, d.z, 40, 1.0, 0); await ready(); const T = App.enterableAt(d.x, d.z); if (!T || T.shut) throw new Error("castle door"); await enter(T); inFocus(0, 2); await wait(600); },
+      // (at breakfast, everyone at the tables: the minute of the morning when most of the castle's household has just
+      // sat down, its first half hour)
+      setup: async () => {
+        const day = Math.floor(st.T / DAY), d = C.fort.hall.door || C.fort.hall, T = App.enterableAt(d.x, d.z);
+        if (!T || T.shut) throw new Error("castle door");
+        const ids = App.residentsOf(T.sc || C.fort.hall).slice(0, 80);
+        let best = 435, bn = -1;
+        for (let mm = 380; mm <= 520; mm += 5) { const n = ids.filter((id) => { const S = App.planStep(id, day * DAY + mm); return S.step.k === "morning" && S.m - S.step.s < 25 && S.m - S.step.s > 3; }).length; if (n > bn) { bn = n; best = mm; } }
+        clock(String(Math.floor(best / 60)).padStart(2, "0") + ":" + String(best % 60).padStart(2, "0"));
+        at(d.x, d.z, 40, 1.0, 0); await ready(); await enter(T); inFocus(0, 2); await wait(600);
+      },
       cam: () => inOrbit({ r: 40, phi: 0.98, th: 0.45 }, { r: 30, phi: 0.92, th: -0.3 }), after: leave },
     { id: "town", title: "A town wakes up", sub: "A house for every household, jobs, chores, friends: a whole life, whether you watch or not", secs: 6,
       setup: async () => { clock("07:50"); const v = C.town; at(v.x - 10, v.z + 6, 30, 1.05, 0.6); await ready(); },
@@ -305,8 +328,10 @@
         if (!cands.length) throw new Error("no quiet pier");
         let t = null, S = null, p = null, th = 0;
         for (const c of cands.slice(0, 3)) {
-          S = c.S; p = S.p; th = Math.atan2((p.cx != null ? p.cx : p.x) - p.x, (p.cz != null ? p.cz : p.z) - p.z); // (towards the water)
-          at(p.x, p.z, 10, 1.22, th + 0.35);
+          // (the way to the open water from the fisher's spot: the mean of the directions in which water lies a few
+          // blocks off; the camera goes out there and looks back at the fisher)
+          S = c.S; p = S.p; let wx = 0, wz = 0; for (let k = 0; k < 24; k++) { const a = (k / 24) * 6.283; for (const r of [4, 7, 10]) if (!App.isLand(p.x + Math.sin(a) * r, p.z + Math.cos(a) * r)) { wx += Math.sin(a); wz += Math.cos(a); } } th = Math.atan2(wx, wz);
+          at(p.x, p.z, 13, 1.12, th + 0.45);
           await ready();
           await until(() => st.tickles.some((q) => S.ids.includes(q.id) && q.fishGear), 4);
           t = st.tickles.find((q) => S.ids.includes(q.id) && q.fishGear);
@@ -319,8 +344,9 @@
         const ph = t.id * 0.7, c = () => ((performance.now() / 1000) * 0.16 + ph) % 1;
         await until(() => c() > 0.55 && c() < 0.62, 8);
       },
-      // from over the water, low, looking at the fisher's face and the line; it ends when the fish is up
-      cam: () => { const R = FILM.rod, t = R.t, y = groundY(t.pos.x, t.pos.z) + 0.8; return move({ x: t.pos.x, z: t.pos.z, y, r: 10, phi: 1.22, th: R.th + 0.35 }, { x: t.pos.x, z: t.pos.z, y, r: 8.5, phi: 1.16, th: R.th + 0.1 }); },
+      // from out over the water, a little above, looking back at the fisher's face, the rod and the line, the shore
+      // behind; the camera drifts round a little; it ends when the fish is up
+      cam: () => { const R = FILM.rod, t = R.t, y = groundY(t.pos.x, t.pos.z) + 0.8; return move({ x: t.pos.x, z: t.pos.z, y, r: 13, phi: 1.12, th: R.th + 0.45 }, { x: t.pos.x, z: t.pos.z, y, r: 10.5, phi: 1.08, th: R.th + 0.15 }); },
       done: (u) => u > 0.4 && !!(FILM.rod.t.fishGear && FILM.rod.t.fishGear.fish), tail: 1.3 },
     { id: "fortress", title: "A fortress", sub: "Walls and towers, gates that shut at night, an armoury, catapults, griffins on patrol", secs: 6,
       setup: async () => { clock("10:00"); const w = C.fort.walls, Rg = App.regions[C.R], pts = (w.gates || []).map((a) => ({ x: w.x + Math.cos(a) * w.r, z: w.z + Math.sin(a) * w.r })), g = near(pts, Rg.cx, Rg.cz) || w; FILM.gate = { g, th: Math.atan2(g.x - w.x, g.z - w.z) }; at(g.x, g.z, 26, 1.15, FILM.gate.th + 0.3); await ready(); },
@@ -344,11 +370,17 @@
         if (rider.action && rider.action.kind === "fp") { rider.action.ride = true; rider.action.mWas = true; }
         await wait(500);
         const a = rider.action; if (!a || !a.ride) throw new Error("did not mount (" + (a ? a.kind : "no action") + ")");
-        App.keys.add("Space"); App.keys.add("KeyW"); FILM.rider = rider;
-        await wait(1600);
+        // already up and out between the keep and the wall, flying round the castle (it started on the ground by the
+        // keep and flew into it); the eyes are turned down in the shot
+        const W0 = v.walls, R0 = W0 ? W0.r * 0.82 : 50, cx = W0 ? W0.x : v.x, cz = W0 ? W0.z : v.z, a0 = Math.atan2(rider.pos.x - cx, rider.pos.z - cz);
+        rider.pos.x = cx + Math.sin(a0) * R0; rider.pos.z = cz + Math.cos(a0) * R0; rider.heading = a0 + Math.PI / 2; a.alt = 16;
+        App.keys.add("KeyW"); FILM.rider = rider; FILM.riderTurn = { cx, cz, R0 };
+        await wait(1200);
       },
       // (the eyes turned well down, so that the castle and the walls pass beneath)
-      cam: () => { const t = FILM.rider, v = C.fort; let looked = false; return (u) => { t.heading = Math.atan2(v.x - t.pos.x, v.z - t.pos.z) + 0.75; if (!looked) { App.fpLook(0, 140); looked = true; } if (u > 0.6) App.keys.delete("Space"); }; },
+      // (a slow, steady turn round the castle: the heading set once towards it and then turned a little each frame;
+      // aimed at the keep every frame it spun on the spot when the rider passed close to it)
+      cam: () => { const t = FILM.rider; let looked = false, h = null; return (u, dt) => { if (h == null) h = t.heading; h += (dt || DT) * 0.17; t.heading = h; if (t.action && t.action.kind === "fp") t.action.alt = 16; if (!looked) { App.fpLook(0, 140); looked = true; } }; },
       after: async () => { App.keys.clear(); } },
     // the same rider seen from the side, in third person: the griffin in profile, the castle behind it (asked 14
     // November: a few moments through its eyes, then the griffin itself in the air). The film flies it round the
@@ -358,11 +390,11 @@
         const t = FILM.rider; if (!t || App.isKO(t.id)) throw new Error("no rider");
         const W0 = C.fort.walls, v = W0 ? { x: W0.x, z: W0.z } : C.fort, a0 = t.action || {};
         App.keys.clear(); if (App.fpOn && App.fpOn()) App.exitFP();
-        // (round the ring between the keep and the wall, the camera outside the wall looking in: the griffin in
-        // profile, the castle behind it, and it never crosses the keep)
-        FILM.fly = { t, v, R0: W0 ? W0.r * 0.8 : 52, a: Math.atan2(t.pos.x - v.x, t.pos.z - v.z), R: Math.max(40, Math.hypot(t.pos.x - v.x, t.pos.z - v.z)), alt: Math.max(8, a0.alt || 0) };
+        // (round the fortress just outside its wall, the camera further out looking in: the griffin in profile, the
+        // wall and the castle behind it)
+        FILM.fly = { t, v, R0: W0 ? W0.r + 9 : 60, a: Math.atan2(t.pos.x - v.x, t.pos.z - v.z), R: Math.max(40, Math.hypot(t.pos.x - v.x, t.pos.z - v.z)), alt: Math.max(8, a0.alt || 0) };
         FILM.fly.step = (dt) => {
-          const F = FILM.fly, T = F.t; F.a += dt * 0.22; F.R += (F.R0 - F.R) * Math.min(1, dt * 0.8); F.alt += (13 - F.alt) * Math.min(1, dt * 0.6);
+          const F = FILM.fly, T = F.t; F.stepped = true; F.a += dt * 0.22; F.R += (F.R0 - F.R) * Math.min(1, dt * 0.8); F.alt += (12 - F.alt) * Math.min(1, dt * 0.6);
           if (!T.action || !T.action.film) T.action = { kind: "fp", ride: true, alt: F.alt, started: st.T, film: true }; // (the film's own flight: see stepFP below)
           T.action.alt = F.alt;
           T.pos.x = F.v.x + Math.sin(F.a) * F.R; T.pos.z = F.v.z + Math.cos(F.a) * F.R; T.heading = F.a + Math.PI / 2;
@@ -376,25 +408,20 @@
         if (!FILM.stepFP0) { FILM.stepFP0 = App.stepFP; App.stepFP = (T, a, dm, dtReal) => (a && a.film && FILM.fly && FILM.fly.t === T ? FILM.fly.step(dtReal || DT) : FILM.stepFP0(T, a, dm, dtReal)); }
         FILM.fly.step(0.03); cam.follow = t.id; at(t.pos.x, t.pos.z, 16, 1.1, FILM.fly.a + 0.4); await wait(1500); // (the griffin's model back on it after first person)
       },
-      cam: () => (u, dt) => { const F = FILM.fly; cam.follow = F.t.id; cam.fly = null; cam.target.x += (F.t.pos.x - cam.target.x) * 0.25; cam.target.z += (F.t.pos.z - cam.target.z) * 0.25; cam.radius = 16; cam.phi = 1.1; cam.theta = F.a + 0.4; },
-      after: async () => { const F = FILM.fly; if (F && F.t) { F.t.action = null; F.t.flyY = null; } cam.follow = null; FILM.fly = null; if (FILM.stepFP0) { App.stepFP = FILM.stepFP0; FILM.stepFP0 = null; } if (FILM.range0 != null) { App.RANGE.full = FILM.range0; FILM.range0 = null; } App.MAX_FULL = 96; await leave(); } },
-    { id: "dive", title: "Diving", sub: "Down with a diver to the wrecks, the reefs and the pearl beds", secs: 6,
-      setup: async () => {
-        clock("11:20"); const s = near(App.diveSites.filter((q) => q.kind === "pearls" || q.kind === "wreck"), C.dock.x, C.dock.z) || App.diveSites[0];
-        at(s.shore.x, s.shore.z, 22, 1.0, Math.atan2(s.shore.x - s.x, s.shore.z - s.z)); await ready();
-        const t = agentsNear(s.shore.x, s.shore.z, 60).filter((q) => !App.isKO(q.id) && !(q.action && q.action.kind === "fp"))[0];
-        if (!t) throw new Error("nobody to dive");
-        App.endAction(t); t.pos.x = s.shore.x; t.pos.z = s.shore.z; App.startDiveAt(t, s.i, st.T + 60);
-        cam.follow = t.id; cam.radius = 13; cam.phi = 0.9; FILM.diver = t;
-        await until(() => t.pos.y < App.WATER_Y - 1.2, 40);
+      // (the camera set here after the game's own camera code, at the griffin's height: the game keeps the view's
+      // target on the ground)
+      cam: () => (u, dt) => {
+        const F = FILM.fly; if (!F.stepped) F.step(dt || DT); F.stepped = false; cam.follow = null; cam.fly = null;
+        const T = F.t.pos; cam.target.set(T.x, T.y + 0.8, T.z); cam.radius = 16; cam.phi = 1.1; cam.theta = F.a + 0.4;
+        const c = App.camera; c.position.set(T.x + 16 * Math.sin(1.1) * Math.sin(cam.theta), T.y + 0.8 + 16 * Math.cos(1.1), T.z + 16 * Math.sin(1.1) * Math.cos(cam.theta)); c.lookAt(T.x, T.y + 0.8, T.z);
       },
-      cam: () => (u, dt) => { cam.follow = FILM.diver.id; cam.theta += 0.12 * dt; } },
-    { id: "spear", title: "Spearfishing", sub: "A harpoon for the fish of the reefs, in first person", secs: 6,
+      after: async () => { const F = FILM.fly; if (F && F.t) { F.t.action = null; F.t.flyY = null; } cam.follow = null; FILM.fly = null; if (FILM.stepFP0) { App.stepFP = FILM.stepFP0; FILM.stepFP0 = null; } if (FILM.range0 != null) { App.RANGE.full = FILM.range0; FILM.range0 = null; } App.MAX_FULL = 96; await leave(); } },
+    { id: "spear", title: "Diving and spearfishing", sub: "Down to the reefs, the wrecks and the pearl beds; a harpoon for their fish, in first person", secs: 7,
       setup: async () => {
         clock("11:40");
         const reef = App.diveSites.find((s) => /Painted Reef/.test(s.name)) || App.diveSites.find((s) => s.kind === "reef");
         at(reef.x, reef.z, 20, 1.0, 0); await ready();
-        const t = FILM.diver && st.tickles.includes(FILM.diver) ? FILM.diver : st.tickles.find((q) => !App.isKO(q.id));
+        const t = st.tickles.find((q) => !App.isKO(q.id) && !q.riding && !(q.action && q.action.kind === "fp"));
         if (!t) throw new Error("nobody to spear");
         await leave(); App.endAction(t);
         t.pos.x = reef.x + 2; t.pos.z = reef.z + 2; t.pos.y = App.WATER_Y - 0.7;
@@ -405,8 +432,24 @@
         const ey = () => t.pos.y + (t.height || 3) * 0.8;
         const far = App.seaFishNear(t.pos.x, ey(), t.pos.z, 80);
         if (!far.length) throw new Error("no fish");
-        const f0 = far[0], ang = Math.atan2(f0.x - t.pos.x, f0.z - t.pos.z);
-        t.pos.x = f0.x - Math.sin(ang) * 6; t.pos.z = f0.z - Math.cos(ang) * 6; t.pos.y = Math.max(App.seaFloorY(t.pos.x, t.pos.z) + 0.7, f0.y - 1.6);
+        // (in open water: a fish of a school, the diver five blocks off it at its height, with clear water between
+        // them and below; asked 25 November, it was shot against a slope of sand with the fish far off)
+        const open = (x, z, y) => !App.isLand(x, z) && App.seaFloorY(x, z) < y - 1.6;
+        let pick = null;
+        for (const f of far.slice(0, 60)) {
+          const school = far.filter((g) => Math.hypot(g.x - f.x, g.z - f.z) < 4).length;
+          for (let k = 0; k < 12; k++) {
+            const a = (k / 12) * 6.283, px = f.x - Math.sin(a) * 5.5, pz = f.z - Math.cos(a) * 5.5, ey0 = f.y + 0.3;
+            let ok = true; for (let q = 0; q <= 6 && ok; q++) { const u = q / 6; ok = open(px + (f.x - px) * u, pz + (f.z - pz) * u, ey0); }
+            if (ok && open(px, pz, ey0 - 1) && (!pick || school > pick.school)) pick = { f, px, pz, ey0, school };
+          }
+          if (pick && pick.school >= 4) break;
+        }
+        if (!pick) throw new Error("no fish in open water");
+        const f0 = pick.f;
+        t.pos.x = pick.px; t.pos.z = pick.pz; t.pos.y = pick.ey0 - (t.height || 3) * 0.8; t.heading = Math.atan2(f0.x - t.pos.x, f0.z - t.pos.z);
+        // (in first person the depth is the dive's: set so that the eyes are at the fish's height)
+        if (t.action && t.action.kind === "fp") { t.action.water = true; t.action.dive = Math.max(0.7, (App.WATER_Y - 0.95) - t.pos.y); }
         cam.target.set(t.pos.x, t.pos.y, t.pos.z);
         await wait(1200);
         FILM.spear = { t, aim: () => { const q = App.seaFishNear(t.pos.x, ey(), t.pos.z, 9)[0]; if (!q) return null; t.heading = Math.atan2(q.x - t.pos.x, q.z - t.pos.z); const dd = Math.hypot(q.x - t.pos.x, q.z - t.pos.z); return Math.atan2(q.y - ey(), dd); }, thrown: false };
@@ -450,18 +493,20 @@
         FILM.rampage = { v, d }; await wait(2500);
       },
       cam: () => { const R = FILM.rampage; return follow(() => (R.d.rampage ? { pos: { x: R.d.x, z: R.d.z } } : null), { r: 34, phi: 1.04, dth: 0.12 }); } },
-    { id: "hunt", title: "Hunting", sub: "Deer and boar for the granary", secs: 6,
+    // (in place of the hunt, where a griffin flew through again: Tickles on skateboards and roller skates, something
+    // not seen before in the film; asked 25 November)
+    { id: "skate", title: "Skateboards and skates", sub: "Every Tickle's on-chain item comes out to play", secs: 6,
       setup: async () => {
-        clock("14:15");
-        let best = null;
-        // (a hunting ground out in the woods, away from the farms and the square, with two hunters at least)
-        for (const v of App.villages) { if (!v.hunt || v.hunt.poi < 0) continue; const hs = v.residents.filter((id) => App.choreOf(id) === "hunt" && App.doesChores(id) && !App.isKO(id)); const far = Math.hypot(v.hunt.x - v.x, v.hunt.z - v.z); const score = (hs.length >= 2 ? 1000 : 0) + Math.min(far, 80) + Math.min(hs.length, 4) * 5; if (!best || score > best.score) best = { v, hs, score }; }
-        if (!best || best.hs.length < 2) throw new Error("no hunters");
-        const g = best.v.hunt; at(g.x, g.z, 24, 1.02, 0.3); await ready(6);
-        FILM.hunt = { g, ids: best.hs };
-        await until(() => st.tickles.some((t) => FILM.hunt.ids.includes(t.id) && Math.hypot(t.pos.x - g.x, t.pos.z - g.z) < 30), 10);
+        clock("16:30");
+        const skating = (t) => t.group.visible && t.action && t.action.act && (t.action.act.ground === "Skateboard" || t.action.act.ground === "Skates") && t.action.phase === "doing";
+        const towns = App.villages.filter((v) => v.residents.length >= 60).sort((a, b) => b.residents.length - a.residents.length).slice(0, 6);
+        let sk = null;
+        for (const v of towns) { at(v.x, v.z, 30, 1.0, 0.5); await ready(6); if (!st.tickles.some(skating)) await until(() => st.tickles.some(skating), 12); sk = st.tickles.find(skating); if (sk) break; }
+        if (!sk) throw new Error("nobody skating");
+        FILM.skate = { t: sk };
       },
-      cam: () => { const H = FILM.hunt; return follow(() => st.tickles.find((t) => H.ids.includes(t.id)) || { pos: H.g }, { r: 18, phi: 1.1, dth: 0.1 }); } },
+      // (low and from the side, keeping pace with the skater)
+      cam: () => { const S = FILM.skate; return follow(() => S.t, { r: 9, phi: 1.22, th: S.t.heading + 1.4, dth: 0.05 }); } },
     { id: "surf", title: "Contests", sub: "Surfing, karts, foot races, fishing, regattas, strongest Tickle, fashion, song", secs: 6,
       setup: async () => {
         clock("15:25"); const day = Math.floor(st.T / DAY);
@@ -477,11 +522,15 @@
         FILM.surf = { D, th };
       },
       cam: () => { const S = FILM.surf, D = S.D; return move({ x: D.x + D.ux * 12, z: D.z + D.uz * 12, r: 26, phi: 1.08, th: S.th + 0.95 }, { x: D.x + D.ux * 16, z: D.z + D.uz * 16, r: 22, phi: 1.1, th: S.th + 0.4 }); } },
-    { id: "parliament", title: "The Parliament", sub: "The holders' ministers sit every afternoon and vote the laws", secs: 4,
-      // (from outside: the hall on the Maker's Isle, its columns and dome, the ministers at its door; inside, 333
-      // seats with a dozen ministers in them look empty on film)
-      setup: async () => { clock("15:55"); const P = App.parliament; FILM.parl = { x: P.x, z: P.z, th: Math.atan2(P.door.x - P.x, P.door.z - P.z) }; at(P.x, P.z, 72, 0.92, FILM.parl.th + 1.2); cam.target.y += 4; await ready(); },
-      cam: () => { const Q = FILM.parl; return orbit({ x: Q.x, z: Q.z, y: App.WATER_Y + 6 }, { r: 72, phi: 0.92, th: Q.th + 1.2 }, { r: 56, phi: 0.98, th: Q.th + 0.45 }); } },
+    { id: "tame", title: "Taming", sub: "Seven kinds of wild creature, won over with a snack and raised for the arena", secs: 6,
+      setup: async () => {
+        clock("17:00"); const day = Math.floor(st.T / DAY);
+        let spot = null, who = [];
+        for (const v of App.villages) { for (const id of v.residents) { const P = App.planOf(id, day), L = P.steps.find((s) => s.k === "leisure" && s.taming); if (L) { if (!spot) spot = L.p; if (Math.hypot(L.p.x - spot.x, L.p.z - spot.z) < 10) who.push(id); } } if (who.length >= 2) break; }
+        if (!spot) throw new Error("no tamer today");
+        at(spot.x, spot.z, 24, 1.08, 0.5); await ready(6); FILM.tame = { spot, who };
+      },
+      cam: () => { const T = FILM.tame; return follow(() => st.tickles.find((t) => T.who.includes(t.id)) || { pos: T.spot }, { r: 18, phi: 1.08, dth: 0.12 }); } },
     { id: "dungeon", title: "The Great Underworld", sub: "Twelve floors under the whole island, a guardian on each; parties go down for relics", secs: 7,
       setup: async () => {
         clock("15:50");
@@ -539,15 +588,6 @@
         // (from outside the wall, a little above the rider: the griffin crosses the wall with the fortress beyond it)
         const g = follow(pick, { r: 17, phi: 0.82, th: Math.atan2(-w.front.ux, -w.front.uz) + 0.35, dth: 0.05 }); return (u, dt) => { holdGate(); return g(u, dt); }; },
       after: warNormal },
-    { id: "tame", title: "Taming", sub: "Seven kinds of wild creature, won over with a snack and raised for the arena", secs: 6,
-      setup: async () => {
-        clock("17:00"); const day = Math.floor(st.T / DAY);
-        let spot = null, who = [];
-        for (const v of App.villages) { for (const id of v.residents) { const P = App.planOf(id, day), L = P.steps.find((s) => s.k === "leisure" && s.taming); if (L) { if (!spot) spot = L.p; if (Math.hypot(L.p.x - spot.x, L.p.z - spot.z) < 10) who.push(id); } } if (who.length >= 2) break; }
-        if (!spot) throw new Error("no tamer today");
-        at(spot.x, spot.z, 24, 1.08, 0.5); await ready(6); FILM.tame = { spot, who };
-      },
-      cam: () => { const T = FILM.tame; return follow(() => st.tickles.find((t) => T.who.includes(t.id)) || { pos: T.spot }, { r: 18, phi: 1.08, dth: 0.12 }); } },
     { id: "arena", title: "The arena", sub: "A creature tournament every evening, the whole island in the stands", secs: 7,
       // (a bout is fought in the ring only when both tamers are in the flesh: the range of full Tickles is widened
       // for the shot, and the shot waits for a bout)
@@ -556,10 +596,18 @@
       setup: async () => { clock("17:18"); const a = C.arena; FILM.range0 = App.RANGE.full; App.RANGE.full = 90; App.MAX_FULL = 120; at(a.x, a.z, 24, 0.9, a.rot - 0.45); await ready(12); await until(() => { const tr = st.tourneys[Math.floor(st.T / DAY) + ":" + a.region]; return tr && tr.current; }, 60); await wait(1200); },
       cam: () => { const a = C.arena; return orbit({ x: a.x, z: a.z }, { r: 24, phi: 0.9, th: a.rot - 0.45 }, { r: 19, phi: 1.02, th: a.rot + 0.4 }); },
       after: () => { if (FILM.range0 != null) { App.RANGE.full = FILM.range0; FILM.range0 = null; } App.MAX_FULL = 96; } },
-    { id: "ether", title: "Ether fields", sub: "Crystals that power the creatures' magic", secs: 4,
-      setup: async () => { clock("18:50"); const f = C.ether; at(f.x, f.z, 24, 1.12, 0); await ready(); },
-      cam: () => { const f = C.ether; return orbit({ x: f.x, z: f.z }, { r: 24, phi: 1.14, th: 0 }, { r: 20, phi: 1.06, th: 0.8 }); } },
-    { id: "casino", title: "The casino", sub: "Poker, blackjack, roulette, bingo and the slots, open from seven", secs: 7,
+    { id: "parliament", title: "The Parliament", sub: "The holders' ministers sit every afternoon and vote the laws", secs: 4,
+      // (inside, at the vote, the camera on the ministers who are there: asked 25 November, the Parliament is seen
+      // from outside once, with the statue, and inside once, here)
+      setup: async () => {
+        clock("17:28"); const P = App.parliament; at(P.door.x, P.door.z, 40, 1.0, 0); await ready();
+        await enter({ kind: "parliament", parliament: P, door: P.door });
+        const occ = App.chamberOccupants ? App.chamberOccupants(App.inside.map.rooms[0]) : [];
+        const cx = occ.length ? occ.reduce((a, o) => a + o.at.x, 0) / occ.length : 0, cz = occ.length ? occ.reduce((a, o) => a + o.at.z, 0) / occ.length : 0;
+        inFocus(cx, cz); await wait(500); FILM.parlIn = { n: occ.length };
+      },
+      cam: () => inOrbit({ r: 30, phi: 0.9, th: 0.3 }, { r: 24, phi: 0.85, th: -0.25 }), after: leave },
+    { id: "casino", title: "The casino", sub: "Poker, blackjack, roulette, bingo and the slots, open from seven", secs: 8,
       setup: async () => {
         clock("20:10"); const Cs = C.casino; at(Cs.x, Cs.z, 40, 1.0, 0); await ready(); // (an hour after opening the tables are full)
         const T = { kind: "casino", casino: Cs, door: Cs.door }, map = App.mapOf(T);
@@ -571,9 +619,16 @@
         if (!seated()) await until(seated, 40);
         let ri = 1, best = -1;
         map.rooms.forEach((R, i) => { const n = cards(i); if (i > 0 && n > best) { best = n; ri = i; } });
-        await enter(T, { floor: ri }); inFocus(0, 0); await wait(600); FILM.casino = { ri };
+        // (one game, then another: the two tables of the room with the most players at them, close up, a cut between
+        // them halfway; asked 25 November, instead of a pass through the room)
+        const tabs = Object.entries(App.CASINO_LAYOUT.tables).filter(([k, P]) => P.room === ri && (P.kind === "poker" || P.kind === "blackjack"))
+          .map(([k, P]) => ({ P, n: App.casinoOccupants(Cs, ri).filter((o) => o.table === k && o.pose === "cards").length })).sort((a, b) => b.n - a.n);
+        await enter(T, { floor: ri }); FILM.casino = { ri, A: tabs[0] && tabs[0].P, B: (tabs[1] && tabs[1].n ? tabs[1] : tabs[0]) && (tabs[1] && tabs[1].n ? tabs[1] : tabs[0]).P };
+        if (FILM.casino.A) inFocus(FILM.casino.A.x, FILM.casino.A.z); await wait(600);
       },
-      cam: () => inOrbit({ r: 26, phi: 0.98, th: 0.5 }, { r: 20, phi: 0.9, th: -0.35 }), after: leave },
+      cam: () => { const K = FILM.casino; let cut = false; const a = inOrbit({ r: 15, phi: 0.95, th: 0.6 }, { r: 13, phi: 0.9, th: 0.2 }), b = inOrbit({ r: 15, phi: 0.95, th: -0.5 }, { r: 13, phi: 0.9, th: -0.9 });
+        return (u) => { if (u < 0.5) return a(u * 2); if (!cut && K.B) { cut = true; inFocus(K.B.x, K.B.z); } return b((u - 0.5) * 2); }; },
+      after: leave },
     { id: "fire", title: "Dinner by the fire", sub: "Every evening, the whole place round the square's fire", secs: 6,
       setup: async () => { clock("20:40"); const v = C.keep; at(v.x, v.z, 26, 1.12, 0.4); await ready(); },
       cam: () => { const v = C.keep; return orbit({ x: v.x, z: v.z }, { r: 26, phi: 1.14, th: 0.4 }, { r: 20, phi: 1.06, th: 1.2 }); } },
@@ -599,6 +654,9 @@
     ctrl = null; ov.title = null; ov.titleA = 0; ov.big = null; ov.bigA = 0; ov.black = 1;
     if (recording) pauseRec();
     st.speed = 1;
+    // (a scene starts from the ordinary view: out of first person, the camera following nobody; the griffin's side
+    // shot carries on from the first-person one and takes care of that itself)
+    if (S.id !== "griffinside") { if (App.fpOn && App.fpOn()) { App.keys.clear(); App.exitFP(); } cam.follow = null; cam.fly = null; }
     try { await S.setup(); } catch (e) { log("skipped " + S.id + ": " + (e && e.message)); try { if (S.after) await S.after(); } catch (e2) { /* */ } return false; }
     ctrl = S.cam();
     if (FILM.onShot) { try { FILM.onShot(S); } catch (e) { /* */ } }

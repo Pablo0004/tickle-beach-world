@@ -58,8 +58,39 @@ birds' wings, first person inside buildings. Still to do, in this order:
    on by default, or a notice that it exists.
 11. **1.16 More mounts and creatures (asked 22 November, pending)**: flying is not only for griffins: add pegasi
     (horses with wings) and winged unicorns as mounts, and in general many more creatures, monsters and animals of
-    every kind (all as strokes, like the rest). To decide first with the owner: which ones, which can be tamed or
-    ridden, which fly, and where each lives.
+    every kind (all as strokes, like the rest). Decided 25 November: every one of them can be tamed, and every one
+    with wings can fly. Still to decide: which ones, and where each lives.
+13. **1.18 Chat between holders (asked 25 November, pending)**: a chat so that holders can talk to each other, from
+    one of their Tickles to another's.
+14. **1.19 Sorties from enemy fortresses (asked 25 November, pending)**: by default, when a Tickle or a group of
+    Tickles passes close to an enemy fortress, Tickles come out of it (over or through the wall) to attack the ones
+    coming near, as in Imperium.
+12. **1.17 The film, second pass (owner's notes on the final cut, 25 November)**, in this order:
+    a. Inside the castle: the Tickles stood in one straight line, through walls and away from any table; they are
+       to sit on the chairs, round the tables.
+    b. Animals cross the lake without a boat (in the game too): they must not.
+    c. Fishing: a much prettier angle.
+    d. The fortress shot: a Tickle glitches on top of the wall and falls.
+    e. First person on the griffin: the griffin spins fast on itself.
+    f. Music: too many changes. Three or four calm tracks as the base, spread through the film; the livelier ones
+       for battles and busy moments (the dragon's battle music is good).
+    g. Diving (third and first person) looks bad: shoot it again from other angles; in first person show the
+       spearfishing, something pleasant to watch.
+    h. After the dragon, the short walk of several Tickles: drop it, or at least the griffin flying in it (already
+       shown); at most Tickles on scooters or skateboards, something not seen before.
+    i. A horse right in the sea (the surf shot): it should not be.
+    j. The Parliament is shown twice from outside and never inside: order it (outside once, inside once).
+       Found 25 November: of the ministers who sit on a day (about 256 of 333) only some 20 to 40 reach the chamber:
+       186 live more than 340 blocks from their region's dock, the limit for an afternoon trip on the launch
+       (population.js `trip`). To decide with the owner how the far ones get there (set out earlier, ride, or a
+       launch from a nearer shore); meanwhile the film shoots the chamber at the vote, on the ministers present.
+    k. The dungeon fight: the Dark Skull skeleton is poorly made; remodel it (not another monster).
+    l. The war: the Tickles on the walls do not defend (they should shoot spears, arrows, spells); the griffin
+       riders bunch on one spot instead of spreading out, attacking or defending the wall.
+    m. The arena: the red and white dais makes the fighters sink into it: remove it or put it level with the
+       ground; show different fights, with more striking creatures.
+    n. Ether fields: drop the shot, lengthen another.
+    o. The casino: instead of a pass through a room, stay on one game, then another.
 10. **1.15 Stables for the tamed (asked 15 November, pending)**: inside a fortress, a tamed animal, creature or
     monster that is not being used (not ridden, not fighting, not out with its tamer) stays in the stables, not
     loose in the square; the stables are to be made bigger and set against the wall, on its inner side. To decide

@@ -1958,6 +1958,10 @@
     const s = App.surfaceAt(t.pos.x, t.pos.z);
     const swimming = t.action && t.action.water && t.action.phase === "doing";
     let ty = s.y;
+    // (the top of a wall is only for those whose place is up there, the watch and the defenders, or who are up there
+    // already: one walking by on the ground at the foot of the wall stays on the ground, asked 25 November: a Tickle
+    // jumped onto the wall and fell off again)
+    if (s.wall && t.pos.y < s.y - 1.5 && !(t.action && (t.action.onWall || t.action.kind === "wallwatch"))) ty = Math.max(App.columnHeight(Math.floor(t.pos.x), Math.floor(t.pos.z)), App.WATER_Y);
     if (s.water) ty = App.WATER_Y - (swimming ? 0.95 : 0.7);
     if (t.flyY != null) ty = t.flyY; // up on a griffin
     // aboard a boat or out on a surfboard the height is set by the boat or the wave (also while the game is paused)
