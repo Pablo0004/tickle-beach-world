@@ -857,8 +857,8 @@
     rooms: ROOMS, tables: TP, slots: SLOTS, bar: BAR,
     seat(key, k) {
       const P = TP[key];
-      if (P.kind === "poker") { const rx = P.big ? 11.4 : 9.0, rz = P.big ? 8.85 : 6.9, a = -Math.PI / 2 + ((k + 1) * 2 * Math.PI) / (P.seats + 1), x = P.x + Math.cos(a) * rx, z = P.z + Math.sin(a) * rz; return { x, z, rot: Math.atan2(P.x - x, P.z - z) }; }
-      if (P.kind === "blackjack") { const a = Math.PI * (0.12 + 0.19 * k), x = P.x - Math.cos(a) * 8.4, z = P.z + Math.sin(a) * 6.3; return { x, z, rot: Math.atan2(P.x - x, P.z - z) }; }
+      if (P.kind === "poker") { const rx = P.big ? 9.9 : 8.0, rz = P.big ? 7.2 : 5.9, /* (a chair's depth from the felt: they sat too far off it, asked 26 November) */ a = -Math.PI / 2 + ((k + 1) * 2 * Math.PI) / (P.seats + 1), x = P.x + Math.cos(a) * rx, z = P.z + Math.sin(a) * rz; return { x, z, rot: Math.atan2(P.x - x, P.z - z) }; }
+      if (P.kind === "blackjack") { const a = Math.PI * (0.12 + 0.19 * k), x = P.x - Math.cos(a) * 7.3, z = P.z + Math.sin(a) * 4.9; return { x, z, rot: Math.atan2(P.x - x, P.z - z) }; }
       if (P.kind === "roulette") { const sp = [[-7.2, 5.85], [-2.4, 5.85], [2.4, 5.85], [7.2, 5.85], [-7.2, -5.85], [-2.4, -5.85], [2.4, -5.85], [-11.1, 0]][k]; const x = P.x + sp[0], z = P.z + sp[1]; return { x, z, rot: Math.atan2(P.x + sp[0] * 0.6 - x, P.z - z) }; }
       // bingo: three rows of twelve facing the board on the back wall
       const row = Math.floor(k / 12), col = k % 12;
@@ -866,7 +866,7 @@
     },
     dealer(key) {
       const P = TP[key];
-      if (P.kind === "poker") return { x: P.x, z: P.z - (P.big ? 9.6 : 7.5), rot: 0 };
+      if (P.kind === "poker") return { x: P.x, z: P.z - (P.big ? 7.7 : 6.3), rot: 0 };
       if (P.kind === "blackjack") return { x: P.x, z: P.z - 5.1, rot: 0 };
       if (P.kind === "roulette") return { x: P.x + 5.55, z: P.z - 6.15, rot: 0 };
       return { x: P.x + 6.9, z: P.z - 3.9, rot: 0 };

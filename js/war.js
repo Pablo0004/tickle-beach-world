@@ -652,7 +652,7 @@
       const W0 = App.villages[w.b].walls, F = w.front;
       if (W0) {
         const gs = sideIds(w, "B").filter((x) => w.unit[x] === "griffin").sort((x, y) => x - y), k = Math.max(0, gs.indexOf(t.id)), n = gs.length;
-        const ga = Math.atan2(F.gz - W0.z, F.gx - W0.x), off = (k - (n - 1) / 2) * (3.2 / W0.r);
+        const ga = Math.atan2(F.gz - W0.z, F.gx - W0.x), off = (k - (n - 1) / 2) * (7 / W0.r); // (seven blocks apart: their wings are wide)
         target = { x: W0.x + Math.cos(ga + off) * (W0.r + 6), z: W0.z + Math.sin(ga + off) * (W0.r + 6) };
       }
     }
