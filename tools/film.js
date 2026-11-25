@@ -499,9 +499,23 @@
       setup: async () => {
         clock("16:30");
         const skating = (t) => t.group.visible && t.action && t.action.act && (t.action.act.ground === "Skateboard" || t.action.act.ground === "Skates") && t.action.phase === "doing";
-        const towns = App.villages.filter((v) => v.residents.length >= 60).sort((a, b) => b.residents.length - a.residents.length).slice(0, 6);
-        let sk = null;
-        for (const v of towns) { at(v.x, v.z, 30, 1.0, 0.5); await ready(6); if (!st.tickles.some(skating)) await until(() => st.tickles.some(skating), 12); sk = st.tickles.find(skating); if (sk) break; }
+        const v = (C.town && C.town.residents.length >= 40) ? C.town : App.villages.filter((q) => q.residents.length >= 60).sort((a, b) => b.residents.length - a.residents.length)[0];
+        at(v.x, v.z, 30, 1.0, 0.5); await ready(8);
+        if (!st.tickles.some(skating)) await until(() => st.tickles.some(skating), 6);
+        // (nobody out on wheels just now: two or three of those in the square take their skateboards or skates out,
+        // the same thing the game has them do; the owners of one first)
+        if (!st.tickles.some(skating)) {
+          const free = st.tickles.filter((t) => t.group.visible && !App.isKO(t.id) && !t.riding && Math.hypot(t.pos.x - v.x, t.pos.z - v.z) < 22 && !(t.action && /fp|war|ko|box|duel|ride/.test(t.action.kind || "")));
+          free.sort((a, b) => ((b.ground === "Skateboard" || b.ground === "Skates") - (a.ground === "Skateboard" || a.ground === "Skates")));
+          for (const t of free.slice(0, 3)) {
+            const g = t.ground === "Skates" ? "Skates" : "Skateboard", act = st.acts.find((q) => q.where === "ground" && q.ground === g);
+            if (!act) continue;
+            App.endAction(t);
+            App.startDo(t, { act, ref: "item" + t.id, spot: { x: t.pos.x + 3, z: t.pos.z + 2 }, ownItem: true, itemName: g, borrowed: t.ground !== g }, false, st.T + 25);
+          }
+          await until(() => st.tickles.some(skating), 8);
+        }
+        const sk = st.tickles.find(skating);
         if (!sk) throw new Error("nobody skating");
         FILM.skate = { t: sk };
       },
@@ -603,10 +617,13 @@
         clock("17:28"); const P = App.parliament; at(P.door.x, P.door.z, 40, 1.0, 0); await ready();
         await enter({ kind: "parliament", parliament: P, door: P.door });
         const occ = App.chamberOccupants ? App.chamberOccupants(App.inside.map.rooms[0]) : [];
-        const cx = occ.length ? occ.reduce((a, o) => a + o.at.x, 0) / occ.length : 0, cz = occ.length ? occ.reduce((a, o) => a + o.at.z, 0) / occ.length : 0;
-        inFocus(cx, cz); await wait(500); FILM.parlIn = { n: occ.length };
+        // (the camera close on the thickest group of ministers present)
+        let best = null; for (const o of occ) { const n = occ.filter((q) => Math.hypot(q.at.x - o.at.x, q.at.z - o.at.z) < 7).length; if (!best || n > best.n) best = { o, n }; }
+        const grp = best ? occ.filter((q) => Math.hypot(q.at.x - best.o.at.x, q.at.z - best.o.at.z) < 7) : [];
+        const cx = grp.length ? grp.reduce((a, o) => a + o.at.x, 0) / grp.length : 0, cz = grp.length ? grp.reduce((a, o) => a + o.at.z, 0) / grp.length : 0;
+        inFocus(cx, cz); await wait(500); FILM.parlIn = { n: occ.length, grp: grp.length };
       },
-      cam: () => inOrbit({ r: 30, phi: 0.9, th: 0.3 }, { r: 24, phi: 0.85, th: -0.25 }), after: leave },
+      cam: () => inOrbit({ r: 17, phi: 1.0, th: 0.35 }, { r: 14, phi: 0.95, th: -0.2 }), after: leave },
     { id: "casino", title: "The casino", sub: "Poker, blackjack, roulette, bingo and the slots, open from seven", secs: 8,
       setup: async () => {
         clock("20:10"); const Cs = C.casino; at(Cs.x, Cs.z, 40, 1.0, 0); await ready(); // (an hour after opening the tables are full)

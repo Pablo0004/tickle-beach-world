@@ -91,6 +91,14 @@ birds' wings, first person inside buildings. Still to do, in this order:
        ground; show different fights, with more striking creatures.
     n. Ether fields: drop the shot, lengthen another.
     o. The casino: instead of a pass through a room, stay on one game, then another.
+    Progress 25 November (stopped at 30% of the session): done and seen in snapshots: a (seated at breakfast), c
+    (from the water), e (no spin; high, round the castle; side shot outside the wall with the castle behind), m (the
+    dais laid flat), n (dropped), o (one table close up). Done in code, not yet seen: b (pets and mounts wait on the
+    shore), d (walkers stay off the wall top), f (fixed soundtrack), g (third-person dive dropped; spearfishing in
+    open water), h (skating in place of the hunt, staged if nobody skates), i (follows from b), j (statue framed
+    without the Parliament; inside at the vote on the largest group: still sparse, see the attendance finding), k
+    (the Lich remodelled), l (spears on the walls, longer reach, griffin riders spread and defending). Still to do:
+    m's "different, more striking creature fights"; check all of the above in snapshots; record the film again.
 10. **1.15 Stables for the tamed (asked 15 November, pending)**: inside a fortress, a tamed animal, creature or
     monster that is not being used (not ridden, not fighting, not out with its tamer) stays in the stables, not
     loose in the square; the stables are to be made bigger and set against the wall, on its inner side. To decide
