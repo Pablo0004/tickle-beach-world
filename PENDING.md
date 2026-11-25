@@ -84,6 +84,10 @@ birds' wings, first person inside buildings. Still to do, in this order:
     Owner, 26 November, for the fourth version (best film I can make, every scene checked for bugs): no boat on top
     of another; nothing passing through structures it should not; everything well framed; at the Kraken, not only the
     beast: the Tickles attacking it in formation, not piled up. Scenes are to be provoked in code, not waited for.
+12c. **1.20 Room between everything (asked 26 November, pending, for the game; the film to avoid crowds now)**: no
+    scene should have Tickles piled up, nor Tickles with the animals and creatures that follow them all on top of
+    each other: everything with space between it, every model apart from the next, in the game as in the film.
+    To work on after the film.
 13. **1.18 Chat between holders (asked 25 November, pending)**: a chat so that holders can talk to each other, from
     one of their Tickles to another's.
 14. **1.19 Sorties from enemy fortresses (asked 25 November, pending)**: by default, when a Tickle or a group of
