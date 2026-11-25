@@ -99,6 +99,13 @@ birds' wings, first person inside buildings. Still to do, in this order:
     without the Parliament; inside at the vote on the largest group: still sparse, see the attendance finding), k
     (the Lich remodelled), l (spears on the walls, longer reach, griffin riders spread and defending). Still to do:
     m's "different, more striking creature fights"; check all of the above in snapshots; record the film again.
+    Second sitting, 25 November (to 40% of the session): war.js had been pushed broken (a comment swallowed the end
+    of the riders' height line, so no war loaded) and is fixed; the Parliament is shown outside once (with the
+    statue) and inside once, from the Speaker's side, on its largest group; the Lich builds (60 strokes, fidelity
+    check 89, no fails); skating is staged from up to fifty blocks round the square (the game's own skate action,
+    checked). Still wrong: the spearfishing shot still looks at a slope of sand and the strike ends it at once (the
+    Painted Reef lies along a shallow slope: try another reef, or the open-water search must also want the floor
+    well below the diver all round); the siege and wall shots with the new defence are not yet seen.
 10. **1.15 Stables for the tamed (asked 15 November, pending)**: inside a fortress, a tamed animal, creature or
     monster that is not being used (not ridden, not fighting, not out with its tamer) stays in the stables, not
     loose in the square; the stables are to be made bigger and set against the wall, on its inner side. To decide
