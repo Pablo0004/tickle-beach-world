@@ -113,6 +113,9 @@ birds' wings, first person inside buildings. Still to do, in this order:
     fire salamander), the surf with no horse in the sea, the fortress with nobody on the wall, the Lich close up
     (robes a little lighter), the spearfishing over a deep, colourful reef (the sites are tried deepest first until
     one has fish in deep water: fish swim only in the loaded sea round the camera).
+    Recorded again and given to the owner 25 November: 26 scenes, none skipped, 160 s, 1920x1080, H.264 + AAC with
+    the fixed soundtrack (no errors in the mix). Waiting for the owner's notes. Open, for the owner to decide: how
+    the far ministers reach the Parliament (see j).
 10. **1.15 Stables for the tamed (asked 15 November, pending)**: inside a fortress, a tamed animal, creature or
     monster that is not being used (not ridden, not fighting, not out with its tamer) stays in the stables, not
     loose in the square; the stables are to be made bigger and set against the wall, on its inner side. To decide
