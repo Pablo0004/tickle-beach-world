@@ -652,10 +652,14 @@
   App.updatePawns = () => {
     if (!pawnMesh) return;
     let n = 0;
+    // (a dragon on the rampage: everyone near it who is not fighting it is indoors, the far figures too; asked 25
+    // November, some went on dancing in the square)
+    const raging = []; if (App.dragonObjects) for (const d of App.dragonObjects.values()) if (d && d.rampage && !d.dead) raging.push(d);
     for (const id of pawnIds) {
       if (P.agent[id] || n >= PAWN_CAP) continue;
       let p = App.planPos(id, st.T);
       if (p.inside) continue;
+      if (raging.length && raging.some((d) => Math.hypot(p.x - d.x, p.z - d.z) < 90)) continue;
       // (the plan's way is straight between its points: where it runs through a building, the figure goes round
       // the outside of it instead of through its walls)
       if (App.clearOfBuildings && App.buildingAt && App.buildingAt(p.x, p.z)) p = App.clearOfBuildings(p);

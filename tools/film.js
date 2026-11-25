@@ -122,7 +122,7 @@
   // the day, and the lively ones for the battles (the dragon's, which the owner liked, for the kraken and the dragon)
   const SOUNDTRACK = {
     feel_good_island: ["intro", "statue", "parliament", "castle", "town", "dock", "rod", "fortress"],
-    tropical_fantasy: ["griffin", "griffinside", "spear", "seacave"],
+    sandy_seaside_2nd: ["griffin", "griffinside", "spear", "seacave"], // (the owner's choice, 25 November: the song the game was playing)
     great_boss: ["kraken", "dragon", "rampage"],
     sandy_seaside: ["skate", "surf", "tame"],
     rpg_battle: ["dungeon", "siege", "walls", "arena"],
@@ -130,7 +130,7 @@
   };
   FILM.SOUNDTRACK = SOUNDTRACK;
   function noteMusic(S) {
-    const key = Object.keys(SOUNDTRACK).find((k) => SOUNDTRACK[k].includes(S.id)), T = key && App.MUSIC_TRACKS[key];
+    const key = Object.keys(SOUNDTRACK).find((k) => SOUNDTRACK[k].includes(S.id)), T = key && App.MUSIC_TRACKS[key.replace(/_2nd$/, "")];
     const now = T ? null : App.musicNow && App.musicNow();
     rec.music.push({ id: S.id, t0: rec.n / FILM.fps, file: T ? "music/" + T.file : now && now.file ? "music/" + now.file : null, gain: T ? (T.gain != null ? T.gain : 1) : now && now.gain != null ? now.gain : 1 });
   }
@@ -498,10 +498,8 @@
         const q = S.f0 && App.seaFishAt ? App.seaFishAt(S.f0) : null, d = q ? Math.hypot(q.x - t.pos.x, q.z - t.pos.z) : 0;
         if (!S.thrown && d > 5.5 && u < 0.6) App.keys.add("KeyW"); else App.keys.delete("KeyW");
         if (!S.thrown && u > 0.6) { S.thrown = true; App.keys.delete("KeyW"); t.forceHit = true; key("KeyB"); }
-        t.mesh.visible = true;
-        const h = t.heading, fx = Math.sin(h), fz = Math.cos(h), y0 = t.pos.y + (t.height || 3) * 0.6, c = App.camera;
-        c.position.set(t.pos.x - fx * 5 + fz * 2.2, y0 + 1.3, t.pos.z - fz * 5 - fx * 2.2);
-        c.lookAt(t.pos.x + fx * 4, y0 - 0.2, t.pos.z + fz * 4);
+        // (the game's own view from behind the Tickle, as the mouse wheel gives it: the diver and its harpoon in sight)
+        if (!S.back) { S.back = true; App.fpWheel && App.fpWheel(440); }
       }; },
       done: (u) => !!(FILM.spear && FILM.spear.t.spearCast && FILM.spear.t.spearCast.struck), tail: 2.2,
       after: async () => { App.keys.clear(); await leave(); } },
@@ -585,10 +583,18 @@
         clock("17:00"); const day = Math.floor(st.T / DAY);
         // (a taming out on dry land, in a meadow, a grove or by the falls, not at a pond, a beach or a pier where
         // others fish; asked 25 November)
-        let spot = null, who = [], wet = null, wetWho = [];
-        for (const v of App.villages) { for (const id of v.residents) { const P = App.planOf(id, day), L = P.steps.find((s) => s.k === "leisure" && s.taming); if (!L) continue; const isWet = /pond|beach|pier|shore|lake/i.test((L.p.type || "") + " " + (L.p.label || "")); if (isWet) { if (!wet) wet = L.p; if (Math.hypot(L.p.x - wet.x, L.p.z - wet.z) < 10) wetWho.push(id); continue; } if (!spot) spot = L.p; if (Math.hypot(L.p.x - spot.x, L.p.z - spot.z) < 10) who.push(id); } if (who.length >= 2) break; }
-        if (!spot) { spot = wet; who = wetWho; }
-        if (!spot) throw new Error("no tamer today");
+        // (and the quietest of them: the fewest other Tickles about, no fire or party next to it)
+        const spots = [];
+        for (const v of App.villages) for (const id of v.residents) {
+          const P = App.planOf(id, day), L = P.steps.find((s) => s.k === "leisure" && s.taming); if (!L) continue;
+          const wet = /pond|beach|pier|shore|lake/i.test((L.p.type || "") + " " + (L.p.label || ""));
+          let S = spots.find((q) => Math.hypot(q.p.x - L.p.x, q.p.z - L.p.z) < 10); if (!S) spots.push((S = { p: L.p, who: [], wet })); S.who.push(id);
+        }
+        if (!spots.length) throw new Error("no tamer today");
+        const all = []; for (let id = 0; id < TB.SUPPLY; id += 3) { const q = App.planPos(id, st.T); if (!q.inside) all.push([q.x, q.z]); }
+        for (const S of spots) S.crowd = all.filter(([x, z]) => Math.hypot(x - S.p.x, z - S.p.z) < 18).length * 3 - S.who.length + (S.wet ? 1000 : 0);
+        spots.sort((a, b) => a.crowd - b.crowd);
+        const spot = spots[0].p, who = spots[0].who;
         at(spot.x, spot.z, 24, 1.08, 0.5); await ready(6); FILM.tame = { spot, who };
         // (the horses and other mounts waiting about are led out of the shot, back after it)
         FILM.hidden = [];
@@ -647,11 +653,9 @@
         FILM.flyer = st.tickles.find((t) => t.riding && t.riding.fly && (t.riding.alt || 0) > 1.5 && near0(t)) || st.tickles.find((t) => t.riding && t.riding.fly && near0(t)) || null;
         FILM.gatePt = { x: w.front.gx != null ? w.front.gx : w.front.x, z: w.front.gz != null ? w.front.gz : w.front.z };
       },
-      // (if the rider is knocked out, the next griffin in the air takes over; the camera keeps its turn, so no spin)
-      cam: () => { const w = FILM.war, flying = (t) => t.riding && t.riding.fly && !App.isKO(t.id) && Math.hypot(t.pos.x - w.front.x, t.pos.z - w.front.z) < 90;
-        const pick = () => { if (!FILM.flyer || !flying(FILM.flyer)) FILM.flyer = st.tickles.find(flying) || null; return FILM.flyer || { pos: FILM.gatePt }; };
-        // (from outside the wall, a little above the rider: the griffin crosses the wall with the fortress beyond it)
-        const g = follow(pick, { r: 17, phi: 0.82, th: Math.atan2(-w.front.ux, -w.front.uz) + 0.35, dth: 0.05 }); return (u, dt) => { holdGate(); return g(u, dt); }; },
+      // (wide and from the side, a little above the riders: the attackers' line of griffins over their ranks, the
+      // defenders' line out in front of their wall, the walls shooting; asked 25 November)
+      cam: () => { const F = FILM.war.front, th = Math.atan2(-F.ux, -F.uz), m = move({ x: F.x - F.ux * 10, z: F.z - F.uz * 10, y: App.surfaceAt(F.x, F.z).y + 7, r: 46, phi: 1.05, th: th + 1.35 }, { x: F.x - F.ux * 4, z: F.z - F.uz * 4, y: App.surfaceAt(F.x, F.z).y + 7, r: 40, phi: 1.0, th: th + 1.0 }); return (u) => { holdGate(); return m(u); }; },
       after: warNormal },
     { id: "arena", title: "The arena", sub: "A creature tournament every evening, the whole island in the stands", secs: 7,
       // (a bout is fought in the ring only when both tamers are in the flesh: the range of full Tickles is widened
@@ -704,10 +708,12 @@
         let c = null; for (const k in st.contests) { const q = st.contests[k]; if (q && q.day === day && q.kind === "music") c = q; }
         if (!c && App.debugContest) { c = App.debugContest("music", C.R); for (let r = 0; !c && r < App.regions.length; r++) c = App.debugContest("music", r); }
         if (!c) throw new Error("no song contest today");
-        const Vn = App.contestVenue(c.region, "square"); at(Vn.x, Vn.z, 28, 0.86, Vn.rot + 0.4); await ready(); FILM.song = Vn;
+        const Vn = App.contestVenue(c.region, "square"); at(Vn.x, Vn.z, 20, 0.98, Vn.rot); await ready(); FILM.song = Vn;
       },
-      // (from the front of the stage, over the crowd: the singer, not the back of the stage; asked 25 November)
-      cam: () => { const Vn = FILM.song; return orbit({ x: Vn.x, z: Vn.z }, { r: 28, phi: 0.86, th: Vn.rot + 0.4 }, { r: 22, phi: 0.95, th: Vn.rot - 0.3 }); } },
+      // (from out in front of the stage, above the crowd, looking at the singer: the stage's own layout gives where it
+      // stands and which way the crowd is; asked 25 November, it was shot from behind)
+      cam: () => { const Vn = FILM.song, st0 = Vn.L ? Vn.L(0, -1.5) : Vn, fr = Vn.L ? Vn.L(0, 8) : { x: Vn.x + Math.sin(Vn.rot) * 8, z: Vn.z + Math.cos(Vn.rot) * 8 }, th = Math.atan2(fr.x - st0.x, fr.z - st0.z);
+        return orbit({ x: st0.x, z: st0.z, y: App.surfaceAt(st0.x, st0.z).y + 2 }, { r: 20, phi: 0.98, th: th + 0.25 }, { r: 15, phi: 1.02, th: th - 0.2 }); } },
     { id: "night", title: null, secs: 8, big: ["TICKLE BEACH WORLD", "Built from the on-chain models of Tickle Beach"],
       setup: async () => { clock("22:10"); const w = C.fort.walls; at(w.x, w.z, 210, 1.0, 2.2); await ready(); },
       cam: () => { const w = C.fort.walls; return orbit({ x: w.x, z: w.z }, { r: 210, phi: 1.0, th: 2.2 }, { r: 150, phi: 1.06, th: 2.8 }); } },
