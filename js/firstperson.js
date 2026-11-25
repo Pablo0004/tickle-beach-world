@@ -73,7 +73,7 @@
   App.exitFP = () => {
     if (!fp) return;
     const t = agentOf(fp.id);
-    if (t) { t.mesh.visible = true; if (t.tagEl) t.tagEl.style.visibility = ""; if (t.action && t.action.kind === "fp") t.action = null; if (App.dropSpear) App.dropSpear(t); }
+    if (t) { t.mesh.visible = true; if (t.arms) { if (t.arms.R) t.arms.R.visible = true; if (t.arms.L) t.arms.L.visible = true; } if (t.tagEl) t.tagEl.style.visibility = ""; if (t.action && t.action.kind === "fp") t.action = null; if (App.dropSpear) App.dropSpear(t); }
     fp = null;
     if (document.pointerLockElement && document.exitPointerLock) document.exitPointerLock();
     App.camera.fov = FOV0; App.camera.updateProjectionMatrix();
@@ -556,6 +556,9 @@
     fp.lastT = now;
     const third = fp.back > 0.8;
     t.mesh.visible = third;
+    // (its arms and what they hold go with it: through its own eyes nothing of the Tickle is seen; a held item stood
+    // in the view, asked 26 November)
+    if (t.arms) { if (t.arms.R) t.arms.R.visible = third; if (t.arms.L) t.arms.L.visible = third; }
     if (t.tagEl) t.tagEl.style.visibility = "hidden";
     t.group.updateMatrixWorld(true);
     t.pivot.localToWorld(EYE.set(0, (t.height || 3) * 0.8, 0.55));
