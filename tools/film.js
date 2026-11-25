@@ -98,7 +98,10 @@
     hideParked();
     if (!looping || FILM.noGuard || App.inside || (App.fpOn && App.fpOn())) return;
     const c = App.camera, T = App.cam.target;
-    for (let k = 0; k < 30 && camBlocked(c.position); k++) c.position.lerp(T, 0.1);
+    // (and nothing between it and what it looks at: the first blocked point out from the target sets how far back it
+    // can stand)
+    const C0 = c.position.clone(), Q = new THREE.Vector3();
+    for (let i = 1; i <= 20; i++) { Q.copy(T).lerp(C0, i / 20); if (camBlocked(Q)) { c.position.copy(T).lerp(C0, Math.max(0.12, (i - 1.5) / 20)); break; } }
   }
   App.render = () => { camGuard(); render0(); if (looping) { try { ox.drawImage(App.renderer.domElement, 0, 0, FILM.W, FILM.H); drawOverlay(); } catch (e) { /* a frame lost */ } } };
   const ramp = (x, a, b) => Math.max(0, Math.min(1, (x - a) / (b - a)));
@@ -366,7 +369,7 @@
         }
         cands.sort((a, b) => a.crowd - b.crowd);
         if (!cands.length) throw new Error("no quiet pier");
-        let t = null, S = null, p = null, th = 0;
+        let t = null, S = null, p = null, th = 0; FILM.rodBest = null;
         for (const c of cands.slice(0, 8)) {
           // (the way to the open water from the fisher's spot: the mean of the directions in which water lies a few
           // blocks off; the camera goes out there and looks back at the fisher)
@@ -377,11 +380,16 @@
           // (and quiet in fact: no more than three others standing within ten blocks of the fishers; asked 26
           // November, the pier was crowded)
           const others = st.tickles.filter((q) => q.group.visible && !S.ids.includes(q.id) && Math.hypot(q.pos.x - p.x, q.pos.z - p.z) < 10).length;
+          const t1 = st.tickles.find((q) => S.ids.includes(q.id) && q.fishGear);
+          if (t1 && (!FILM.rodBest || others < FILM.rodBest.others)) FILM.rodBest = { S, p, th, t: t1, others, c };
           if (others > 3) { t = null; continue; }
-          t = st.tickles.find((q) => S.ids.includes(q.id) && q.fishGear);
+          t = t1;
           FILM.rod = { p, th, ids: S.ids, crowd: c.crowd };
           if (t) break;
         }
+        // (none quiet enough: the quietest of those tried)
+        if (!t && FILM.rodBest) { ({ S, p, th, t } = FILM.rodBest); at(p.x, p.z, 13, 1.12, th + 0.45); await ready(6); FILM.rod = { p, th, ids: S.ids, crowd: FILM.rodBest.c.crowd }; }
+        FILM.rodBest = null;
         if (!t) throw new Error("no fisher with a rod out");
         FILM.rod.t = t; t.forceCatch = true;
         // the shot starts a moment before the pull of its rod (sim.js: one cast every 6.25 s, the fish up at 0.07 of it)
@@ -570,7 +578,16 @@
         if (!d) throw new Error("no dragon object");
         const v = near(App.villages.filter((o) => o.residents.length >= 20 && Math.hypot(o.x - L.x, o.z - L.z) < 400), L.x, L.z) || App.nearestVillage(L.x, L.z);
         clock("12:55"); at(v.x, v.z, 36, 1.02, 0.8); await ready();
-        d.x = v.x + 6; d.z = v.z + 4; d.y = App.surfaceAt(d.x, d.z).y;
+        // (it lands on open ground near the square, clear of every house by eight blocks: it stood on a roof)
+        let spot = null;
+        for (let r = 4; r <= 40 && !spot; r += 3) for (let k = 0; k < 16 && !spot; k++) {
+          const a0 = (k / 16) * 6.283, x = v.x + Math.sin(a0) * r, z = v.z + Math.cos(a0) * r;
+          let clear = App.isLand(x, z);
+          for (let q = 0; q < 12 && clear; q++) { const b0 = (q / 12) * 6.283; for (const rr of [0, 4, 8]) if (App.buildingAt(x + Math.sin(b0) * rr, z + Math.cos(b0) * rr)) { clear = false; break; } }
+          if (clear) spot = { x, z };
+        }
+        if (!spot) spot = { x: v.x, z: v.z };
+        d.x = spot.x; d.z = spot.z; d.y = App.surfaceAt(d.x, d.z).y;
         if (!App.startRampage(d)) throw new Error("rampage refused");
         FILM.rampage = { v, d }; await wait(2500);
       },
@@ -600,7 +617,7 @@
         FILM.skate = { t }; at(t.pos.x, t.pos.z, 9, 1.22, t.heading + 1.4); await wait(1500);
       },
       // (low and from the side, keeping pace with the skater)
-      cam: () => { const S = FILM.skate; return follow(() => S.t, { r: 9, phi: 1.22, th: S.t.heading + 1.4, dth: 0.05 }); } },
+      cam: () => { const S = FILM.skate; return follow(() => S.t, { r: 11, phi: 1.02, th: S.t.heading + 1.4, dth: 0.05 }); } },
     { id: "surf", title: "Contests", sub: "Surfing, karts, foot races, fishing, regattas, strongest Tickle, fashion, song", secs: 6,
       setup: async () => {
         clock("15:25"); const day = Math.floor(st.T / DAY);
@@ -616,30 +633,26 @@
         FILM.surf = { D, th };
       },
       cam: () => { const S = FILM.surf, D = S.D; return move({ x: D.x + D.ux * 12, z: D.z + D.uz * 12, r: 26, phi: 1.08, th: S.th + 0.95 }, { x: D.x + D.ux * 16, z: D.z + D.uz * 16, r: 22, phi: 1.1, th: S.th + 0.4 }); } },
-    { id: "tame", title: "Taming", sub: "Seven kinds of wild creature, won over with a snack and raised for the arena", secs: 6,
+    { id: "tame", title: "Taming", sub: "Seven kinds of wild creature, won over with a snack and raised for the arena", secs: 7,
+      // (provoked, not waited for: a quiet meadow, grove or falls away from the villages, a wild creature there and a
+      // tamer with its own creature brought to it; asked 26 November, ponds crowded with Tickles and horses)
       setup: async () => {
-        clock("17:00"); const day = Math.floor(st.T / DAY);
-        // (a taming out on dry land, in a meadow, a grove or by the falls, not at a pond, a beach or a pier where
-        // others fish; asked 25 November)
-        // (and the quietest of them: the fewest other Tickles about, no fire or party next to it)
-        const spots = [];
-        for (const v of App.villages) for (const id of v.residents) {
-          const P = App.planOf(id, day), L = P.steps.find((s) => s.k === "leisure" && s.taming); if (!L) continue;
-          const wet = /pond|beach|pier|shore|lake/i.test((L.p.type || "") + " " + (L.p.label || ""));
-          let S = spots.find((q) => Math.hypot(q.p.x - L.p.x, q.p.z - L.p.z) < 10); if (!S) spots.push((S = { p: L.p, who: [], wet })); S.who.push(id);
-        }
-        if (!spots.length) throw new Error("no tamer today");
+        clock("17:00");
+        const v0 = C.town || App.villages[0];
         const all = []; for (let id = 0; id < TB.SUPPLY; id += 3) { const q = App.planPos(id, st.T); if (!q.inside) all.push([q.x, q.z]); }
-        for (const S of spots) S.crowd = all.filter(([x, z]) => Math.hypot(x - S.p.x, z - S.p.z) < 18).length * 3 - S.who.length + (S.wet ? 1000 : 0);
-        spots.sort((a, b) => a.crowd - b.crowd);
-        const spot = spots[0].p, who = spots[0].who;
-        at(spot.x, spot.z, 24, 1.08, 0.5); await ready(6); FILM.tame = { spot, who };
-        // (the horses and other mounts waiting about are led out of the shot, back after it)
-        FILM.hidden = [];
-        for (const t of st.tickles) { const o = App.mountObjOf && App.mountObjOf(t.id); if (o && o.visible && !t.riding && Math.hypot(o.position.x - spot.x, o.position.z - spot.z) < 28) { o.visible = false; FILM.hidden.push(o); } }
+        const pois = App.poisNear(v0.x, v0.z, 420, (p) => /meadow|grove|falls/.test(p.type || "")).map((p) => ({ p, crowd: all.filter(([x, z]) => Math.hypot(x - p.x, z - p.z) < 30).length })).sort((a, b) => a.crowd - b.crowd).slice(0, 6);
+        let spot = null, w = null;
+        for (const { p } of pois) { at(p.x, p.z, 24, 1.08, 0.5); await ready(8); await until(() => !!App.wildNear(p.x, p.z, 30), 6); w = App.wildNear(p.x, p.z, 30); if (w) { spot = p; break; } }
+        if (!spot) throw new Error("no wild creature in a quiet place");
+        const id = App.villages.slice().sort((a, b) => Math.hypot(a.x - spot.x, a.z - spot.z) - Math.hypot(b.x - spot.x, b.z - spot.z)).flatMap((v) => v.residents).find((q) => App.leadCreature(q) && !App.isKO(q) && !(App.isDead && App.isDead(q)) && App.creaturesOf(q).length < 3);
+        if (id == null) throw new Error("no tamer");
+        if (!App.pop.agent[id]) { App.forcePromote(id); await until(() => !!App.pop.agent[id], 12); App.pinned = null; }
+        const t = App.pop.agent[id]; if (!t) throw new Error("no tamer");
+        App.endAction(t); t.pos.x = w.x + 7; t.pos.z = w.z + 2; t.pos.y = App.surfaceAt(t.pos.x, t.pos.z).y; await wait(800);
+        if (!App.tamingBrain(t, {})) throw new Error("taming refused");
+        FILM.tame = { spot: { x: w.x, z: w.z }, who: [id] };
       },
-      cam: () => { const T = FILM.tame; return follow(() => st.tickles.find((t) => T.who.includes(t.id)) || { pos: T.spot }, { r: 18, phi: 1.08, dth: 0.12 }); },
-      after: () => { for (const o of FILM.hidden || []) o.visible = true; FILM.hidden = null; } },
+      cam: () => { const T = FILM.tame; return follow(() => st.tickles.find((t) => T.who.includes(t.id)) || { pos: T.spot }, { r: 18, phi: 1.08, dth: 0.12 }); } },
     { id: "dungeon", title: "The Great Underworld", sub: "Twelve floors under the whole island, a guardian on each; parties go down for relics", secs: 7,
       setup: async () => {
         clock("15:50");
@@ -650,7 +663,7 @@
         else { const dg = C.fort ? near(App.dungeons, C.fort.x, C.fort.z) : App.dungeons[0]; await enter({ kind: "dungeon", dg, door: dg.door }); }
         FILM.dungeon = { watched: !!pick };
       },
-      cam: () => inOrbit({ r: 16, phi: 1.0, th: 0.4 }, { r: 13, phi: 0.95, th: -0.5 }), after: leave },
+      cam: () => inOrbit({ r: 19, phi: 0.78, th: 0.4 }, { r: 16, phi: 0.74, th: -0.5 }), after: leave }, // (from higher up: rocks stood between the camera and the fight)
     { id: "siege", title: "War between holders", sub: "Armies of fifty, a siege at the gate: the ram, the catapults, the archers on the walls", noWarm: true, secs: 8,
       setup: async () => {
         clock("14:30"); await leave();
@@ -693,7 +706,10 @@
       },
       // (if the rider is knocked out, the next griffin in the air takes over; the camera keeps its turn, so no spin)
       cam: () => { const w = FILM.war, flying = (t) => t.riding && t.riding.fly && !App.isKO(t.id) && Math.hypot(t.pos.x - w.front.x, t.pos.z - w.front.z) < 90;
-        const pick = () => { if (!FILM.flyer || !flying(FILM.flyer)) FILM.flyer = st.tickles.find(flying) || null; return FILM.flyer || { pos: FILM.gatePt }; };
+        // (a defenders' rider first: they fly in front of their wall, with the wall behind; the attackers' keep a line
+        // over their own crowded ranks)
+        const defB = (t) => w.B.some((c) => c.ids.includes(t.id));
+        const pick = () => { if (!FILM.flyer || !flying(FILM.flyer)) FILM.flyer = st.tickles.find((t) => flying(t) && defB(t)) || st.tickles.find(flying) || null; return FILM.flyer || { pos: FILM.gatePt }; };
         // (from outside the wall, a little above the rider: the griffin crosses the wall with the fortress beyond it)
         const g = follow(pick, { r: 17, phi: 0.82, th: Math.atan2(-w.front.ux, -w.front.uz) + 0.35, dth: 0.05 }); return (u, dt) => { holdGate(); return g(u, dt); }; },
       after: warNormal },

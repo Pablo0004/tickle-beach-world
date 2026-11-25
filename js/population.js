@@ -183,11 +183,13 @@
   // a place as a target: its centre plus what is needed to stand around it sensibly
   const atSpot = (p) => p.type === "pier" || p.type === "falls" || p.type === "beach";
   const asPlace = (p) => ({ x: atSpot(p) ? p.spot.x : p.x, z: atSpot(p) ? p.spot.z : p.z, type: p.type, lakeR: p.lake ? p.lake.r : 0, label: placeLabel(p) });
-  const plazaOf = (v, label) => ({ x: v.x, z: v.z, type: "plaza", label: label || v.name + " square" });
+  // (the square of a big place spreads wider: a fortress's hundred Tickles at work in its square stood in one knot;
+  // asked 26 November, nobody piled up)
+  const plazaOf = (v, label) => ({ x: v.x, z: v.z, type: "plaza", label: label || v.name + " square", spread: Math.min(v.walls ? v.walls.r * 0.6 : 28, 14 + Math.sqrt(v.residents.length) * 1.1) });
   // where one Tickle stands at a place: around the square, on the bank of a pond, in a ring round a campfire...
   function standAt(pl, id, salt) {
     const a = App.hash2(id, salt, 31) * 6.28, u = App.hash2(id, salt, 37);
-    const R = { plaza: [6, 14], pond: [pl.lakeR + 2, pl.lakeR + 6], camp: [5, 10], pier: [1, 6], falls: [2, 8] }[pl.type] || [2, 12];
+    const R = { plaza: [6, pl.spread || 14], pond: [pl.lakeR + 2, pl.lakeR + 6], camp: [5, 10], pier: [1, 6], falls: [2, 8] }[pl.type] || [2, 12];
     const d = R[0] + u * (R[1] - R[0]);
     return { x: pl.x + Math.cos(a) * d, z: pl.z + Math.sin(a) * d, label: pl.label, type: pl.type, cx: pl.x, cz: pl.z };
   }
