@@ -832,6 +832,81 @@
     try { if (S.after) await S.after(); } catch (e) { log("after " + S.id + ": " + e.message); }
     return true;
   }
+  // ---------- takes: every scene recorded on its own, and the film put together from them ----------
+  // (asked 26 November: to shoot one scene again without the whole film.) FILM.takes(ids) records each scene, already
+  // encoded, to film/take-<id>.bin (a header with its frames, then the frames); FILM.assemble() joins the takes of
+  // every scene in the film's order into one MP4 and mixes the music in, in a couple of minutes, nothing shot again.
+  // A scene that carries on from the one before it is taken with it (the side shot of the griffin with the first
+  // person one, the walls with the siege).
+  const DEPS = { griffinside: "griffin", walls: "siege" };
+  const b64 = (buf) => { const u = buf instanceof ArrayBuffer ? new Uint8Array(buf) : new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength); let s = ""; for (let i = 0; i < u.length; i++) s += String.fromCharCode(u[i]); return btoa(s); };
+  const unb64 = (s) => { const b = atob(s), u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; };
+  FILM.takes = async (ids) => {
+    if (FILM.status === "running") return "already running";
+    ids = ids ? ids.slice() : SCENES.map((s) => s.id);
+    for (const k in DEPS) if (ids.includes(k) && !ids.includes(DEPS[k])) ids.push(DEPS[k]);
+    stopNow = false; FILM.status = "running"; FILM.done = []; FILM.skipped = [];
+    C = cast(); fix(); looping = true; FILM.manual = true;
+    App.MAX_FULL = 96; FILM.chunks0 = App.RANGE.chunks; App.RANGE.chunks = 7;
+    if (App.toggleMusic && App.musicOn && !App.musicOn()) { try { App.toggleMusic(true); } catch (e) { /* */ } }
+    const vol0 = App.musicVolume ? App.musicVolume() : null; if (App.musicVolume) App.musicVolume(0);
+    log("waiting for the far view"); await until(() => App.farViewReady && App.farViewReady(), 300);
+    for (const S of SCENES.filter((q) => ids.includes(q.id))) {
+      if (stopNow) break;
+      const take = { chunks: [], parts: [], desc: null, codec: null };
+      rec.n = 0; rec.music = [];
+      rec.enc = new VideoEncoder({ output: (chunk, meta) => {
+        const u = new Uint8Array(chunk.byteLength); chunk.copyTo(u);
+        take.chunks.push({ t: chunk.timestamp, d: chunk.duration || Math.round(1e6 / FILM.fps), k: chunk.type === "key" ? 1 : 0, n: u.byteLength }); take.parts.push(u);
+        if (meta && meta.decoderConfig && !take.codec) { take.codec = meta.decoderConfig.codec; take.desc = meta.decoderConfig.description ? b64(meta.decoderConfig.description) : null; }
+      }, error: (e) => log("encoder: " + e.message) });
+      rec.enc.configure({ codec: "avc1.640028", width: FILM.W, height: FILM.H, bitrate: FILM.bitrate, framerate: FILM.fps, latencyMode: "quality", avc: { format: "avc" } });
+      const ok = await shoot(S, true);
+      await rec.enc.flush(); rec.enc.close(); rec.enc = null;
+      if (!ok || !take.chunks.length) { FILM.skipped.push(S.id); continue; }
+      const head = new TextEncoder().encode(JSON.stringify({ id: S.id, frames: rec.n, fps: FILM.fps, codec: take.codec, desc: take.desc, chunks: take.chunks }));
+      const hl = new Uint8Array(4); new DataView(hl.buffer).setUint32(0, head.byteLength);
+      await fetch("/film/take-" + S.id + ".bin", { method: "DELETE" }).catch(() => {});
+      await fetch("/film/take-" + S.id + ".bin", { method: "POST", body: new Blob([hl, head, ...take.parts]) });
+      FILM.done.push(S.id); log("take " + S.id + ": " + Math.round(rec.n / FILM.fps * 10) / 10 + " s");
+    }
+    if (App.musicVolume && vol0 != null) App.musicVolume(vol0);
+    FILM.manual = false; App.MAX_FULL = null; warNormal(); if (FILM.chunks0 != null) { App.RANGE.chunks = FILM.chunks0; FILM.chunks0 = null; }
+    FILM.status = stopNow ? "stopped" : "done";
+    return FILM.done.length + " takes, skipped: " + (FILM.skipped.join(", ") || "none");
+  };
+  FILM.assemble = async (name, only) => {
+    name = name || "tickle-beach-world.mp4";
+    const takes = [];
+    for (const S of SCENES.filter((q) => !only || only.includes(q.id))) {
+      const r = await fetch("/film/take-" + S.id + ".bin?" + Date.now());
+      if (!r.ok) return "missing take: " + S.id;
+      const ab = await r.arrayBuffer(), hl = new DataView(ab).getUint32(0);
+      takes.push({ head: JSON.parse(new TextDecoder().decode(new Uint8Array(ab, 4, hl))), ab, off: 4 + hl });
+    }
+    FILM.status = "assembling";
+    await startRec(name); rec.enc.close(); rec.enc = null;
+    let t0 = 0, first = true; rec.music = [];
+    const desc0 = takes[0].head.desc;
+    for (const T of takes) {
+      const H = T.head;
+      if (H.desc !== desc0) log("take " + H.id + ": another stream header (it may not play)");
+      const key = Object.keys(SOUNDTRACK).find((k) => SOUNDTRACK[k].includes(H.id)), M = key && App.MUSIC_TRACKS[key.replace(/_2nd$/, "")];
+      rec.music.push({ id: H.id, t0: t0 / 1e6, file: M ? "music/" + M.file : null, gain: M && M.gain != null ? M.gain : 1 });
+      let off = T.off;
+      for (const c of H.chunks) {
+        const ch = new EncodedVideoChunk({ type: c.k ? "key" : "delta", timestamp: t0 + c.t, duration: c.d, data: new Uint8Array(T.ab, off, c.n) }); off += c.n;
+        rec.mux.addVideoChunk(ch, first ? { decoderConfig: { codec: H.codec, codedWidth: FILM.W, codedHeight: FILM.H, description: unb64(H.desc) } } : undefined);
+        first = false;
+      }
+      t0 += Math.round((H.frames * 1e6) / H.fps);
+    }
+    rec.n = Math.round((t0 * FILM.fps) / 1e6);
+    try { await mixMusic(); } catch (e) { log("music: " + e.message); }
+    rec.mux.finalize(); rec.mux = null; await rec.queue;
+    FILM.status = "idle";
+    return "assembled " + takes.length + " scenes, " + Math.round(t0 / 1e6) + " s";
+  };
   FILM.run = async (ids, name) => {
     if (FILM.status === "running") return "already running";
     stopNow = false; FILM.status = "running"; FILM.done = []; FILM.skipped = [];
