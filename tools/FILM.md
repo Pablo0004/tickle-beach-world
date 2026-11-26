@@ -31,6 +31,16 @@ at the end (the sounds are not). The clock, the weather (clear) and the camera a
 the scenes are in the order of a day. A scene whose setup fails (no war could be declared, nobody to dive...) is
 skipped and the film goes on.
 
+## One scene again, not the whole film
+
+Every scene can be recorded on its own as a take, already encoded, in `film/take-<id>.bin`; the film is then put
+together from the takes, with the music mixed in, in a couple of minutes:
+```js
+FILM.takes();                 // every scene as a take (once)
+FILM.takes(["casino"]);       // only these scenes again (one that carries on from the one before it comes too)
+FILM.assemble();              // film/tickle-beach-world.mp4 from the takes of every scene
+```
+
 ## The scenes
 
 Dawn over the island (title), the Maker's statue, inside a castle, a town waking up, the lake and its ferries,
